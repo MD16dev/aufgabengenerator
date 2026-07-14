@@ -27,14 +27,14 @@ export const ThemeToggle: React.FC = () => {
   return (
     <button
       onClick={() => setIsLight(!isLight)}
-      className="p-2.5 bg-slate-900/40 hover:bg-purple-500/10 border border-slate-800 hover:border-purple-500/30 rounded-xl text-slate-400 hover:text-purple-400 transition-all cursor-pointer shadow-sm flex items-center justify-center"
+      className="p-2.5 bg-theme-card hover:bg-purple-500/10 border border-theme-border rounded-xl text-theme-muted hover:text-purple-600 transition-all cursor-pointer shadow-sm flex items-center justify-center"
       aria-label="Theme umschalten"
       id="theme-toggle-btn"
     >
       {isLight ? (
-        <Moon className="w-5 h-5 transition-transform hover:rotate-12" />
+        <Sun className="w-5 h-5 transition-transform hover:scale-110 text-amber-500" />
       ) : (
-        <Sun className="w-5 h-5 transition-transform hover:scale-110" />
+        <Moon className="w-5 h-5 transition-transform hover:rotate-12 text-purple-400" />
       )}
     </button>
   );
