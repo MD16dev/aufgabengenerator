@@ -1,11 +1,31 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, afterAll } from 'vitest';
 import request from 'supertest';
 import app from '../../app';
+import { prisma } from '../../utils/db';
 
 describe('Auth & Score API Endpoints', () => {
   const uniqueUsername = `user_${Date.now()}_${Math.floor(Math.random() * 1000)}`;
   const password = 'password123';
   let token = '';
+
+  afterAll(async () => {
+    // Clean up test user records to keep the database clean
+    try {
+      const testUser = await prisma.user.findUnique({
+        where: { username: uniqueUsername }
+      });
+      if (testUser) {
+        await prisma.solvedTask.deleteMany({
+          where: { userId: testUser.id }
+        });
+        await prisma.user.delete({
+          where: { id: testUser.id }
+        });
+      }
+    } catch (err) {
+      // Ignore if user doesn't exist
+    }
+  });
 
   it('should register a new user successfully', async () => {
     const res = await request(app)
