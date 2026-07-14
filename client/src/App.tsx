@@ -378,13 +378,13 @@ function App() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col transition-colors duration-300">
+    <div className="min-h-screen flex flex-col transition-colors duration-200">
       {/* Decorative blobs */}
       <div className="absolute top-0 left-1/4 w-96 h-96 bg-purple-600/5 rounded-full blur-3xl pointer-events-none" />
       <div className="absolute top-1/3 right-1/4 w-96 h-96 bg-indigo-600/5 rounded-full blur-3xl pointer-events-none" />
 
       {/* Navigation Header */}
-      <header className="w-full py-4 px-6 border-b border-slate-200 dark:border-slate-800/40 bg-slate-950/20 backdrop-blur-md sticky top-0 z-40 transition-colors duration-300">
+      <header className="w-full py-4 px-6 border-b border-theme-border bg-theme-bg/85 backdrop-blur-md sticky top-0 z-40 transition-colors duration-200">
         <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
           
           {/* Logo & Slogan */}
@@ -397,21 +397,21 @@ function App() {
               <GraduationCap className="w-6 h-6 text-white" />
             </div>
             <div>
-              <h1 className="text-lg font-bold font-display text-slate-850 dark:text-slate-100 m-0 leading-tight">
+              <h1 className="text-lg font-bold font-display text-theme-primary m-0 leading-tight">
                 AufgabenGenerator
               </h1>
-              <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">Lerne mit unendlich vielen Aufgaben</p>
+              <p className="text-xs text-theme-muted font-medium">Lerne mit unendlich vielen Aufgaben</p>
             </div>
           </div>
 
           {/* Navigation Tabs */}
-          <nav className="flex bg-slate-200/50 dark:bg-slate-900/40 p-1 rounded-xl border border-slate-300 dark:border-slate-800/60" id="navigation-tabs-list">
+          <nav className="flex bg-theme-card border border-theme-border p-1 rounded-xl" id="navigation-tabs-list">
             <button
               onClick={() => { setActiveTab('home'); setActiveTaskId(null); }}
               className={`flex items-center gap-1.5 px-3 py-2 text-xs font-semibold rounded-lg transition-all cursor-pointer ${
                 activeTab === 'home'
                   ? 'bg-purple-600 text-white shadow-md'
-                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200'
+                  : 'text-theme-secondary hover:text-theme-primary'
               }`}
             >
               <Home className="w-4 h-4" /> Start
@@ -421,7 +421,7 @@ function App() {
               className={`flex items-center gap-1.5 px-3 py-2 text-xs font-semibold rounded-lg transition-all cursor-pointer ${
                 activeTab === 'tasks'
                   ? 'bg-purple-600 text-white shadow-md'
-                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200'
+                  : 'text-theme-secondary hover:text-theme-primary'
               }`}
             >
               <BookOpen className="w-4 h-4" /> Aufgaben
@@ -431,7 +431,7 @@ function App() {
               className={`flex items-center gap-1.5 px-3 py-2 text-xs font-semibold rounded-lg transition-all cursor-pointer ${
                 activeTab === 'leaderboard'
                   ? 'bg-purple-600 text-white shadow-md'
-                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200'
+                  : 'text-theme-secondary hover:text-theme-primary'
               }`}
             >
               <Trophy className="w-4 h-4" /> Bestenliste
@@ -441,7 +441,7 @@ function App() {
               className={`flex items-center gap-1.5 px-3 py-2 text-xs font-semibold rounded-lg transition-all cursor-pointer ${
                 activeTab === 'profile'
                   ? 'bg-purple-600 text-white shadow-md'
-                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200'
+                  : 'text-theme-secondary hover:text-theme-primary'
               }`}
             >
               <User className="w-4 h-4" /> Profil
@@ -452,7 +452,7 @@ function App() {
           <div className="flex items-center gap-2.5">
             <button
               onClick={() => setIsOnboardingOpen(true)}
-              className="p-2.5 bg-slate-100/50 dark:bg-slate-900/40 hover:bg-purple-500/10 border border-slate-300 dark:border-slate-800 hover:border-purple-500/30 rounded-xl text-slate-500 dark:text-slate-400 hover:text-purple-600 dark:hover:text-purple-400 transition-all cursor-pointer shadow-sm flex items-center justify-center"
+              className="p-2.5 bg-theme-card hover:bg-purple-500/10 border border-theme-border hover:border-purple-500/30 rounded-xl text-theme-muted hover:text-purple-600 transition-all cursor-pointer shadow-sm flex items-center justify-center"
               title="Tour starten"
             >
               <HelpCircle className="w-5 h-5" />
@@ -467,7 +467,7 @@ function App() {
             ) : user ? (
               <button
                 onClick={handleLogout}
-                className="flex items-center gap-1.5 px-4 py-2.5 bg-rose-500/10 hover:bg-rose-500/20 text-rose-600 dark:text-rose-300 font-semibold rounded-xl text-xs border border-rose-500/20 transition-all cursor-pointer"
+                className="flex items-center gap-1.5 px-4 py-2.5 bg-rose-500/10 hover:bg-rose-500/20 text-rose-600 dark:text-rose-350 font-semibold rounded-xl text-xs border border-rose-500/20 transition-all cursor-pointer"
                 id="login-btn"
               >
                 <LogOut className="w-3.5 h-3.5" /> Logout
@@ -493,25 +493,25 @@ function App() {
         {activeTab === 'home' && (
           <div className="w-full max-w-4xl mx-auto space-y-6 animate-fadeIn">
             {/* Welcoming Card */}
-            <div className="glass-panel rounded-3xl p-6 md:p-8 relative overflow-hidden glow-purple">
+            <div className="glass-panel rounded-3xl p-6 md:p-8 relative overflow-hidden">
               <div className="absolute top-0 right-0 w-64 h-64 bg-purple-500/10 rounded-full blur-3xl pointer-events-none" />
               <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
                 <div>
-                  <h2 className="text-3xl font-extrabold font-display text-slate-800 dark:text-slate-100 mb-2">
+                  <h2 className="text-3xl font-extrabold font-display text-theme-primary mb-2">
                     Hallo, {user ? user.displayName : 'Gast'}! 👋
                   </h2>
-                  <p className="text-slate-600 dark:text-slate-400 text-sm md:text-base max-w-lg leading-relaxed">
+                  <p className="text-theme-secondary text-sm md:text-base max-w-lg leading-relaxed">
                     Willkommen zurück auf deinem Aufgabengenerator-Dashboard. Wähle unten ein Lernfach aus oder setze deinen Pomodoro-Fokus-Timer, um direkt loszulegen!
                   </p>
                 </div>
                 <div className="flex gap-4 shrink-0">
-                  <div className="text-center p-4 bg-slate-100/50 dark:bg-slate-900/30 border border-slate-200 dark:border-slate-800 rounded-2xl w-24">
-                    <span className="block text-2xl font-extrabold text-slate-800 dark:text-slate-100">{getActiveScore()}</span>
-                    <span className="text-[10px] text-slate-500 uppercase font-semibold">Punkte</span>
+                  <div className="text-center p-4 bg-theme-card border border-theme-border rounded-2xl w-24 shadow-sm">
+                    <span className="block text-2xl font-extrabold text-theme-primary">{getActiveScore()}</span>
+                    <span className="text-[10px] text-theme-muted uppercase font-bold tracking-wider">Punkte</span>
                   </div>
-                  <div className="text-center p-4 bg-slate-100/50 dark:bg-slate-900/30 border border-slate-200 dark:border-slate-800 rounded-2xl w-24">
-                    <span className="block text-2xl font-extrabold text-slate-800 dark:text-slate-100">{user ? 1 : 0}</span>
-                    <span className="text-[10px] text-slate-500 uppercase font-semibold">Module</span>
+                  <div className="text-center p-4 bg-theme-card border border-theme-border rounded-2xl w-24 shadow-sm">
+                    <span className="block text-2xl font-extrabold text-theme-primary">{user ? 1 : 0}</span>
+                    <span className="text-[10px] text-theme-muted uppercase font-bold tracking-wider">Module</span>
                   </div>
                 </div>
               </div>
@@ -521,72 +521,72 @@ function App() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               
               {/* Quick Navigation Panel */}
-              <div className="glass-panel rounded-3xl p-6 glow-purple flex flex-col justify-between">
+              <div className="glass-panel rounded-3xl p-6 flex flex-col justify-between">
                 <div>
-                  <h3 className="text-lg font-bold font-display text-slate-800 dark:text-slate-100 mb-4 flex items-center gap-2">
-                    <Compass className="w-5 h-5 text-purple-600 dark:text-purple-400" /> Schnellzugriff
+                  <h3 className="text-lg font-bold font-display text-theme-primary mb-4 flex items-center gap-2">
+                    <Compass className="w-5 h-5 text-purple-650" /> Schnellzugriff
                   </h3>
                   <div className="space-y-3">
                     <button
                       onClick={() => setActiveTab('tasks')}
-                      className="w-full flex items-center justify-between p-4 bg-slate-100/50 dark:bg-slate-900/30 hover:bg-slate-200/60 dark:hover:bg-slate-900/50 border border-slate-200 dark:border-slate-800 rounded-2xl transition-all cursor-pointer group text-left"
+                      className="w-full flex items-center justify-between p-4 bg-theme-card hover:brightness-95 dark:hover:brightness-110 border border-theme-border rounded-2xl transition-all cursor-pointer group text-left shadow-sm"
                     >
                       <div className="flex items-center gap-3">
                         <div className="p-2.5 bg-purple-500/10 rounded-xl border border-purple-500/20 text-purple-600 dark:text-purple-400">
                           <BookOpen className="w-5 h-5" />
                         </div>
                         <div>
-                          <span className="font-bold text-slate-800 dark:text-slate-250 block text-sm">Übungsaufgaben rechnen</span>
-                          <span className="text-slate-500 text-xs">Unendliche Fragen generieren & loesen</span>
+                          <span className="font-bold text-theme-primary block text-sm">Übungsaufgaben rechnen</span>
+                          <span className="text-theme-muted text-xs font-medium">Unendliche Fragen generieren & loesen</span>
                         </div>
                       </div>
-                      <ArrowRight className="w-4 h-4 text-slate-405 group-hover:translate-x-1 transition-transform" />
+                      <ArrowRight className="w-4 h-4 text-theme-muted group-hover:translate-x-1 transition-transform" />
                     </button>
 
                     <button
                       onClick={() => setActiveTab('leaderboard')}
-                      className="w-full flex items-center justify-between p-4 bg-slate-100/50 dark:bg-slate-900/30 hover:bg-slate-200/60 dark:hover:bg-slate-900/50 border border-slate-200 dark:border-slate-800 rounded-2xl transition-all cursor-pointer group text-left"
+                      className="w-full flex items-center justify-between p-4 bg-theme-card hover:brightness-95 dark:hover:brightness-110 border border-theme-border rounded-2xl transition-all cursor-pointer group text-left shadow-sm"
                     >
                       <div className="flex items-center gap-3">
                         <div className="p-2.5 bg-emerald-500/10 rounded-xl border border-emerald-500/20 text-emerald-600 dark:text-emerald-400">
                           <Trophy className="w-5 h-5" />
                         </div>
                         <div>
-                          <span className="font-bold text-slate-800 dark:text-slate-250 block text-sm">Bestenliste einsehen</span>
-                          <span className="text-slate-500 text-xs">Vergleiche deine Leistungen mit anderen</span>
+                          <span className="font-bold text-theme-primary block text-sm">Bestenliste einsehen</span>
+                          <span className="text-theme-muted text-xs font-medium">Vergleiche deine Leistungen mit anderen</span>
                         </div>
                       </div>
-                      <ArrowRight className="w-4 h-4 text-slate-405 group-hover:translate-x-1 transition-transform" />
+                      <ArrowRight className="w-4 h-4 text-theme-muted group-hover:translate-x-1 transition-transform" />
                     </button>
 
                     <button
                       onClick={() => setActiveTab('profile')}
-                      className="w-full flex items-center justify-between p-4 bg-slate-100/50 dark:bg-slate-900/30 hover:bg-slate-200/60 dark:hover:bg-slate-900/50 border border-slate-200 dark:border-slate-800 rounded-2xl transition-all cursor-pointer group text-left"
+                      className="w-full flex items-center justify-between p-4 bg-theme-card hover:brightness-95 dark:hover:brightness-110 border border-theme-border rounded-2xl transition-all cursor-pointer group text-left shadow-sm"
                     >
                       <div className="flex items-center gap-3">
                         <div className="p-2.5 bg-blue-500/10 rounded-xl border border-blue-500/20 text-blue-600 dark:text-blue-400">
                           <User className="w-5 h-5" />
                         </div>
                         <div>
-                          <span className="font-bold text-slate-800 dark:text-slate-250 block text-sm">Mein Profil bearbeiten</span>
-                          <span className="text-slate-500 text-xs">Passwort, Name und Profilbild anpassen</span>
+                          <span className="font-bold text-theme-primary block text-sm">Mein Profil bearbeiten</span>
+                          <span className="text-theme-muted text-xs font-medium">Passwort, Name und Profilbild anpassen</span>
                         </div>
                       </div>
-                      <ArrowRight className="w-4 h-4 text-slate-405 group-hover:translate-x-1 transition-transform" />
+                      <ArrowRight className="w-4 h-4 text-theme-muted group-hover:translate-x-1 transition-transform" />
                     </button>
                   </div>
                 </div>
-                <div className="mt-4 pt-4 border-t border-slate-200 dark:border-slate-800 flex items-center gap-2 text-xs text-slate-500">
+                <div className="mt-4 pt-4 border-t border-theme-border flex items-center gap-2 text-xs text-theme-muted">
                   <ShieldCheck className="w-4 h-4 text-emerald-500" />
                   <span>Deine Daten werden sicher in der SQLite-Datenbank verschlüsselt.</span>
                 </div>
               </div>
 
               {/* Pomodoro Timer Configuration & Visual Panel */}
-              <div className="glass-panel rounded-3xl p-6 glow-purple flex flex-col justify-between">
+              <div className="glass-panel rounded-3xl p-6 flex flex-col justify-between">
                 <div>
-                  <h3 className="text-lg font-bold font-display text-slate-800 dark:text-slate-100 mb-4 flex items-center gap-2">
-                    <Clock className="w-5 h-5 text-purple-650" /> Pomodoro Timer
+                  <h3 className="text-lg font-bold font-display text-theme-primary mb-4 flex items-center gap-2">
+                    <Clock className="w-5 h-5 text-purple-600" /> Pomodoro Timer
                   </h3>
 
                   {/* Circular Timer Visual Display */}
@@ -598,7 +598,7 @@ function App() {
                           cx="72"
                           cy="72"
                           r="64"
-                          className="stroke-slate-200 dark:stroke-slate-800 fill-none"
+                          className="stroke-theme-card fill-none"
                           strokeWidth="6"
                         />
                         <circle
@@ -615,11 +615,11 @@ function App() {
                         />
                       </svg>
                       <div className="absolute flex flex-col items-center justify-center">
-                        <span className="text-2xl font-extrabold text-slate-800 dark:text-slate-100 tabular-nums">
+                        <span className="text-2xl font-extrabold text-theme-primary tabular-nums">
                           {formatTime(pomodoroMinutes, pomodoroSeconds)}
                         </span>
                         <span className={`text-[10px] font-bold uppercase tracking-wider mt-1 ${
-                          pomodoroMode === 'work' ? 'text-purple-600 dark:text-purple-400' : 'text-emerald-500'
+                          pomodoroMode === 'work' ? 'text-purple-600' : 'text-emerald-500'
                         }`}>
                           {pomodoroMode === 'work' ? 'Fokuszeit' : 'Pause'}
                         </span>
@@ -632,7 +632,7 @@ function App() {
                         onClick={() => setPomodoroIsActive(!pomodoroIsActive)}
                         className={`p-2.5 rounded-xl border transition-all cursor-pointer ${
                           pomodoroIsActive 
-                            ? 'bg-rose-500/10 hover:bg-rose-500/20 border-rose-500/20 text-rose-600 dark:text-rose-400' 
+                            ? 'bg-rose-500/10 hover:bg-rose-500/20 border-rose-500/20 text-rose-600' 
                             : 'bg-purple-600 hover:bg-purple-500 text-white border-transparent shadow-md'
                         }`}
                       >
@@ -640,7 +640,7 @@ function App() {
                       </button>
                       <button
                         onClick={resetPomodoro}
-                        className="p-2.5 bg-slate-100/50 dark:bg-slate-900/30 hover:bg-slate-200/50 dark:hover:bg-slate-800/40 border border-slate-300 dark:border-slate-800 rounded-xl text-slate-500 hover:text-slate-700 dark:hover:text-slate-200 transition-colors cursor-pointer"
+                        className="p-2.5 bg-theme-card hover:brightness-95 dark:hover:brightness-110 border border-theme-border rounded-xl text-theme-muted hover:text-theme-primary transition-colors cursor-pointer"
                         title="Timer zurücksetzen"
                       >
                         <RotateCcw className="w-4 h-4" />
@@ -649,10 +649,10 @@ function App() {
                   </div>
 
                   {/* Customizable durations with sliders */}
-                  <div className="space-y-4 mt-4 border-t border-slate-200 dark:border-slate-800 pt-4">
+                  <div className="space-y-4 mt-4 border-t border-theme-border pt-4">
                     <div>
                       <div className="flex justify-between items-center mb-1">
-                        <label className="block text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                        <label className="block text-[10px] font-bold text-theme-muted uppercase tracking-wider">
                           Fokuszeit
                         </label>
                         <span className="text-xs font-bold text-purple-600 dark:text-purple-400">
@@ -666,12 +666,12 @@ function App() {
                         step="1"
                         value={pomodoroWorkTime}
                         onChange={(e) => handleWorkTimeChange(parseInt(e.target.value, 10) || 25)}
-                        className="w-full accent-purple-600 cursor-pointer bg-slate-200 dark:bg-slate-800 rounded-lg h-2"
+                        className="w-full accent-purple-600 cursor-pointer bg-theme-card rounded-lg h-2"
                       />
                     </div>
                     <div>
                       <div className="flex justify-between items-center mb-1">
-                        <label className="block text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                        <label className="block text-[10px] font-bold text-theme-muted uppercase tracking-wider">
                           Pause
                         </label>
                         <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400">
@@ -685,7 +685,7 @@ function App() {
                         step="1"
                         value={pomodoroBreakTime}
                         onChange={(e) => handleBreakTimeChange(parseInt(e.target.value, 10) || 5)}
-                        className="w-full accent-emerald-500 cursor-pointer bg-slate-200 dark:bg-slate-800 rounded-lg h-2"
+                        className="w-full accent-emerald-500 cursor-pointer bg-theme-card rounded-lg h-2"
                       />
                     </div>
                   </div>
@@ -720,15 +720,15 @@ function App() {
 
             {/* Right Side: Contextual live-updating module/task Leaderboard */}
             <div className="w-full lg:w-[350px] shrink-0">
-              <div className="glass-panel rounded-3xl p-5 glow-purple h-full flex flex-col justify-between min-h-[400px]">
+              <div className="glass-panel rounded-3xl p-5 h-full flex flex-col justify-between min-h-[400px]">
                 <div>
                   <div className="flex items-center gap-2 mb-2">
                     <Trophy className="w-4 h-4 text-purple-650" />
-                    <h3 className="font-bold font-display text-sm text-slate-800 dark:text-slate-100">
+                    <h3 className="font-bold font-display text-sm text-theme-primary">
                       {activeTaskId ? 'Aufgaben-Rangliste' : 'Fach-Rangliste'}
                     </h3>
                   </div>
-                  <span className="text-[10px] font-semibold text-slate-500 block mb-4 uppercase tracking-wider border-b border-slate-200 dark:border-slate-800 pb-2">
+                  <span className="text-[10px] font-bold text-theme-muted block mb-4 uppercase tracking-wider border-b border-theme-border pb-2">
                     {activeTaskId ? 'Typ: 2x2 Determinante' : `Modul: ${
                       activeModuleId === 'lin_alg' ? 'Lineare Algebra' :
                       activeModuleId === 'os' ? 'Betriebssysteme' :
@@ -740,7 +740,7 @@ function App() {
                   {loadingSideLeaderboard ? (
                     <div className="flex flex-col items-center justify-center py-16 gap-3">
                       <RefreshCw className="w-6 h-6 text-purple-500 animate-spin" />
-                      <p className="text-[10px] text-slate-500">Rangliste wird geladen...</p>
+                      <p className="text-[10px] text-theme-muted">Rangliste wird geladen...</p>
                     </div>
                   ) : sideLeaderboard.length > 0 ? (
                     <div className="space-y-2 max-h-[450px] overflow-y-auto pr-1">
@@ -749,22 +749,22 @@ function App() {
                           key={idx}
                           className={`flex items-center justify-between p-3 rounded-xl border text-xs transition-all ${
                             item.isUser
-                              ? 'bg-purple-500/10 dark:bg-purple-500/15 border-purple-500/30'
-                              : 'bg-slate-100/50 dark:bg-slate-900/20 border-slate-200 dark:border-slate-800'
+                              ? 'bg-purple-500/10 dark:bg-purple-500/15 border-purple-500/35'
+                              : 'bg-theme-card border-theme-border'
                           }`}
                         >
                           <div className="flex items-center gap-2.5 min-w-0">
                             <span className={`w-5 h-5 rounded-full flex items-center justify-center font-bold text-[10px] shrink-0 ${
-                              idx === 0 ? 'bg-amber-500/20 text-amber-600 dark:text-amber-400' :
-                              idx === 1 ? 'bg-slate-200 dark:bg-slate-800 text-slate-650 dark:text-slate-300' :
+                              idx === 0 ? 'bg-amber-500/20 text-amber-600 dark:text-amber-455' :
+                              idx === 1 ? 'bg-theme-card border border-theme-border text-theme-secondary font-bold' :
                               idx === 2 ? 'bg-amber-700/20 text-amber-800 dark:text-amber-600' :
-                              'bg-slate-200 dark:bg-slate-800/40 text-slate-500 dark:text-slate-450'
+                              'bg-theme-card border border-theme-border/50 text-theme-muted font-bold'
                             }`}>
                               {idx + 1}
                             </span>
 
                             {/* Avatar image */}
-                            <div className="w-7 h-7 rounded-lg bg-purple-500/10 flex items-center justify-center overflow-hidden border border-slate-300 dark:border-slate-800 shrink-0">
+                            <div className="w-7 h-7 rounded-lg bg-purple-500/10 flex items-center justify-center overflow-hidden border border-theme-border shrink-0">
                               {item.profilePic ? (
                                 <img src={item.profilePic} className="w-full h-full object-cover" alt="" />
                               ) : (
@@ -773,26 +773,26 @@ function App() {
                             </div>
 
                             <div className="truncate">
-                              <span className="font-semibold text-slate-800 dark:text-slate-200 block truncate">{item.displayName}</span>
-                              <span className="block text-[9px] text-slate-500 truncate">@{item.username}</span>
+                              <span className="font-bold text-theme-primary block truncate">{item.displayName}</span>
+                              <span className="block text-[9px] text-theme-muted truncate">@{item.username}</span>
                             </div>
                           </div>
 
-                          <div className="flex items-center gap-1 shrink-0 font-bold text-slate-800 dark:text-slate-100 ml-2">
+                          <div className="flex items-center gap-1 shrink-0 font-extrabold text-theme-primary ml-2">
                             <span>{item.solvedCount}</span>
-                            <span className="text-[10px] text-slate-500 font-normal">pts</span>
+                            <span className="text-[10px] text-theme-muted font-normal">pts</span>
                           </div>
                         </div>
                       ))}
                     </div>
                   ) : (
-                    <div className="text-center py-12 text-slate-500 dark:text-slate-400 text-xs">
+                    <div className="text-center py-12 text-theme-muted text-xs">
                       Noch keine Einträge vorhanden. Löse Aufgaben, um hier zu erscheinen!
                     </div>
                   )}
                 </div>
 
-                <div className="mt-4 pt-3 border-t border-slate-200 dark:border-slate-800 flex items-center gap-1.5 text-[10px] text-slate-500 dark:text-slate-400">
+                <div className="mt-4 pt-3 border-t border-theme-border flex items-center gap-1.5 text-[10px] text-theme-muted font-medium">
                   <Zap className="w-3.5 h-3.5 text-purple-500 animate-pulse" />
                   <span>Aktualisiert sich live beim Lösen!</span>
                 </div>
@@ -805,20 +805,20 @@ function App() {
         {/* TAB 3: Bestenliste (Dedicated Tabs filter rankings view) */}
         {activeTab === 'leaderboard' && (
           <div className="w-full max-w-2xl mx-auto px-4 animate-fadeIn" id="leaderboard-ranking-panel">
-            <div className="glass-panel rounded-3xl p-6 md:p-8 glow-purple">
-              <h2 className="text-2xl font-bold font-display text-slate-800 dark:text-slate-100 mb-2">Bestenliste</h2>
-              <p className="text-slate-600 dark:text-slate-400 text-sm mb-6">Messe dich mit deinen Kommilitonen.</p>
+            <div className="glass-panel rounded-3xl p-6 md:p-8">
+              <h2 className="text-2xl font-bold font-display text-theme-primary mb-2">Bestenliste</h2>
+              <p className="text-theme-secondary text-sm mb-6">Messe dich mit deinen Kommilitonen.</p>
 
               {/* Filtering Controls */}
-              <div className="flex flex-col sm:flex-row gap-3 mb-6 p-4 bg-slate-100/50 dark:bg-slate-900/20 border border-slate-200 dark:border-slate-800 rounded-2xl">
+              <div className="flex flex-col sm:flex-row gap-3 mb-6 p-4 bg-theme-card border border-theme-border rounded-2xl">
                 <div className="flex-grow">
-                  <label className="block text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">
+                  <label className="block text-[10px] font-bold text-theme-muted uppercase tracking-wider mb-1">
                     Bestenlisten-Typ
                   </label>
                   <select
                     value={leaderboardFilter}
                     onChange={(e) => setLeaderboardFilter(e.target.value as LeaderboardFilterType)}
-                    className="w-full px-3 py-2 bg-slate-200/50 dark:bg-slate-950/40 border border-slate-300 dark:border-slate-700 rounded-xl text-slate-800 dark:text-slate-200 text-sm font-medium focus:outline-none focus:border-purple-500"
+                    className="w-full px-3 py-2 bg-theme-input border border-theme-border rounded-xl text-theme-primary text-sm font-medium focus:outline-none focus:border-purple-500"
                   >
                     <option value="global">Gesamte Bestenliste</option>
                     <option value="module">Nach Modul</option>
@@ -828,13 +828,13 @@ function App() {
 
                 {leaderboardFilter === 'module' && (
                   <div className="flex-grow animate-fadeIn">
-                    <label className="block text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">
+                    <label className="block text-[10px] font-bold text-theme-muted uppercase tracking-wider mb-1">
                       Wähle Modul
                     </label>
                     <select
                       value={selectedModuleFilter}
                       onChange={(e) => setSelectedModuleFilter(e.target.value)}
-                      className="w-full px-3 py-2 bg-slate-200/50 dark:bg-slate-950/40 border border-slate-300 dark:border-slate-700 rounded-xl text-slate-800 dark:text-slate-200 text-sm font-medium focus:outline-none focus:border-purple-500"
+                      className="w-full px-3 py-2 bg-theme-input border border-theme-border rounded-xl text-theme-primary text-sm font-medium focus:outline-none focus:border-purple-500"
                     >
                       <option value="Lineare Algebra">Lineare Algebra</option>
                       <option value="Betriebssysteme">Betriebssysteme</option>
@@ -846,13 +846,13 @@ function App() {
 
                 {leaderboardFilter === 'task' && (
                   <div className="flex-grow animate-fadeIn">
-                    <label className="block text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">
+                    <label className="block text-[10px] font-bold text-theme-muted uppercase tracking-wider mb-1">
                       Wähle Aufgabe
                     </label>
                     <select
                       value={selectedTaskFilter}
                       onChange={(e) => setSelectedTaskFilter(e.target.value)}
-                      className="w-full px-3 py-2 bg-slate-200/50 dark:bg-slate-950/40 border border-slate-300 dark:border-slate-700 rounded-xl text-slate-800 dark:text-slate-200 text-sm font-medium focus:outline-none focus:border-purple-500"
+                      className="w-full px-3 py-2 bg-theme-input border border-theme-border rounded-xl text-theme-primary text-sm font-medium focus:outline-none focus:border-purple-500"
                     >
                       <option value="lin_alg_det">2x2 Determinante</option>
                     </select>
@@ -864,7 +864,7 @@ function App() {
               {loadingLeaderboard ? (
                 <div className="flex flex-col items-center justify-center py-16 gap-4">
                   <RefreshCw className="w-8 h-8 text-purple-500 animate-spin" />
-                  <p className="text-slate-500 dark:text-slate-400 text-xs">Bestenliste wird aktualisiert...</p>
+                  <p className="text-theme-muted text-xs">Bestenliste wird aktualisiert...</p>
                 </div>
               ) : leaderboard.length > 0 ? (
                 <div className="space-y-2.5">
@@ -873,22 +873,22 @@ function App() {
                       key={index}
                       className={`flex items-center justify-between p-4 rounded-2xl border transition-all ${
                         item.isUser
-                          ? 'bg-purple-500/10 dark:bg-purple-500/15 border-purple-500/30 dark:border-purple-500/40 shadow-sm'
-                          : 'bg-slate-100/50 dark:bg-slate-900/30 border-slate-200 dark:border-slate-800/40'
+                          ? 'bg-purple-500/10 dark:bg-purple-500/15 border-purple-500/35 shadow-sm'
+                          : 'bg-theme-card border-theme-border'
                       }`}
                     >
                       <div className="flex items-center gap-4.5">
                         <span className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm ${
                           index === 0 ? 'bg-amber-500/20 text-amber-600 dark:text-amber-400 border border-amber-500/35' :
-                          index === 1 ? 'bg-slate-400/25 text-slate-600 dark:text-slate-300 border border-slate-400/35' :
+                          index === 1 ? 'bg-theme-card border border-theme-border text-theme-secondary font-bold' :
                           index === 2 ? 'bg-amber-700/20 text-amber-800 dark:text-amber-600 border border-amber-700/35' :
-                          'bg-slate-200 dark:bg-slate-800/40 text-slate-500 dark:text-slate-450 border border-slate-300 dark:border-transparent'
+                          'bg-theme-card border border-theme-border text-theme-muted font-bold'
                         }`}>
                           {index + 1}
                         </span>
 
                         {/* Profile Pic in Leaderboard */}
-                        <div className="w-10 h-10 rounded-xl bg-purple-500/10 flex items-center justify-center overflow-hidden border border-slate-300 dark:border-slate-800 shrink-0">
+                        <div className="w-10 h-10 rounded-xl bg-purple-500/10 flex items-center justify-center overflow-hidden border border-theme-border shrink-0">
                           {item.profilePic ? (
                             <img src={item.profilePic} className="w-full h-full object-cover" alt="" />
                           ) : (
@@ -897,20 +897,20 @@ function App() {
                         </div>
 
                         <div>
-                          <span className="font-semibold text-slate-800 dark:text-slate-200">{item.displayName}</span>
-                          <span className="block text-[10px] text-slate-500 font-medium">@{item.username}</span>
+                          <span className="font-bold text-theme-primary">{item.displayName}</span>
+                          <span className="block text-[10px] text-theme-muted font-semibold">@{item.username}</span>
                         </div>
                       </div>
 
                       <div className="flex items-center gap-2">
-                        <span className="font-bold text-slate-800 dark:text-slate-100">{item.solvedCount}</span>
-                        <span className="text-xs text-slate-500 dark:text-slate-400">gelöst</span>
+                        <span className="font-extrabold text-theme-primary">{item.solvedCount}</span>
+                        <span className="text-xs text-theme-muted font-medium">gelöst</span>
                       </div>
                     </div>
                   ))}
                 </div>
               ) : (
-                <div className="text-center py-12 text-slate-500 dark:text-slate-400 text-sm">
+                <div className="text-center py-12 text-theme-muted text-sm">
                   Keine Einträge für diese Filter-Auswahl vorhanden. Löse Aufgaben, um hier zu erscheinen!
                 </div>
               )}
@@ -922,14 +922,14 @@ function App() {
         {activeTab === 'profile' && (
           <div className="w-full max-w-2xl mx-auto px-4 animate-fadeIn" id="profile-details-panel">
             {user ? (
-              <div className="glass-panel rounded-3xl p-6 md:p-8 glow-purple">
+              <div className="glass-panel rounded-3xl p-6 md:p-8">
                 
                 {/* Profile Header and Editor */}
                 {!isEditMode ? (
                   <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
                     <div className="flex items-center gap-4">
                       {/* Avatar Render */}
-                      <div className="w-16 h-16 rounded-2xl bg-gradient-to-tr from-purple-500 to-indigo-500 flex items-center justify-center overflow-hidden shadow-lg border border-slate-200 dark:border-slate-800 shrink-0">
+                      <div className="w-16 h-16 rounded-2xl bg-gradient-to-tr from-purple-500 to-indigo-500 flex items-center justify-center overflow-hidden shadow-lg border border-theme-border shrink-0">
                         {user.profilePic ? (
                           <img src={user.profilePic} className="w-full h-full object-cover" alt="Profilbild" />
                         ) : (
@@ -937,9 +937,9 @@ function App() {
                         )}
                       </div>
                       <div>
-                        <h2 className="text-2xl font-bold font-display text-slate-800 dark:text-slate-100">{user.displayName}</h2>
-                        <p className="text-slate-500 dark:text-slate-400 text-xs font-semibold">@{user.username}</p>
-                        <p className="text-[10px] text-slate-400 mt-1">Registriert: {new Date(user.createdAt).toLocaleDateString('de-DE')}</p>
+                        <h2 className="text-2xl font-bold font-display text-theme-primary">{user.displayName}</h2>
+                        <p className="text-theme-muted text-xs font-semibold">@{user.username}</p>
+                        <p className="text-[10px] text-theme-muted mt-1 font-semibold">Registriert: {new Date(user.createdAt).toLocaleDateString('de-DE')}</p>
                       </div>
                     </div>
 
@@ -951,22 +951,22 @@ function App() {
                         setEditPassword('');
                         setProfileMessage(null);
                       }}
-                      className="px-4 py-2 border border-slate-300 dark:border-slate-800 hover:border-purple-500/40 text-slate-600 dark:text-slate-400 hover:text-purple-600 dark:hover:text-purple-400 text-xs font-bold rounded-xl flex items-center gap-1.5 transition-colors cursor-pointer"
+                      className="px-4 py-2 border border-theme-border hover:border-purple-500/40 text-theme-secondary hover:text-purple-650 text-xs font-bold rounded-xl flex items-center gap-1.5 transition-colors cursor-pointer"
                     >
                       <Edit className="w-3.5 h-3.5" /> Bearbeiten
                     </button>
                   </div>
                 ) : (
                   <form onSubmit={handleUpdateProfile} className="space-y-5 mb-6">
-                    <h3 className="text-lg font-bold font-display text-slate-800 dark:text-slate-100">Profil bearbeiten</h3>
+                    <h3 className="text-lg font-bold font-display text-theme-primary">Profil bearbeiten</h3>
                     
                     {/* Avatar Upload field */}
-                    <div className="flex items-center gap-4 p-4 bg-slate-100/50 dark:bg-slate-950/20 border border-slate-200 dark:border-slate-800 rounded-2xl">
-                      <div className="relative w-16 h-16 rounded-2xl bg-slate-300 dark:bg-slate-800 flex items-center justify-center overflow-hidden border border-slate-200 dark:border-slate-800 shrink-0">
+                    <div className="flex items-center gap-4 p-4 bg-theme-card border border-theme-border rounded-2xl">
+                      <div className="relative w-16 h-16 rounded-2xl bg-theme-input flex items-center justify-center overflow-hidden border border-theme-border shrink-0">
                         {editProfilePic ? (
                           <img src={editProfilePic} className="w-full h-full object-cover" alt="Vorschau" />
                         ) : (
-                          <span className="text-2xl font-bold text-slate-500 uppercase">{editDisplayName.substring(0, 2)}</span>
+                          <span className="text-2xl font-bold text-theme-muted uppercase">{editDisplayName.substring(0, 2)}</span>
                         )}
                         <label className="absolute inset-0 bg-black/50 hover:bg-black/60 cursor-pointer flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity">
                           <Camera className="w-5 h-5 text-white" />
@@ -979,14 +979,14 @@ function App() {
                         </label>
                       </div>
                       <div>
-                        <span className="text-xs font-bold text-slate-800 dark:text-slate-200 block mb-1">Profilbild hochladen</span>
-                        <span className="text-[10px] text-slate-500 dark:text-slate-400 block leading-relaxed">Klicke auf das Vorschaubild zum Auswählen. Maximal 1.5 MB (PNG/JPG).</span>
+                        <span className="text-xs font-bold text-theme-primary block mb-1">Profilbild hochladen</span>
+                        <span className="text-[10px] text-theme-muted block leading-relaxed font-semibold">Klicke auf das Vorschaubild zum Auswählen. Maximal 1.5 MB (PNG/JPG).</span>
                       </div>
                     </div>
 
                     {/* Display name field */}
                     <div>
-                      <label className="block text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1.5 pl-1">
+                      <label className="block text-xs font-bold text-theme-muted uppercase tracking-wider mb-1.5 pl-1">
                         Anzeigename
                       </label>
                       <input
@@ -994,13 +994,13 @@ function App() {
                         required
                         value={editDisplayName}
                         onChange={(e) => setEditDisplayName(e.target.value)}
-                        className="w-full px-4 py-2.5 bg-slate-100/50 dark:bg-slate-950/40 border border-slate-300 dark:border-slate-700/60 rounded-xl text-slate-800 dark:text-slate-200 text-sm font-medium focus:outline-none focus:border-purple-500"
+                        className="w-full px-4 py-2.5 bg-theme-input border border-theme-border rounded-xl text-theme-primary text-sm font-medium focus:outline-none focus:border-purple-500"
                       />
                     </div>
 
                     {/* Password change field */}
                     <div>
-                      <label className="block text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1.5 pl-1">
+                      <label className="block text-xs font-bold text-theme-muted uppercase tracking-wider mb-1.5 pl-1">
                         Neues Passwort (optional)
                       </label>
                       <input
@@ -1008,7 +1008,7 @@ function App() {
                         value={editPassword}
                         onChange={(e) => setEditPassword(e.target.value)}
                         placeholder="Freilassen, falls unverändert"
-                        className="w-full px-4 py-2.5 bg-slate-100/50 dark:bg-slate-950/40 border border-slate-300 dark:border-slate-700/60 rounded-xl text-slate-800 dark:text-slate-200 text-sm font-medium focus:outline-none focus:border-purple-500"
+                        className="w-full px-4 py-2.5 bg-theme-input border border-theme-border rounded-xl text-theme-primary text-sm font-medium focus:outline-none focus:border-purple-500"
                       />
                     </div>
 
@@ -1016,8 +1016,8 @@ function App() {
                     {profileMessage && (
                       <div className={`p-3 text-xs font-medium rounded-xl leading-relaxed ${
                         profileMessage.type === 'success'
-                          ? 'bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-300'
-                          : 'bg-rose-500/10 border border-rose-500/20 text-rose-600 dark:text-rose-300'
+                          ? 'bg-emerald-500/10 border border-emerald-500/20 text-emerald-600'
+                          : 'bg-rose-500/10 border border-rose-500/20 text-rose-600'
                       }`}>
                         {profileMessage.text}
                       </div>
@@ -1043,7 +1043,7 @@ function App() {
                           setIsEditMode(false);
                           setProfileMessage(null);
                         }}
-                        className="px-5 py-2.5 border border-slate-300 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 font-semibold rounded-xl text-xs transition-all cursor-pointer"
+                        className="px-5 py-2.5 border border-theme-border text-theme-secondary hover:text-theme-primary font-semibold rounded-xl text-xs transition-all cursor-pointer"
                       >
                         Abbrechen
                       </button>
@@ -1053,89 +1053,89 @@ function App() {
 
                 {/* Stats Grid */}
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
-                  <div className="p-4 bg-slate-100/50 dark:bg-slate-900/30 border border-slate-200 dark:border-slate-800/50 rounded-2xl flex flex-col justify-between" id="solved-tasks-badge">
+                  <div className="p-4 bg-theme-card border border-theme-border rounded-2xl flex flex-col justify-between shadow-sm" id="solved-tasks-badge">
                     <div className="flex justify-between items-start text-purple-600 dark:text-purple-400 mb-2">
                       <Trophy className="w-5 h-5" />
-                      <span className="text-xs text-slate-500 font-semibold uppercase">Punkte</span>
+                      <span className="text-xs text-theme-muted font-bold uppercase tracking-wider">Punkte</span>
                     </div>
                     <div>
-                      <span className="text-2xl font-extrabold text-slate-800 dark:text-slate-100">{getActiveScore()}</span>
-                      <span className="block text-xs text-slate-500 dark:text-slate-400 mt-1">gelöste Aufgaben</span>
+                      <span className="text-2xl font-extrabold text-theme-primary">{getActiveScore()}</span>
+                      <span className="block text-xs text-theme-muted mt-1 font-semibold">gelöste Aufgaben</span>
                     </div>
                   </div>
 
-                  <div className="p-4 bg-slate-100/50 dark:bg-slate-900/30 border border-slate-200 dark:border-slate-800/50 rounded-2xl flex flex-col justify-between">
+                  <div className="p-4 bg-theme-card border border-theme-border rounded-2xl flex flex-col justify-between shadow-sm">
                     <div className="flex justify-between items-start text-emerald-600 dark:text-emerald-400 mb-2">
                       <BookOpen className="w-5 h-5" />
-                      <span className="text-xs text-slate-500 font-semibold uppercase">Module</span>
+                      <span className="text-xs text-theme-muted font-bold uppercase tracking-wider">Module</span>
                     </div>
                     <div>
-                      <span className="text-2xl font-extrabold text-slate-800 dark:text-slate-100">
+                      <span className="text-2xl font-extrabold text-theme-primary">
                         {user.solvedCount > 0 ? 1 : 0}
                       </span>
-                      <span className="block text-xs text-slate-500 dark:text-slate-400 mt-1">aktive Fächer</span>
+                      <span className="block text-xs text-theme-muted mt-1 font-semibold">aktive Fächer</span>
                     </div>
                   </div>
 
-                  <div className="p-4 bg-slate-100/50 dark:bg-slate-900/30 border border-slate-200 dark:border-slate-800/50 rounded-2xl flex flex-col justify-between">
+                  <div className="p-4 bg-theme-card border border-theme-border rounded-2xl flex flex-col justify-between shadow-sm">
                     <div className="flex justify-between items-start text-blue-600 dark:text-blue-400 mb-2">
                       <Clock className="w-5 h-5" />
-                      <span className="text-xs text-slate-500 font-semibold uppercase">Status</span>
+                      <span className="text-xs text-theme-muted font-bold uppercase tracking-wider">Status</span>
                     </div>
                     <div>
-                      <span className="text-xl font-extrabold text-slate-800 dark:text-slate-100 truncate block">
+                      <span className="text-xl font-extrabold text-theme-primary truncate block">
                         {user.solvedCount >= 10 ? 'Fortgeschritten' : 'Anfänger'}
                       </span>
-                      <span className="block text-xs text-slate-500 dark:text-slate-400 mt-1">Lernniveau</span>
+                      <span className="block text-xs text-theme-muted mt-1 font-semibold">Lernniveau</span>
                     </div>
                   </div>
                 </div>
 
                 {/* Achievements */}
-                <h3 className="text-sm font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-4">Erfolge</h3>
+                <h3 className="text-sm font-bold text-theme-muted uppercase tracking-wider mb-4">Erfolge</h3>
                 <div className="space-y-3">
                   <div className={`flex items-center gap-3.5 p-3.5 rounded-2xl border transition-all ${
                     user.solvedCount >= 1 
-                      ? 'bg-slate-100/50 dark:bg-slate-900/10 border-slate-200 dark:border-slate-850/30 opacity-100'
-                      : 'bg-slate-200/20 dark:bg-slate-900/5 border-slate-200/30 dark:border-slate-900/10 opacity-35'
+                      ? 'bg-theme-card border-theme-border opacity-100 shadow-sm'
+                      : 'bg-theme-card/30 border-theme-border/30 opacity-40'
                   }`}>
-                    <Medal className={`w-6 h-6 ${user.solvedCount >= 1 ? 'text-yellow-500' : 'text-slate-400 dark:text-slate-500'}`} />
+                    <Medal className={`w-6 h-6 ${user.solvedCount >= 1 ? 'text-yellow-500' : 'text-theme-muted'}`} />
                     <div>
-                      <h4 className="text-sm font-bold text-slate-800 dark:text-slate-200">Erster Schritt</h4>
-                      <p className="text-xs text-slate-500 dark:text-slate-400">Erste Aufgabe im Modul Lineare Algebra richtig gelöst.</p>
+                      <h4 className="text-sm font-bold text-theme-primary">Erster Schritt</h4>
+                      <p className="text-xs text-theme-muted font-medium">Erste Aufgabe im Modul Lineare Algebra richtig gelöst.</p>
                     </div>
                   </div>
                   <div className={`flex items-center gap-3.5 p-3.5 rounded-2xl border transition-all ${
                     user.solvedCount >= 10 
-                      ? 'bg-slate-100/50 dark:bg-slate-900/10 border-slate-200 dark:border-slate-800/30 opacity-100'
-                      : 'bg-slate-200/20 dark:bg-slate-900/5 border-slate-200/30 dark:border-slate-900/10 opacity-35'
+                      ? 'bg-theme-card border-theme-border opacity-100 shadow-sm'
+                      : 'bg-theme-card/30 border-theme-border/30 opacity-40'
                   }`}>
-                    <Medal className={`w-6 h-6 ${user.solvedCount >= 10 ? 'text-purple-500' : 'text-slate-400 dark:text-slate-500'}`} />
+                    <Medal className={`w-6 h-6 ${user.solvedCount >= 10 ? 'text-purple-500' : 'text-theme-muted'}`} />
                     <div>
-                      <h4 className="text-sm font-bold text-slate-800 dark:text-slate-200">Matrix Meister</h4>
-                      <p className="text-xs text-slate-500 dark:text-slate-400">Löse 10 Determinanten-Aufgaben fehlerfrei.</p>
+                      <h4 className="text-sm font-bold text-theme-primary">Matrix Meister</h4>
+                      <p className="text-xs text-theme-muted font-medium">Löse 10 Determinanten-Aufgaben fehlerfrei.</p>
                     </div>
                   </div>
                 </div>
               </div>
             ) : (
-              <div className="glass-panel rounded-3xl p-8 text-center glow-purple">
+              <div className="glass-panel rounded-3xl p-8 text-center">
                 <div className="max-w-md mx-auto py-6">
                   <div className="p-3 bg-purple-500/10 rounded-2xl border border-purple-500/20 text-purple-600 dark:text-purple-400 w-fit mx-auto mb-4">
                     <Sparkles className="w-6 h-6" />
                   </div>
-                  <h2 className="text-2xl font-bold font-display text-slate-800 dark:text-slate-100 mb-2">Erstelle ein Profil</h2>
-                  <p className="text-slate-600 dark:text-slate-400 text-sm mb-6">
+                  <h2 className="text-2xl font-bold font-display text-theme-primary mb-2">Erstelle ein Profil</h2>
+                  <p className="text-theme-secondary text-sm mb-6">
                     Melde dich an, um deine Rechenpunkte dauerhaft zu sichern, deine Erfolge einzusehen und einen Platz in der globalen Rangliste zu ergattern.
                   </p>
                   
                   {/* Guest Session stats */}
-                  <div className="p-4 bg-slate-100/50 dark:bg-slate-900/20 rounded-2xl border border-slate-200 dark:border-slate-800 text-left mb-6">
-                    <span className="text-xs text-slate-400 dark:text-slate-500 font-semibold uppercase tracking-wider block mb-1">
+                  <div className="p-4 bg-theme-card rounded-2xl border border-theme-border text-left mb-6 shadow-sm">
+                    <span className="text-xs text-theme-muted font-bold uppercase tracking-wider block mb-1">
                       Aktuelle Session (Gast)
                     </span>
                     <div className="flex justify-between items-center">
-                      <span className="text-sm font-medium text-slate-600 dark:text-slate-300">Punkte gesammelt:</span>
+                      <span className="text-sm font-semibold text-theme-secondary">Punkte gesammelt:</span>
                       <span className="text-lg font-bold text-purple-600 dark:text-purple-400">{guestScore}</span>
                     </div>
                   </div>
@@ -1154,13 +1154,13 @@ function App() {
       </main>
 
       {/* Footer */}
-      <footer className="py-6 border-t border-slate-200 dark:border-slate-800/40 flex flex-col sm:flex-row items-center justify-between gap-4 max-w-6xl w-full mx-auto px-6 text-xs text-slate-500 transition-colors duration-300">
-        <p>© {new Date().getFullYear()} AufgabenGenerator. Entwickelt für Uni-Kommilitonen.</p>
+      <footer className="py-6 border-t border-theme-border flex flex-col sm:flex-row items-center justify-between gap-4 max-w-6xl w-full mx-auto px-6 text-xs text-theme-muted transition-colors duration-200">
+        <p className="font-medium">© {new Date().getFullYear()} AufgabenGenerator. Entwickelt für Uni-Kommilitonen.</p>
         <a
           href="https://github.com/MD16dev/aufgabengenerator"
           target="_blank"
           rel="noopener noreferrer"
-          className="flex items-center gap-1.5 px-3.5 py-1.5 bg-slate-150 dark:bg-slate-900 hover:bg-slate-200 dark:hover:bg-slate-800 border border-slate-300 dark:border-slate-800 text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-slate-100 font-semibold rounded-xl transition-all cursor-pointer shadow-sm"
+          className="flex items-center gap-1.5 px-3.5 py-1.5 bg-theme-card hover:brightness-95 dark:hover:brightness-110 border border-theme-border text-theme-secondary hover:text-theme-primary font-bold rounded-xl transition-all cursor-pointer shadow-sm"
         >
           <Github className="w-4 h-4" /> GitHub Repository
         </a>
@@ -1172,22 +1172,22 @@ function App() {
           <button
             onClick={() => setIsWidgetExpanded(true)}
             style={{ transition: 'all 0.3s cubic-bezier(0.25, 1, 0.5, 1)' }}
-            className={`pointer-events-auto p-3.5 rounded-full glass-panel border border-purple-500/25 shadow-2xl flex items-center gap-2 hover:scale-105 cursor-pointer glow-purple animate-fadeIn ${
+            className={`pointer-events-auto p-3.5 rounded-full glass-panel shadow-2xl flex items-center gap-2 hover:scale-105 cursor-pointer animate-fadeIn ${
               pomodoroIsActive ? 'animate-pulse' : ''
             }`}
           >
-            <Clock className={`w-5 h-5 ${pomodoroMode === 'work' ? 'text-purple-600 dark:text-purple-400' : 'text-emerald-500'}`} />
-            <span className="text-xs font-bold text-slate-800 dark:text-slate-200 tabular-nums">
+            <Clock className={`w-5 h-5 ${pomodoroMode === 'work' ? 'text-purple-600' : 'text-emerald-500'}`} />
+            <span className="text-xs font-bold text-theme-primary tabular-nums">
               {formatTime(pomodoroMinutes, pomodoroSeconds)}
             </span>
           </button>
         ) : (
-          <div className="pointer-events-auto p-5 rounded-2xl glass-panel border border-purple-500/25 shadow-2xl glow-purple w-64 animate-fadeIn">
+          <div className="pointer-events-auto p-5 rounded-2xl glass-panel shadow-2xl w-64 animate-fadeIn">
             <div className="flex justify-between items-center mb-4">
-              <span className="text-xs font-bold text-slate-700 dark:text-slate-300">Pomodoro Timer</span>
+              <span className="text-xs font-bold text-theme-secondary">Pomodoro Timer</span>
               <button
                 onClick={() => setIsWidgetExpanded(false)}
-                className="text-[10px] font-bold text-slate-500 hover:text-slate-700 dark:hover:text-slate-200 cursor-pointer"
+                className="text-[10px] font-bold text-theme-muted hover:text-theme-primary cursor-pointer"
               >
                 Minimieren
               </button>
@@ -1201,7 +1201,7 @@ function App() {
                     cx="48"
                     cy="48"
                     r="42"
-                    className="stroke-slate-200 dark:stroke-slate-800 fill-none"
+                    className="stroke-theme-card fill-none"
                     strokeWidth="4"
                   />
                   <circle
@@ -1218,11 +1218,11 @@ function App() {
                   />
                 </svg>
                 <div className="absolute flex flex-col items-center">
-                  <span className="text-base font-extrabold text-slate-800 dark:text-slate-100 tabular-nums">
+                  <span className="text-base font-extrabold text-theme-primary tabular-nums">
                     {formatTime(pomodoroMinutes, pomodoroSeconds)}
                   </span>
                   <span className={`text-[8px] font-extrabold uppercase ${
-                    pomodoroMode === 'work' ? 'text-purple-600 dark:text-purple-400' : 'text-emerald-500'
+                    pomodoroMode === 'work' ? 'text-purple-600' : 'text-emerald-500'
                   }`}>
                     {pomodoroMode === 'work' ? 'Fokus' : 'Pause'}
                   </span>
@@ -1248,7 +1248,7 @@ function App() {
               </button>
               <button
                 onClick={resetPomodoro}
-                className="p-1.5 bg-slate-200/60 dark:bg-slate-900/40 hover:bg-slate-300 dark:hover:bg-slate-800 border border-slate-300 dark:border-slate-800 text-slate-500 hover:text-slate-700 rounded-lg cursor-pointer"
+                className="p-1.5 bg-theme-card hover:brightness-95 dark:hover:brightness-110 border border-theme-border text-theme-muted hover:text-theme-primary rounded-lg cursor-pointer"
                 title="Zurücksetzen"
               >
                 <RotateCcw className="w-3.5 h-3.5" />

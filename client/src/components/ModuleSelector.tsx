@@ -24,7 +24,6 @@ interface ModuleInfo {
 
 export const ModuleSelector: React.FC<ModuleSelectorProps> = ({ activeModule, onActiveModuleChange, onSelectTask }) => {
 
-
   const modules: ModuleInfo[] = [
     {
       id: 'lin_alg',
@@ -76,7 +75,7 @@ export const ModuleSelector: React.FC<ModuleSelectorProps> = ({ activeModule, on
       id: 'formal_sys',
       name: 'Formale Systeme',
       icon: <Network className="w-6 h-6 text-blue-600 dark:text-blue-400" />,
-      description: 'Automaten, formale Sprachen, Prozesse, Grammatiken und Aussagenlogik.',
+      description: 'Automaten, formale Sprachen, Grammatiken und Aussagenlogik.',
       tasks: [
         {
           id: 'formal_dfa_regex',
@@ -119,10 +118,10 @@ export const ModuleSelector: React.FC<ModuleSelectorProps> = ({ activeModule, on
   return (
     <div className="w-full max-w-5xl mx-auto px-4 py-6 animate-fadeIn" id="module-selector-dashboard">
       <div className="text-center mb-10">
-        <h2 className="text-3xl md:text-4xl font-extrabold font-display text-slate-800 dark:text-slate-100 mb-3">
+        <h2 className="text-3xl md:text-4xl font-extrabold font-display text-theme-primary mb-3">
           Wähle ein Studienfach aus
         </h2>
-        <p className="text-slate-600 dark:text-slate-400 text-sm md:text-base max-w-xl mx-auto">
+        <p className="text-theme-secondary text-sm md:text-base max-w-xl mx-auto font-medium">
           Wähle das Modul und den Aufgabetyp, den du heute üben möchtest. Jede Aufgabe wird bei Klick frisch generiert!
         </p>
       </div>
@@ -135,15 +134,15 @@ export const ModuleSelector: React.FC<ModuleSelectorProps> = ({ activeModule, on
             <button
               key={mod.id}
               onClick={() => onActiveModuleChange(mod.id)}
-              className={`p-5 rounded-2xl border text-left flex flex-col justify-between interactive-card cursor-pointer ${
+              className={`p-5 rounded-2xl border text-left flex flex-col justify-between cursor-pointer transition-all shadow-sm ${
                 isSelected
-                  ? 'bg-purple-500/10 border-purple-500/50 shadow-md shadow-purple-500/10 dark:shadow-purple-500/5'
-                  : 'bg-slate-100/60 dark:bg-slate-900/30 border-slate-200 dark:border-slate-800/40'
+                  ? 'bg-purple-500/10 border-purple-500/50 shadow-md shadow-purple-500/10'
+                  : 'bg-theme-card border-theme-border hover:brightness-95 dark:hover:brightness-110'
               }`}
               id={`module-btn-${mod.id}`}
             >
               <div className="flex items-center justify-between mb-4">
-                <div className="p-2.5 bg-slate-200/50 dark:bg-slate-800/40 rounded-xl border border-slate-300 dark:border-slate-700/30">
+                <div className="p-2.5 bg-theme-input rounded-xl border border-theme-border">
                   {mod.icon}
                 </div>
                 {isSelected && (
@@ -152,11 +151,11 @@ export const ModuleSelector: React.FC<ModuleSelectorProps> = ({ activeModule, on
               </div>
               <div>
                 <h3 className={`font-bold font-display text-base transition-colors ${
-                  isSelected ? 'text-purple-600 dark:text-purple-400' : 'text-slate-800 dark:text-slate-200'
+                  isSelected ? 'text-purple-650 dark:text-purple-400' : 'text-theme-primary'
                 }`}>
                   {mod.name}
                 </h3>
-                <p className="text-slate-600 dark:text-slate-400 text-xs mt-1.5 leading-relaxed line-clamp-2">
+                <p className="text-theme-muted text-xs mt-1.5 leading-relaxed line-clamp-2 font-medium">
                   {mod.description}
                 </p>
               </div>
@@ -166,10 +165,10 @@ export const ModuleSelector: React.FC<ModuleSelectorProps> = ({ activeModule, on
       </div>
 
       {/* Tasks Section for the Active Module */}
-      <div className="glass-panel rounded-3xl p-6 md:p-8 glow-purple">
+      <div className="glass-panel rounded-3xl p-6 md:p-8">
         <div className="flex items-center gap-3 mb-6">
           <BookOpen className="w-5 h-5 text-purple-600 dark:text-purple-400" />
-          <h3 className="text-lg font-bold font-display text-slate-800 dark:text-slate-100">
+          <h3 className="text-lg font-bold font-display text-theme-primary">
             Aufgabentypen in "{activeModuleData.name}"
           </h3>
         </div>
@@ -180,34 +179,34 @@ export const ModuleSelector: React.FC<ModuleSelectorProps> = ({ activeModule, on
               key={task.id}
               className={`p-5 rounded-2xl border flex flex-col justify-between transition-all ${
                 task.isActive
-                  ? 'bg-slate-100/50 dark:bg-slate-900/30 hover:bg-slate-200/60 dark:hover:bg-slate-900/50 border-slate-200 dark:border-slate-800/50 hover:border-purple-500/30 group cursor-pointer'
-                  : 'bg-slate-200/20 dark:bg-slate-950/20 border-slate-200/50 dark:border-slate-900/40 opacity-55'
+                  ? 'bg-theme-card hover:brightness-95 dark:hover:brightness-110 border-theme-border hover:border-purple-500/40 group cursor-pointer shadow-sm'
+                  : 'bg-theme-card/30 border-theme-border/30 opacity-55'
               }`}
               onClick={() => task.isActive && onSelectTask(task.id)}
               id={`task-card-${task.id}`}
             >
               <div>
                 <div className="flex items-center justify-between mb-2">
-                  <h4 className="font-bold text-slate-800 dark:text-slate-200 group-hover:text-purple-600 dark:group-hover:text-purple-400 transition-colors">
+                  <h4 className="font-bold text-theme-primary group-hover:text-purple-600 dark:group-hover:text-purple-400 transition-colors">
                     {task.name}
                   </h4>
                   {task.isActive ? (
-                    <span className="text-xs font-semibold px-2.5 py-0.5 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 rounded-full border border-emerald-500/20">
+                    <span className="text-xs font-bold px-2.5 py-0.5 bg-emerald-500/10 text-emerald-600 dark:text-emerald-450 rounded-full border border-emerald-500/20">
                       Aktiv
                     </span>
                   ) : (
-                    <div className="flex items-center gap-1 text-slate-400 dark:text-slate-500 text-xs font-medium">
+                    <div className="flex items-center gap-1 text-theme-muted text-xs font-bold">
                       <Lock className="w-3 h-3" /> Bald
                     </div>
                   )}
                 </div>
-                <p className="text-slate-600 dark:text-slate-400 text-xs md:text-sm leading-relaxed mb-4">
+                <p className="text-theme-muted text-xs md:text-sm leading-relaxed mb-4 font-medium">
                   {task.description}
                 </p>
               </div>
 
               {task.isActive && (
-                <div className="flex items-center gap-1.5 text-xs font-semibold text-purple-600 dark:text-purple-400 group-hover:text-purple-500 dark:group-hover:text-purple-300 mt-2">
+                <div className="flex items-center gap-1.5 text-xs font-bold text-purple-600 dark:text-purple-400 group-hover:text-purple-500 dark:group-hover:text-purple-300 mt-2">
                   Jetzt starten <ArrowRight className="w-3.5 h-3.5 transition-transform group-hover:translate-x-1" />
                 </div>
               )}
