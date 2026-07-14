@@ -7,7 +7,7 @@ import { OnboardingTour } from './components/OnboardingTour';
 import { 
   GraduationCap, Trophy, User, BookOpen, Clock, Medal, 
   LogIn, LogOut, RefreshCw, Sparkles, HelpCircle, Edit, Save, Camera,
-  Play, Pause, RotateCcw, Home, ArrowRight, ShieldCheck, Zap, Compass
+  Play, Pause, RotateCcw, Home, ArrowRight, ShieldCheck, Zap, Compass, Github
 } from 'lucide-react';
 
 type TabType = 'home' | 'tasks' | 'leaderboard' | 'profile';
@@ -397,7 +397,7 @@ function App() {
               <GraduationCap className="w-6 h-6 text-white" />
             </div>
             <div>
-              <h1 className="text-lg font-bold font-display text-slate-800 dark:text-slate-100 m-0 leading-tight">
+              <h1 className="text-lg font-bold font-display text-slate-850 dark:text-slate-100 m-0 leading-tight">
                 AufgabenGenerator
               </h1>
               <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">Lerne mit unendlich vielen Aufgaben</p>
@@ -505,11 +505,11 @@ function App() {
                   </p>
                 </div>
                 <div className="flex gap-4 shrink-0">
-                  <div className="text-center p-4 bg-slate-100/50 dark:bg-slate-900/30 border border-slate-200 dark:border-slate-800/40 rounded-2xl w-24">
+                  <div className="text-center p-4 bg-slate-100/50 dark:bg-slate-900/30 border border-slate-200 dark:border-slate-800 rounded-2xl w-24">
                     <span className="block text-2xl font-extrabold text-slate-800 dark:text-slate-100">{getActiveScore()}</span>
                     <span className="text-[10px] text-slate-500 uppercase font-semibold">Punkte</span>
                   </div>
-                  <div className="text-center p-4 bg-slate-100/50 dark:bg-slate-900/30 border border-slate-200 dark:border-slate-800/40 rounded-2xl w-24">
+                  <div className="text-center p-4 bg-slate-100/50 dark:bg-slate-900/30 border border-slate-200 dark:border-slate-800 rounded-2xl w-24">
                     <span className="block text-2xl font-extrabold text-slate-800 dark:text-slate-100">{user ? 1 : 0}</span>
                     <span className="text-[10px] text-slate-500 uppercase font-semibold">Module</span>
                   </div>
@@ -524,59 +524,59 @@ function App() {
               <div className="glass-panel rounded-3xl p-6 glow-purple flex flex-col justify-between">
                 <div>
                   <h3 className="text-lg font-bold font-display text-slate-800 dark:text-slate-100 mb-4 flex items-center gap-2">
-                    <Compass className="w-5 h-5 text-purple-650" /> Schnellzugriff
+                    <Compass className="w-5 h-5 text-purple-600 dark:text-purple-400" /> Schnellzugriff
                   </h3>
                   <div className="space-y-3">
                     <button
                       onClick={() => setActiveTab('tasks')}
-                      className="w-full flex items-center justify-between p-4 bg-slate-100/50 dark:bg-slate-900/30 hover:bg-slate-200/60 dark:hover:bg-slate-900/50 border border-slate-200 dark:border-slate-800/40 rounded-2xl transition-all cursor-pointer group text-left"
+                      className="w-full flex items-center justify-between p-4 bg-slate-100/50 dark:bg-slate-900/30 hover:bg-slate-200/60 dark:hover:bg-slate-900/50 border border-slate-200 dark:border-slate-800 rounded-2xl transition-all cursor-pointer group text-left"
                     >
                       <div className="flex items-center gap-3">
                         <div className="p-2.5 bg-purple-500/10 rounded-xl border border-purple-500/20 text-purple-600 dark:text-purple-400">
                           <BookOpen className="w-5 h-5" />
                         </div>
                         <div>
-                          <span className="font-bold text-slate-850 dark:text-slate-200 block text-sm">Übungsaufgaben rechnen</span>
+                          <span className="font-bold text-slate-800 dark:text-slate-250 block text-sm">Übungsaufgaben rechnen</span>
                           <span className="text-slate-500 text-xs">Unendliche Fragen generieren & loesen</span>
                         </div>
                       </div>
-                      <ArrowRight className="w-4 h-4 text-slate-400 group-hover:translate-x-1 transition-transform" />
+                      <ArrowRight className="w-4 h-4 text-slate-405 group-hover:translate-x-1 transition-transform" />
                     </button>
 
                     <button
                       onClick={() => setActiveTab('leaderboard')}
-                      className="w-full flex items-center justify-between p-4 bg-slate-100/50 dark:bg-slate-900/30 hover:bg-slate-200/60 dark:hover:bg-slate-900/50 border border-slate-200 dark:border-slate-800/40 rounded-2xl transition-all cursor-pointer group text-left"
+                      className="w-full flex items-center justify-between p-4 bg-slate-100/50 dark:bg-slate-900/30 hover:bg-slate-200/60 dark:hover:bg-slate-900/50 border border-slate-200 dark:border-slate-800 rounded-2xl transition-all cursor-pointer group text-left"
                     >
                       <div className="flex items-center gap-3">
                         <div className="p-2.5 bg-emerald-500/10 rounded-xl border border-emerald-500/20 text-emerald-600 dark:text-emerald-400">
                           <Trophy className="w-5 h-5" />
                         </div>
                         <div>
-                          <span className="font-bold text-slate-850 dark:text-slate-200 block text-sm">Bestenliste einsehen</span>
+                          <span className="font-bold text-slate-800 dark:text-slate-250 block text-sm">Bestenliste einsehen</span>
                           <span className="text-slate-500 text-xs">Vergleiche deine Leistungen mit anderen</span>
                         </div>
                       </div>
-                      <ArrowRight className="w-4 h-4 text-slate-400 group-hover:translate-x-1 transition-transform" />
+                      <ArrowRight className="w-4 h-4 text-slate-405 group-hover:translate-x-1 transition-transform" />
                     </button>
 
                     <button
                       onClick={() => setActiveTab('profile')}
-                      className="w-full flex items-center justify-between p-4 bg-slate-100/50 dark:bg-slate-900/30 hover:bg-slate-200/60 dark:hover:bg-slate-900/50 border border-slate-200 dark:border-slate-800/40 rounded-2xl transition-all cursor-pointer group text-left"
+                      className="w-full flex items-center justify-between p-4 bg-slate-100/50 dark:bg-slate-900/30 hover:bg-slate-200/60 dark:hover:bg-slate-900/50 border border-slate-200 dark:border-slate-800 rounded-2xl transition-all cursor-pointer group text-left"
                     >
                       <div className="flex items-center gap-3">
                         <div className="p-2.5 bg-blue-500/10 rounded-xl border border-blue-500/20 text-blue-600 dark:text-blue-400">
                           <User className="w-5 h-5" />
                         </div>
                         <div>
-                          <span className="font-bold text-slate-850 dark:text-slate-200 block text-sm">Mein Profil bearbeiten</span>
+                          <span className="font-bold text-slate-800 dark:text-slate-250 block text-sm">Mein Profil bearbeiten</span>
                           <span className="text-slate-500 text-xs">Passwort, Name und Profilbild anpassen</span>
                         </div>
                       </div>
-                      <ArrowRight className="w-4 h-4 text-slate-400 group-hover:translate-x-1 transition-transform" />
+                      <ArrowRight className="w-4 h-4 text-slate-405 group-hover:translate-x-1 transition-transform" />
                     </button>
                   </div>
                 </div>
-                <div className="mt-4 pt-4 border-t border-slate-200 dark:border-slate-800/65 flex items-center gap-2 text-xs text-slate-500">
+                <div className="mt-4 pt-4 border-t border-slate-200 dark:border-slate-800 flex items-center gap-2 text-xs text-slate-500">
                   <ShieldCheck className="w-4 h-4 text-emerald-500" />
                   <span>Deine Daten werden sicher in der SQLite-Datenbank verschlüsselt.</span>
                 </div>
@@ -632,7 +632,7 @@ function App() {
                         onClick={() => setPomodoroIsActive(!pomodoroIsActive)}
                         className={`p-2.5 rounded-xl border transition-all cursor-pointer ${
                           pomodoroIsActive 
-                            ? 'bg-rose-500/10 hover:bg-rose-500/20 border-rose-500/20 text-rose-600 dark:text-rose-450' 
+                            ? 'bg-rose-500/10 hover:bg-rose-500/20 border-rose-500/20 text-rose-600 dark:text-rose-400' 
                             : 'bg-purple-600 hover:bg-purple-500 text-white border-transparent shadow-md'
                         }`}
                       >
@@ -648,32 +648,44 @@ function App() {
                     </div>
                   </div>
 
-                  {/* Customizable durations */}
-                  <div className="grid grid-cols-2 gap-3 mt-4 border-t border-slate-200 dark:border-slate-800/60 pt-4">
+                  {/* Customizable durations with sliders */}
+                  <div className="space-y-4 mt-4 border-t border-slate-200 dark:border-slate-800 pt-4">
                     <div>
-                      <label className="block text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">
-                        Fokuszeit (min)
-                      </label>
+                      <div className="flex justify-between items-center mb-1">
+                        <label className="block text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                          Fokuszeit
+                        </label>
+                        <span className="text-xs font-bold text-purple-600 dark:text-purple-400">
+                          {pomodoroWorkTime} Min.
+                        </span>
+                      </div>
                       <input
-                        type="number"
-                        min="1"
-                        max="180"
+                        type="range"
+                        min="5"
+                        max="60"
+                        step="1"
                         value={pomodoroWorkTime}
                         onChange={(e) => handleWorkTimeChange(parseInt(e.target.value, 10) || 25)}
-                        className="w-full px-3 py-1.5 bg-slate-200/40 dark:bg-slate-950/40 border border-slate-300 dark:border-slate-700/60 rounded-xl text-slate-800 dark:text-slate-200 text-xs font-semibold focus:outline-none"
+                        className="w-full accent-purple-600 cursor-pointer bg-slate-200 dark:bg-slate-800 rounded-lg h-2"
                       />
                     </div>
                     <div>
-                      <label className="block text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">
-                        Pause (min)
-                      </label>
+                      <div className="flex justify-between items-center mb-1">
+                        <label className="block text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                          Pause
+                        </label>
+                        <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400">
+                          {pomodoroBreakTime} Min.
+                        </span>
+                      </div>
                       <input
-                        type="number"
+                        type="range"
                         min="1"
-                        max="120"
+                        max="30"
+                        step="1"
                         value={pomodoroBreakTime}
                         onChange={(e) => handleBreakTimeChange(parseInt(e.target.value, 10) || 5)}
-                        className="w-full px-3 py-1.5 bg-slate-200/40 dark:bg-slate-950/40 border border-slate-300 dark:border-slate-700/60 rounded-xl text-slate-800 dark:text-slate-200 text-xs font-semibold focus:outline-none"
+                        className="w-full accent-emerald-500 cursor-pointer bg-slate-200 dark:bg-slate-800 rounded-lg h-2"
                       />
                     </div>
                   </div>
@@ -711,12 +723,12 @@ function App() {
               <div className="glass-panel rounded-3xl p-5 glow-purple h-full flex flex-col justify-between min-h-[400px]">
                 <div>
                   <div className="flex items-center gap-2 mb-2">
-                    <Trophy className="w-4 h-4 text-purple-600 dark:text-purple-400" />
-                    <h3 className="font-bold font-display text-sm text-slate-850 dark:text-slate-100">
+                    <Trophy className="w-4 h-4 text-purple-650" />
+                    <h3 className="font-bold font-display text-sm text-slate-800 dark:text-slate-100">
                       {activeTaskId ? 'Aufgaben-Rangliste' : 'Fach-Rangliste'}
                     </h3>
                   </div>
-                  <span className="text-[10px] font-semibold text-slate-500 block mb-4 uppercase tracking-wider border-b border-slate-200 dark:border-slate-800/60 pb-2">
+                  <span className="text-[10px] font-semibold text-slate-500 block mb-4 uppercase tracking-wider border-b border-slate-200 dark:border-slate-800 pb-2">
                     {activeTaskId ? 'Typ: 2x2 Determinante' : `Modul: ${
                       activeModuleId === 'lin_alg' ? 'Lineare Algebra' :
                       activeModuleId === 'os' ? 'Betriebssysteme' :
@@ -738,15 +750,15 @@ function App() {
                           className={`flex items-center justify-between p-3 rounded-xl border text-xs transition-all ${
                             item.isUser
                               ? 'bg-purple-500/10 dark:bg-purple-500/15 border-purple-500/30'
-                              : 'bg-slate-100/50 dark:bg-slate-900/20 border-slate-200 dark:border-slate-850'
+                              : 'bg-slate-100/50 dark:bg-slate-900/20 border-slate-200 dark:border-slate-800'
                           }`}
                         >
                           <div className="flex items-center gap-2.5 min-w-0">
                             <span className={`w-5 h-5 rounded-full flex items-center justify-center font-bold text-[10px] shrink-0 ${
                               idx === 0 ? 'bg-amber-500/20 text-amber-600 dark:text-amber-400' :
-                              idx === 1 ? 'bg-slate-400/25 text-slate-600 dark:text-slate-300' :
+                              idx === 1 ? 'bg-slate-200 dark:bg-slate-800 text-slate-650 dark:text-slate-300' :
                               idx === 2 ? 'bg-amber-700/20 text-amber-800 dark:text-amber-600' :
-                              'bg-slate-200 dark:bg-slate-800/40 text-slate-550'
+                              'bg-slate-200 dark:bg-slate-800/40 text-slate-500 dark:text-slate-450'
                             }`}>
                               {idx + 1}
                             </span>
@@ -756,12 +768,12 @@ function App() {
                               {item.profilePic ? (
                                 <img src={item.profilePic} className="w-full h-full object-cover" alt="" />
                               ) : (
-                                <span className="text-[10px] font-bold text-purple-650 uppercase">{item.displayName.substring(0, 2)}</span>
+                                <span className="text-[10px] font-bold text-purple-600 dark:text-purple-400 uppercase">{item.displayName.substring(0, 2)}</span>
                               )}
                             </div>
 
                             <div className="truncate">
-                              <span className="font-semibold text-slate-800 dark:text-slate-250 block truncate">{item.displayName}</span>
+                              <span className="font-semibold text-slate-800 dark:text-slate-200 block truncate">{item.displayName}</span>
                               <span className="block text-[9px] text-slate-500 truncate">@{item.username}</span>
                             </div>
                           </div>
@@ -774,13 +786,13 @@ function App() {
                       ))}
                     </div>
                   ) : (
-                    <div className="text-center py-12 text-slate-500 text-xs">
+                    <div className="text-center py-12 text-slate-500 dark:text-slate-400 text-xs">
                       Noch keine Einträge vorhanden. Löse Aufgaben, um hier zu erscheinen!
                     </div>
                   )}
                 </div>
 
-                <div className="mt-4 pt-3 border-t border-slate-200 dark:border-slate-800/60 flex items-center gap-1.5 text-[10px] text-slate-500">
+                <div className="mt-4 pt-3 border-t border-slate-200 dark:border-slate-800 flex items-center gap-1.5 text-[10px] text-slate-500 dark:text-slate-400">
                   <Zap className="w-3.5 h-3.5 text-purple-500 animate-pulse" />
                   <span>Aktualisiert sich live beim Lösen!</span>
                 </div>
@@ -798,7 +810,7 @@ function App() {
               <p className="text-slate-600 dark:text-slate-400 text-sm mb-6">Messe dich mit deinen Kommilitonen.</p>
 
               {/* Filtering Controls */}
-              <div className="flex flex-col sm:flex-row gap-3 mb-6 p-4 bg-slate-100/50 dark:bg-slate-900/20 border border-slate-200 dark:border-slate-850 rounded-2xl">
+              <div className="flex flex-col sm:flex-row gap-3 mb-6 p-4 bg-slate-100/50 dark:bg-slate-900/20 border border-slate-200 dark:border-slate-800 rounded-2xl">
                 <div className="flex-grow">
                   <label className="block text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">
                     Bestenlisten-Typ
@@ -806,7 +818,7 @@ function App() {
                   <select
                     value={leaderboardFilter}
                     onChange={(e) => setLeaderboardFilter(e.target.value as LeaderboardFilterType)}
-                    className="w-full px-3 py-2 bg-slate-200/50 dark:bg-slate-950/40 border border-slate-350 dark:border-slate-700/60 rounded-xl text-slate-800 dark:text-slate-200 text-sm font-medium focus:outline-none focus:border-purple-500"
+                    className="w-full px-3 py-2 bg-slate-200/50 dark:bg-slate-950/40 border border-slate-300 dark:border-slate-700 rounded-xl text-slate-800 dark:text-slate-200 text-sm font-medium focus:outline-none focus:border-purple-500"
                   >
                     <option value="global">Gesamte Bestenliste</option>
                     <option value="module">Nach Modul</option>
@@ -822,7 +834,7 @@ function App() {
                     <select
                       value={selectedModuleFilter}
                       onChange={(e) => setSelectedModuleFilter(e.target.value)}
-                      className="w-full px-3 py-2 bg-slate-200/50 dark:bg-slate-950/40 border border-slate-350 dark:border-slate-700/60 rounded-xl text-slate-800 dark:text-slate-200 text-sm font-medium focus:outline-none focus:border-purple-500"
+                      className="w-full px-3 py-2 bg-slate-200/50 dark:bg-slate-950/40 border border-slate-300 dark:border-slate-700 rounded-xl text-slate-800 dark:text-slate-200 text-sm font-medium focus:outline-none focus:border-purple-500"
                     >
                       <option value="Lineare Algebra">Lineare Algebra</option>
                       <option value="Betriebssysteme">Betriebssysteme</option>
@@ -840,7 +852,7 @@ function App() {
                     <select
                       value={selectedTaskFilter}
                       onChange={(e) => setSelectedTaskFilter(e.target.value)}
-                      className="w-full px-3 py-2 bg-slate-200/50 dark:bg-slate-950/40 border border-slate-350 dark:border-slate-700/60 rounded-xl text-slate-800 dark:text-slate-200 text-sm font-medium focus:outline-none focus:border-purple-500"
+                      className="w-full px-3 py-2 bg-slate-200/50 dark:bg-slate-950/40 border border-slate-300 dark:border-slate-700 rounded-xl text-slate-800 dark:text-slate-200 text-sm font-medium focus:outline-none focus:border-purple-500"
                     >
                       <option value="lin_alg_det">2x2 Determinante</option>
                     </select>
@@ -870,7 +882,7 @@ function App() {
                           index === 0 ? 'bg-amber-500/20 text-amber-600 dark:text-amber-400 border border-amber-500/35' :
                           index === 1 ? 'bg-slate-400/25 text-slate-600 dark:text-slate-300 border border-slate-400/35' :
                           index === 2 ? 'bg-amber-700/20 text-amber-800 dark:text-amber-600 border border-amber-700/35' :
-                          'bg-slate-200 dark:bg-slate-800/40 text-slate-550 border border-slate-300 dark:border-transparent'
+                          'bg-slate-200 dark:bg-slate-800/40 text-slate-500 dark:text-slate-450 border border-slate-300 dark:border-transparent'
                         }`}>
                           {index + 1}
                         </span>
@@ -880,7 +892,7 @@ function App() {
                           {item.profilePic ? (
                             <img src={item.profilePic} className="w-full h-full object-cover" alt="" />
                           ) : (
-                            <span className="text-xs font-bold text-purple-650 uppercase">{item.displayName.substring(0, 2)}</span>
+                            <span className="text-xs font-bold text-purple-600 dark:text-purple-400 uppercase">{item.displayName.substring(0, 2)}</span>
                           )}
                         </div>
 
@@ -939,7 +951,7 @@ function App() {
                         setEditPassword('');
                         setProfileMessage(null);
                       }}
-                      className="px-4 py-2 border border-slate-300 dark:border-slate-800 hover:border-purple-500/40 text-slate-650 dark:text-slate-400 hover:text-purple-600 dark:hover:text-purple-400 text-xs font-bold rounded-xl flex items-center gap-1.5 transition-colors cursor-pointer"
+                      className="px-4 py-2 border border-slate-300 dark:border-slate-800 hover:border-purple-500/40 text-slate-600 dark:text-slate-400 hover:text-purple-600 dark:hover:text-purple-400 text-xs font-bold rounded-xl flex items-center gap-1.5 transition-colors cursor-pointer"
                     >
                       <Edit className="w-3.5 h-3.5" /> Bearbeiten
                     </button>
@@ -949,7 +961,7 @@ function App() {
                     <h3 className="text-lg font-bold font-display text-slate-800 dark:text-slate-100">Profil bearbeiten</h3>
                     
                     {/* Avatar Upload field */}
-                    <div className="flex items-center gap-4 p-4 bg-slate-100/50 dark:bg-slate-950/20 border border-slate-200 dark:border-slate-850 rounded-2xl">
+                    <div className="flex items-center gap-4 p-4 bg-slate-100/50 dark:bg-slate-950/20 border border-slate-200 dark:border-slate-800 rounded-2xl">
                       <div className="relative w-16 h-16 rounded-2xl bg-slate-300 dark:bg-slate-800 flex items-center justify-center overflow-hidden border border-slate-200 dark:border-slate-800 shrink-0">
                         {editProfilePic ? (
                           <img src={editProfilePic} className="w-full h-full object-cover" alt="Vorschau" />
@@ -968,7 +980,7 @@ function App() {
                       </div>
                       <div>
                         <span className="text-xs font-bold text-slate-800 dark:text-slate-200 block mb-1">Profilbild hochladen</span>
-                        <span className="text-[10px] text-slate-500 block leading-relaxed">Klicke auf das Vorschaubild zum Auswählen. Maximal 1.5 MB (PNG/JPG).</span>
+                        <span className="text-[10px] text-slate-500 dark:text-slate-400 block leading-relaxed">Klicke auf das Vorschaubild zum Auswählen. Maximal 1.5 MB (PNG/JPG).</span>
                       </div>
                     </div>
 
@@ -982,7 +994,7 @@ function App() {
                         required
                         value={editDisplayName}
                         onChange={(e) => setEditDisplayName(e.target.value)}
-                        className="w-full px-4 py-2.5 bg-slate-100/50 dark:bg-slate-950/40 border border-slate-300 dark:border-slate-700/60 rounded-xl text-slate-850 dark:text-slate-250 text-sm font-medium focus:outline-none focus:border-purple-500"
+                        className="w-full px-4 py-2.5 bg-slate-100/50 dark:bg-slate-950/40 border border-slate-300 dark:border-slate-700/60 rounded-xl text-slate-800 dark:text-slate-200 text-sm font-medium focus:outline-none focus:border-purple-500"
                       />
                     </div>
 
@@ -996,7 +1008,7 @@ function App() {
                         value={editPassword}
                         onChange={(e) => setEditPassword(e.target.value)}
                         placeholder="Freilassen, falls unverändert"
-                        className="w-full px-4 py-2.5 bg-slate-100/50 dark:bg-slate-950/40 border border-slate-300 dark:border-slate-700/60 rounded-xl text-slate-850 dark:text-slate-250 text-sm font-medium focus:outline-none focus:border-purple-500"
+                        className="w-full px-4 py-2.5 bg-slate-100/50 dark:bg-slate-950/40 border border-slate-300 dark:border-slate-700/60 rounded-xl text-slate-800 dark:text-slate-200 text-sm font-medium focus:outline-none focus:border-purple-500"
                       />
                     </div>
 
@@ -1005,7 +1017,7 @@ function App() {
                       <div className={`p-3 text-xs font-medium rounded-xl leading-relaxed ${
                         profileMessage.type === 'success'
                           ? 'bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-300'
-                          : 'bg-rose-500/10 border border-rose-500/20 text-rose-600 dark:text-rose-350'
+                          : 'bg-rose-500/10 border border-rose-500/20 text-rose-600 dark:text-rose-300'
                       }`}>
                         {profileMessage.text}
                       </div>
@@ -1031,7 +1043,7 @@ function App() {
                           setIsEditMode(false);
                           setProfileMessage(null);
                         }}
-                        className="px-5 py-2.5 border border-slate-350 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 font-semibold rounded-xl text-xs transition-all cursor-pointer"
+                        className="px-5 py-2.5 border border-slate-300 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 font-semibold rounded-xl text-xs transition-all cursor-pointer"
                       >
                         Abbrechen
                       </button>
@@ -1042,7 +1054,7 @@ function App() {
                 {/* Stats Grid */}
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
                   <div className="p-4 bg-slate-100/50 dark:bg-slate-900/30 border border-slate-200 dark:border-slate-800/50 rounded-2xl flex flex-col justify-between" id="solved-tasks-badge">
-                    <div className="flex justify-between items-start text-purple-650 dark:text-purple-400 mb-2">
+                    <div className="flex justify-between items-start text-purple-600 dark:text-purple-400 mb-2">
                       <Trophy className="w-5 h-5" />
                       <span className="text-xs text-slate-500 font-semibold uppercase">Punkte</span>
                     </div>
@@ -1053,7 +1065,7 @@ function App() {
                   </div>
 
                   <div className="p-4 bg-slate-100/50 dark:bg-slate-900/30 border border-slate-200 dark:border-slate-800/50 rounded-2xl flex flex-col justify-between">
-                    <div className="flex justify-between items-start text-emerald-650 dark:text-emerald-400 mb-2">
+                    <div className="flex justify-between items-start text-emerald-600 dark:text-emerald-400 mb-2">
                       <BookOpen className="w-5 h-5" />
                       <span className="text-xs text-slate-500 font-semibold uppercase">Module</span>
                     </div>
@@ -1066,7 +1078,7 @@ function App() {
                   </div>
 
                   <div className="p-4 bg-slate-100/50 dark:bg-slate-900/30 border border-slate-200 dark:border-slate-800/50 rounded-2xl flex flex-col justify-between">
-                    <div className="flex justify-between items-start text-blue-650 dark:text-blue-400 mb-2">
+                    <div className="flex justify-between items-start text-blue-600 dark:text-blue-400 mb-2">
                       <Clock className="w-5 h-5" />
                       <span className="text-xs text-slate-500 font-semibold uppercase">Status</span>
                     </div>
@@ -1084,7 +1096,7 @@ function App() {
                 <div className="space-y-3">
                   <div className={`flex items-center gap-3.5 p-3.5 rounded-2xl border transition-all ${
                     user.solvedCount >= 1 
-                      ? 'bg-slate-100/50 dark:bg-slate-900/10 border-slate-200 dark:border-slate-800/30 opacity-100'
+                      ? 'bg-slate-100/50 dark:bg-slate-900/10 border-slate-200 dark:border-slate-850/30 opacity-100'
                       : 'bg-slate-200/20 dark:bg-slate-900/5 border-slate-200/30 dark:border-slate-900/10 opacity-35'
                   }`}>
                     <Medal className={`w-6 h-6 ${user.solvedCount >= 1 ? 'text-yellow-500' : 'text-slate-400 dark:text-slate-500'}`} />
@@ -1118,12 +1130,12 @@ function App() {
                   </p>
                   
                   {/* Guest Session stats */}
-                  <div className="p-4 bg-slate-100/50 dark:bg-slate-950/20 rounded-2xl border border-slate-200 dark:border-slate-800/40 text-left mb-6">
+                  <div className="p-4 bg-slate-100/50 dark:bg-slate-900/20 rounded-2xl border border-slate-200 dark:border-slate-800 text-left mb-6">
                     <span className="text-xs text-slate-400 dark:text-slate-500 font-semibold uppercase tracking-wider block mb-1">
                       Aktuelle Session (Gast)
                     </span>
                     <div className="flex justify-between items-center">
-                      <span className="text-sm font-medium text-slate-600 dark:text-slate-350">Punkte gesammelt:</span>
+                      <span className="text-sm font-medium text-slate-600 dark:text-slate-300">Punkte gesammelt:</span>
                       <span className="text-lg font-bold text-purple-600 dark:text-purple-400">{guestScore}</span>
                     </div>
                   </div>
@@ -1142,8 +1154,16 @@ function App() {
       </main>
 
       {/* Footer */}
-      <footer className="py-6 border-t border-slate-200 dark:border-slate-800/40 text-center text-xs text-slate-500 transition-colors duration-300">
+      <footer className="py-6 border-t border-slate-200 dark:border-slate-800/40 flex flex-col sm:flex-row items-center justify-between gap-4 max-w-6xl w-full mx-auto px-6 text-xs text-slate-500 transition-colors duration-300">
         <p>© {new Date().getFullYear()} AufgabenGenerator. Entwickelt für Uni-Kommilitonen.</p>
+        <a
+          href="https://github.com/MD16dev/aufgabengenerator"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex items-center gap-1.5 px-3.5 py-1.5 bg-slate-150 dark:bg-slate-900 hover:bg-slate-200 dark:hover:bg-slate-800 border border-slate-300 dark:border-slate-800 text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-slate-100 font-semibold rounded-xl transition-all cursor-pointer shadow-sm"
+        >
+          <Github className="w-4 h-4" /> GitHub Repository
+        </a>
       </footer>
 
       {/* Persistent Floating Glassmorphic Pomodoro Widget (expandable/collapsible) */}
@@ -1164,10 +1184,10 @@ function App() {
         ) : (
           <div className="pointer-events-auto p-5 rounded-2xl glass-panel border border-purple-500/25 shadow-2xl glow-purple w-64 animate-fadeIn">
             <div className="flex justify-between items-center mb-4">
-              <span className="text-xs font-bold text-slate-700 dark:text-slate-350">Pomodoro Timer</span>
+              <span className="text-xs font-bold text-slate-700 dark:text-slate-300">Pomodoro Timer</span>
               <button
                 onClick={() => setIsWidgetExpanded(false)}
-                className="text-[10px] font-bold text-slate-500 hover:text-slate-800 dark:hover:text-slate-250 cursor-pointer"
+                className="text-[10px] font-bold text-slate-500 hover:text-slate-700 dark:hover:text-slate-200 cursor-pointer"
               >
                 Minimieren
               </button>
@@ -1181,7 +1201,7 @@ function App() {
                     cx="48"
                     cy="48"
                     r="42"
-                    className="stroke-slate-200 dark:stroke-slate-850 fill-none"
+                    className="stroke-slate-200 dark:stroke-slate-800 fill-none"
                     strokeWidth="4"
                   />
                   <circle
@@ -1189,7 +1209,7 @@ function App() {
                     cy="48"
                     r="42"
                     className={`fill-none transition-all duration-1000 ${
-                      pomodoroMode === 'work' ? 'stroke-purple-650' : 'stroke-emerald-500'
+                      pomodoroMode === 'work' ? 'stroke-purple-600' : 'stroke-emerald-500'
                     }`}
                     strokeWidth="5"
                     strokeDasharray={264}
@@ -1214,7 +1234,7 @@ function App() {
             <div className="flex justify-center gap-2">
               <button
                 onClick={() => setPomodoroIsActive(!pomodoroIsActive)}
-                className="flex-grow py-1.5 bg-purple-650 hover:bg-purple-500 text-white font-bold rounded-lg text-xs cursor-pointer flex justify-center items-center gap-1 shadow-sm"
+                className="flex-grow py-1.5 bg-purple-600 hover:bg-purple-500 text-white font-bold rounded-lg text-xs cursor-pointer flex justify-center items-center gap-1 shadow-sm"
               >
                 {pomodoroIsActive ? (
                   <>
@@ -1228,7 +1248,7 @@ function App() {
               </button>
               <button
                 onClick={resetPomodoro}
-                className="p-1.5 bg-slate-200/60 dark:bg-slate-900/40 hover:bg-slate-300 dark:hover:bg-slate-800 border border-slate-350 dark:border-slate-800 text-slate-500 hover:text-slate-850 rounded-lg cursor-pointer"
+                className="p-1.5 bg-slate-200/60 dark:bg-slate-900/40 hover:bg-slate-300 dark:hover:bg-slate-800 border border-slate-300 dark:border-slate-800 text-slate-500 hover:text-slate-700 rounded-lg cursor-pointer"
                 title="Zurücksetzen"
               >
                 <RotateCcw className="w-3.5 h-3.5" />

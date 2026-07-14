@@ -216,7 +216,7 @@ export const OnboardingTour: React.FC<OnboardingTourProps> = ({ onClose }) => {
         {/* Skip Button */}
         <button
           onClick={handleComplete}
-          className="absolute top-4 right-4 p-1.5 text-slate-400 dark:text-slate-500 hover:text-slate-650 dark:hover:text-slate-200 hover:bg-black/5 dark:hover:bg-white/5 rounded-full transition-colors cursor-pointer"
+          className="absolute top-4 right-4 p-1.5 text-slate-400 dark:text-slate-500 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-black/5 dark:hover:bg-white/5 rounded-full transition-colors cursor-pointer"
           title="Tour beenden"
         >
           <X className="w-4 h-4" />
@@ -254,7 +254,7 @@ export const OnboardingTour: React.FC<OnboardingTourProps> = ({ onClose }) => {
             {currentStep > 0 && (
               <button
                 onClick={handleBack}
-                className="px-3.5 py-1.5 bg-slate-250/60 dark:bg-slate-900/60 hover:bg-slate-300 dark:hover:bg-slate-850 text-slate-700 dark:text-slate-300 font-semibold rounded-lg text-xs border border-slate-300 dark:border-slate-850 transition-all cursor-pointer flex items-center gap-1"
+                className="px-3.5 py-1.5 bg-slate-200/60 dark:bg-slate-900/60 hover:bg-slate-300 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 font-semibold rounded-lg text-xs border border-slate-300 dark:border-slate-800 transition-all cursor-pointer flex items-center gap-1"
               >
                 <ArrowLeft className="w-3 h-3" /> Zurück
               </button>

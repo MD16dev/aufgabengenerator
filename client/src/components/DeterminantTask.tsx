@@ -273,7 +273,7 @@ export const DeterminantTask: React.FC<DeterminantTaskProps> = ({ user, onSolved
                 </h3>
                 <div className="space-y-3 text-slate-700 dark:text-slate-300 text-sm md:text-base">
                   {task.steps.map((step, idx) => (
-                    <div key={idx} className="pb-3 last:pb-0 border-b last:border-0 border-slate-200 dark:border-slate-850">
+                    <div key={idx} className="pb-3 last:pb-0 border-b last:border-0 border-slate-200 dark:border-slate-800">
                       <LatexTextRenderer text={step} />
                     </div>
                   ))}

@@ -17,22 +17,19 @@ Diese Datei dient als Synchronisationspunkt zwischen Entwicklern und KI-Agenten.
 * **Ausführender Agent / Entwickler:** Antigravity (Gemini 3.5 Flash)
 * **Was wurde erledigt:**
   - [x] Express-Grundgerüst mit TypeScript und modularer Verzeichnisstruktur eingerichtet.
-  - [x] API-Route für `/api/tasks/determinant` implementiert.
-  - [x] Mathematischer Generator für $2 \times 2$ Determinanten mit LaTeX-Musterlösung.
+  - [x] API-Route für `/api/tasks/determinant` und mathematischer Generator mit LaTeX-Musterlösung.
   - [x] Vitest Unit- und Integrationstests (Supertest) geschrieben (14/14 Pass).
   - [x] Prisma ORM mit SQLite und Tabellen (`User`, `TaskType`, `SolvedTask`) initialisiert und migriert.
-  - [x] Benutzerregistrierung und Login (JWT-basiert, PBKDF2-Passworthashs) im Backend implementiert.
-  - [x] `/api/tasks/solve` (POST) und `/api/tasks/leaderboard` (GET) Endpunkte implementiert.
-  - [x] React-Vite-Client mit TypeScript initialisiert und dedupliziert.
-  - [x] Tailwind CSS v4 und KaTeX in React integriert.
-  - [x] Light-/Darkmode-Umschalter mit automatischer Systemerkennung (prefers-color-scheme).
-  - [x] Startseiten-Fächerauswahl-Dashboard (`ModuleSelector`) mit Modulen und Aufgabetypen.
-  - [x] Echte JWT-Authentifizierung und Profileinstellungen (Name, Passwort ändern, Base64-Avatar-Upload).
+  - [x] Benutzerregistrierung und Login (JWT-basiert, PBKDF2-Passworthashs) im Backend.
+  - [x] Profileinstellungen im Frontend (Anzeigename, Passwort ändern, Base64-Avatar-Upload).
   - [x] Dedizierte Startseite (Home) mit Schnellnavigation, Statistiken und Pomodoro-Timer-Konfiguration.
-  - [x] Anpassbarer & persistenter Pomodoro-Timer (schwebendes Widget in der Ecke, das auf allen Seiten sichtbar ist, mit Synth-Chime-Glockensound bei Ablauf).
-  - [x] Getrenntes Split-Screen-Layout auf der Aufgaben-Seite (links: Aufgaben/Rechnen, rechts: Modul-/Aufgaben-Rangliste).
-  - [x] Live-Aktualisierung der rechten Rangliste bei korrekt gelösten Aufgaben.
-  - [x] Flüssig gleitende und morphende Spotlight-Onboarding-Tour (über ein einziges, transformiertes Masken-Overlay).
+  - [x] Pomodoro-Timer mit stufenlosen Slidern (Fokus: 5-60 min, Pause: 1-30 min) zur Laufzeitanpassung.
+  - [x] Schwebendes Pomodoro-Widget (minimierbare Pille in der Ecke mit kreisförmigem Fortschrittsring, der im maximierten Zustand vollständig gefüllt wird, Glocken-Sound bei Ablauf).
+  - [x] Split-Screen-Layout auf der Aufgaben-Seite (links: Aufgaben/Rechnen, rechts: Modul-/Aufgaben-Rangliste mit Live-Aktualisierung).
+  - [x] Flüssig gleitende und morphende Spotlight-Onboarding-Tour (über ein einziges CSS-transformiertes Masken-Overlay).
+  - [x] Fehlerfreie Farbdarstellung im Dark- & Whitemode durch Bereinigung nicht-standardmäßiger Tailwind-Klassen (z. B. `slate-850` zu `slate-800`).
+  - [x] Integration des `@custom-variant dark` in `index.css` zur Aktivierung der Tailwind v4 CSS-Klassen-Kopplung.
+  - [x] GitHub-Verweis im Footer inklusive offiziellem GitHub-Logo, der das Repository in einem neuen Tab öffnet.
 * **Aktuell in Arbeit / Unfertig:**
   - [ ] Implementierung weiterer Aufgabengeneratoren (z.B. Analysis oder Betriebssysteme).
 * **Identifizierte Blocker / Probleme:**
