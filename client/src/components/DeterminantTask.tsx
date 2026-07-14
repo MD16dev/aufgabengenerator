@@ -151,7 +151,7 @@ export const DeterminantTask: React.FC<DeterminantTaskProps> = ({ user, onSolved
             {/* Header info */}
             <div className="flex justify-between items-center mb-6">
               <span className="text-xs font-bold uppercase tracking-wider px-3 py-1 bg-purple-500/10 text-purple-600 dark:text-purple-400 rounded-full border border-purple-500/25">
-                Lineare Algebra
+                Lineare Algebra (LA)
               </span>
               <span className="text-xs text-theme-muted font-bold">Typ: 2x2 Determinante</span>
             </div>

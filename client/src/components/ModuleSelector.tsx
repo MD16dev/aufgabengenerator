@@ -17,6 +17,7 @@ interface TaskTypeInfo {
 interface ModuleInfo {
   id: string;
   name: string;
+  abbreviation: string;
   icon: React.ReactNode;
   description: string;
   tasks: TaskTypeInfo[];
@@ -28,6 +29,7 @@ export const ModuleSelector: React.FC<ModuleSelectorProps> = ({ activeModule, on
     {
       id: 'lin_alg',
       name: 'Lineare Algebra',
+      abbreviation: 'LA',
       icon: <Binary className="w-6 h-6 text-purple-600 dark:text-purple-400" />,
       description: 'Matrizen, Determinanten, lineare Gleichungssysteme und Vektorräume.',
       tasks: [
@@ -54,6 +56,7 @@ export const ModuleSelector: React.FC<ModuleSelectorProps> = ({ activeModule, on
     {
       id: 'os',
       name: 'Betriebssysteme',
+      abbreviation: 'BUS',
       icon: <Cpu className="w-6 h-6 text-emerald-600 dark:text-emerald-400" />,
       description: 'Seitentabellen, Speicherverwaltung, Scheduling und CPU-Prozesse.',
       tasks: [
@@ -74,6 +77,7 @@ export const ModuleSelector: React.FC<ModuleSelectorProps> = ({ activeModule, on
     {
       id: 'formal_sys',
       name: 'Formale Systeme',
+      abbreviation: 'FOSAP',
       icon: <Network className="w-6 h-6 text-blue-600 dark:text-blue-400" />,
       description: 'Automaten, formale Sprachen, Grammatiken und Aussagenlogik.',
       tasks: [
@@ -94,6 +98,7 @@ export const ModuleSelector: React.FC<ModuleSelectorProps> = ({ activeModule, on
     {
       id: 'algo_struct',
       name: 'Algorithmen & Datenstrukturen',
+      abbreviation: 'DSAL',
       icon: <GitFork className="w-6 h-6 text-pink-600 dark:text-pink-400" />,
       description: 'Bäume, Sortieralgorithmen, Graphentheorie und Komplexitätsanalyse.',
       tasks: [
@@ -134,7 +139,7 @@ export const ModuleSelector: React.FC<ModuleSelectorProps> = ({ activeModule, on
             <button
               key={mod.id}
               onClick={() => onActiveModuleChange(mod.id)}
-              className={`p-5 rounded-2xl border text-left flex flex-col justify-between cursor-pointer transition-all shadow-sm ${
+              className={`p-5 rounded-2xl border text-left flex flex-col justify-between cursor-pointer transition-all shadow-sm min-h-[175px] ${
                 isSelected
                   ? 'bg-purple-500/10 border-purple-500/50 shadow-md shadow-purple-500/10'
                   : 'bg-theme-card border-theme-border hover:brightness-95 dark:hover:brightness-110'
@@ -150,12 +155,15 @@ export const ModuleSelector: React.FC<ModuleSelectorProps> = ({ activeModule, on
                 )}
               </div>
               <div>
-                <h3 className={`font-bold font-display text-base transition-colors ${
+                <h3 className={`font-extrabold font-display text-xl transition-colors ${
                   isSelected ? 'text-purple-650 dark:text-purple-400' : 'text-theme-primary'
                 }`}>
-                  {mod.name}
+                  {mod.abbreviation}
                 </h3>
-                <p className="text-theme-muted text-xs mt-1.5 leading-relaxed line-clamp-2 font-medium">
+                <span className="text-xs font-bold text-theme-secondary block mt-0.5 mb-1.5 leading-none">
+                  {mod.name}
+                </span>
+                <p className="text-theme-muted text-[10px] leading-relaxed line-clamp-2 font-medium">
                   {mod.description}
                 </p>
               </div>
@@ -169,7 +177,7 @@ export const ModuleSelector: React.FC<ModuleSelectorProps> = ({ activeModule, on
         <div className="flex items-center gap-3 mb-6">
           <BookOpen className="w-5 h-5 text-purple-600 dark:text-purple-400" />
           <h3 className="text-lg font-bold font-display text-theme-primary">
-            Aufgabentypen in "{activeModuleData.name}"
+            Aufgabentypen in "{activeModuleData.name} ({activeModuleData.abbreviation})"
           </h3>
         </div>
 
@@ -191,7 +199,7 @@ export const ModuleSelector: React.FC<ModuleSelectorProps> = ({ activeModule, on
                     {task.name}
                   </h4>
                   {task.isActive ? (
-                    <span className="text-xs font-bold px-2.5 py-0.5 bg-emerald-500/10 text-emerald-600 dark:text-emerald-450 rounded-full border border-emerald-500/20">
+                    <span className="text-xs font-bold px-2.5 py-0.5 bg-emerald-500/10 text-emerald-600 dark:text-emerald-455 rounded-full border border-emerald-500/20">
                       Aktiv
                     </span>
                   ) : (

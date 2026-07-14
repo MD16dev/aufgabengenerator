@@ -730,10 +730,10 @@ function App() {
                   </div>
                   <span className="text-[10px] font-bold text-theme-muted block mb-4 uppercase tracking-wider border-b border-theme-border pb-2">
                     {activeTaskId ? 'Typ: 2x2 Determinante' : `Modul: ${
-                      activeModuleId === 'lin_alg' ? 'Lineare Algebra' :
-                      activeModuleId === 'os' ? 'Betriebssysteme' :
-                      activeModuleId === 'formal_sys' ? 'Formale Systeme' :
-                      'Algorithmen & Datenstrukturen'
+                      activeModuleId === 'lin_alg' ? 'LA - Lineare Algebra' :
+                      activeModuleId === 'os' ? 'BUS - Betriebssysteme' :
+                      activeModuleId === 'formal_sys' ? 'FOSAP - Formale Systeme' :
+                      'DSAL - Algorithmen & Datenstrukturen'
                     }`}
                   </span>
 
@@ -836,10 +836,10 @@ function App() {
                       onChange={(e) => setSelectedModuleFilter(e.target.value)}
                       className="w-full px-3 py-2 bg-theme-input border border-theme-border rounded-xl text-theme-primary text-sm font-medium focus:outline-none focus:border-purple-500"
                     >
-                      <option value="Lineare Algebra">Lineare Algebra</option>
-                      <option value="Betriebssysteme">Betriebssysteme</option>
-                      <option value="Formale Systeme">Formale Systeme</option>
-                      <option value="Algorithmen & Datenstrukturen">Algorithmen & Datenstrukturen</option>
+                      <option value="Lineare Algebra">LA - Lineare Algebra</option>
+                      <option value="Betriebssysteme">BUS - Betriebssysteme</option>
+                      <option value="Formale Systeme">FOSAP - Formale Systeme</option>
+                      <option value="Algorithmen & Datenstrukturen">DSAL - Algorithmen & Datenstrukturen</option>
                     </select>
                   </div>
                 )}
