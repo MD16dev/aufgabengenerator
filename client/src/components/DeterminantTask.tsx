@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { MathRenderer, LatexTextRenderer } from './MathRenderer';
-import { CheckCircle2, XCircle, HelpCircle, ArrowRight, RefreshCw, Trophy } from 'lucide-react';
+import { CheckCircle2, XCircle, HelpCircle, ArrowRight, RefreshCw, ArrowLeft } from 'lucide-react';
 
 interface TaskData {
   type: string;
@@ -10,14 +10,20 @@ interface TaskData {
   steps: string[];
 }
 
-export const DeterminantTask: React.FC = () => {
+interface DeterminantTaskProps {
+  user: { id: string; username: string } | null;
+  onSolved: () => void;
+  onBackToSelector: () => void;
+}
+
+export const DeterminantTask: React.FC<DeterminantTaskProps> = ({ user, onSolved, onBackToSelector }) => {
   const [task, setTask] = useState<TaskData | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [userAnswer, setUserAnswer] = useState<string>('');
   const [status, setStatus] = useState<'idle' | 'correct' | 'incorrect'>('idle');
   const [showSolution, setShowSolution] = useState<boolean>(false);
-  const [score, setScore] = useState<number>(() => {
+  const [localScore, setLocalScore] = useState<number>(() => {
     const saved = localStorage.getItem('aufgabengenerator_score');
     return saved ? parseInt(saved, 10) : 0;
   });
@@ -40,7 +46,7 @@ export const DeterminantTask: React.FC = () => {
       const data = await response.json();
       setTask(data);
       
-      // Auto-focus input after loading
+      // Auto-focus input
       setTimeout(() => {
         inputRef.current?.focus();
       }, 50);
@@ -55,7 +61,7 @@ export const DeterminantTask: React.FC = () => {
     fetchTask();
   }, []);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!task || userAnswer.trim() === '') return;
 
@@ -67,29 +73,53 @@ export const DeterminantTask: React.FC = () => {
 
     if (parsedAnswer === task.answer) {
       setStatus('correct');
-      const newScore = score + 1;
-      setScore(newScore);
-      localStorage.setItem('aufgabengenerator_score', newScore.toString());
+      
+      // Record solution in the database if user is logged in
+      const token = localStorage.getItem('auth_token');
+      if (user && token) {
+        try {
+          const response = await fetch('http://localhost:5000/api/tasks/solve', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({ taskTypeId: 'lin_alg_det' })
+          });
+          
+          if (response.ok) {
+            // Success: Notify parent to refresh scores/profile/leaderboard
+            onSolved();
+          }
+        } catch (err) {
+          console.error('Fehler beim Speichern der gelösten Aufgabe:', err);
+        }
+      } else {
+        // Fallback for guest users (local score)
+        const newScore = localScore + 1;
+        setLocalScore(newScore);
+        localStorage.setItem('aufgabengenerator_score', newScore.toString());
+        onSolved();
+      }
     } else {
       setStatus('incorrect');
     }
   };
 
   return (
-    <div className="w-full max-w-2xl mx-auto px-4 py-8">
-      {/* Score display */}
-      <div className="flex items-center justify-between mb-6 px-4 py-3 glass-panel rounded-2xl glow-purple">
-        <div className="flex items-center gap-2">
-          <Trophy className="w-5 h-5 text-purple-400" />
-          <span className="text-sm font-medium text-slate-300">Deine Punkte (Session)</span>
-        </div>
-        <span className="text-xl font-bold bg-gradient-to-r from-purple-400 to-indigo-400 bg-clip-text text-transparent">
-          {score}
-        </span>
+    <div className="w-full max-w-2xl mx-auto px-4 py-8 animate-fadeIn">
+      {/* Back button and title bar */}
+      <div className="flex justify-between items-center mb-6">
+        <button
+          onClick={onBackToSelector}
+          className="flex items-center gap-1.5 text-sm font-semibold text-slate-400 hover:text-slate-200 transition-colors cursor-pointer"
+        >
+          <ArrowLeft className="w-4 h-4" /> Zurück zur Fächerauswahl
+        </button>
       </div>
 
       <div className="glass-panel rounded-3xl p-6 md:p-8 relative overflow-hidden glow-purple">
-        {/* Subtle background glow decorator */}
+        {/* Decorative background glow */}
         <div className="absolute top-0 right-0 w-48 h-48 bg-purple-500/10 rounded-full blur-3xl pointer-events-none" />
 
         {loading ? (
@@ -104,7 +134,7 @@ export const DeterminantTask: React.FC = () => {
             </div>
             <button
               onClick={fetchTask}
-              className="inline-flex items-center gap-2 px-5 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl font-medium border border-slate-700 transition-colors"
+              className="inline-flex items-center gap-2 px-5 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl font-medium border border-slate-700 transition-colors cursor-pointer"
             >
               <RefreshCw className="w-4 h-4" /> Erneut versuchen
             </button>
@@ -140,7 +170,7 @@ export const DeterminantTask: React.FC = () => {
                     value={userAnswer}
                     onChange={(e) => setUserAnswer(e.target.value)}
                     placeholder="Ergebnis eingeben (z.B. -5)"
-                    className="w-full px-4 py-3.5 bg-slate-950/40 border border-slate-700/60 rounded-xl text-slate-100 placeholder-slate-500 focus:outline-none focus:border-purple-500 focus:ring-1 focus:ring-purple-500 transition-all font-medium text-lg disabled:opacity-60 disabled:cursor-not-allowed"
+                    className="w-full px-4 py-3.5 bg-slate-950/40 border border-slate-700/60 rounded-xl text-slate-200 placeholder-slate-500 focus:outline-none focus:border-purple-500 focus:ring-1 focus:ring-purple-500 transition-all font-medium text-lg disabled:opacity-60 disabled:cursor-not-allowed"
                   />
                   {status === 'correct' && (
                     <CheckCircle2 className="absolute right-4 top-1/2 -translate-y-1/2 w-6 h-6 text-emerald-400 animate-bounce" />
@@ -154,7 +184,7 @@ export const DeterminantTask: React.FC = () => {
                   <button
                     type="submit"
                     disabled={userAnswer.trim() === ''}
-                    className="w-full sm:w-auto px-6 py-3.5 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 disabled:from-purple-800 disabled:to-indigo-800 disabled:opacity-40 disabled:cursor-not-allowed text-white font-semibold rounded-xl transition-all shadow-lg hover:shadow-purple-500/25 flex items-center justify-center gap-2"
+                    className="w-full sm:w-auto px-6 py-3.5 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 disabled:from-purple-800 disabled:to-indigo-800 disabled:opacity-40 disabled:cursor-not-allowed text-white font-semibold rounded-xl transition-all shadow-lg hover:shadow-purple-500/25 flex items-center justify-center gap-2 cursor-pointer"
                   >
                     Antwort prüfen
                   </button>
@@ -162,7 +192,7 @@ export const DeterminantTask: React.FC = () => {
                   <button
                     type="button"
                     onClick={fetchTask}
-                    className="w-full sm:w-auto px-6 py-3.5 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-semibold rounded-xl transition-all shadow-lg hover:shadow-emerald-500/25 flex items-center justify-center gap-2"
+                    className="w-full sm:w-auto px-6 py-3.5 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-semibold rounded-xl transition-all shadow-lg hover:shadow-emerald-500/25 flex items-center justify-center gap-2 cursor-pointer animate-fadeIn"
                   >
                     Nächste Aufgabe <ArrowRight className="w-5 h-5" />
                   </button>
@@ -189,11 +219,11 @@ export const DeterminantTask: React.FC = () => {
             )}
 
             {/* Actions for Solution and Reload */}
-            <div className="flex flex-wrap justify-between items-center gap-3 mt-8 pt-6 border-t border-slate-800">
+            <div className="flex flex-wrap justify-between items-center gap-3 mt-8 pt-6 border-t border-slate-800/60">
               <button
                 type="button"
                 onClick={() => setShowSolution(!showSolution)}
-                className="flex items-center gap-2 text-sm font-medium text-slate-400 hover:text-purple-400 transition-colors"
+                className="flex items-center gap-2 text-sm font-medium text-slate-400 hover:text-purple-400 transition-colors cursor-pointer"
               >
                 <HelpCircle className="w-4 h-4" />
                 {showSolution ? 'Lösung ausblenden' : 'Rechenweg anzeigen'}
@@ -203,22 +233,22 @@ export const DeterminantTask: React.FC = () => {
                 <button
                   type="button"
                   onClick={fetchTask}
-                  className="flex items-center gap-2 text-sm font-medium text-slate-400 hover:text-slate-200 transition-colors"
+                  className="flex items-center gap-2 text-sm font-medium text-slate-400 hover:text-slate-200 transition-colors cursor-pointer"
                 >
                   <RefreshCw className="w-4 h-4" /> Überspringen
                 </button>
               )}
             </div>
 
-            {/* Solution Display with Transition */}
+            {/* Solution Display */}
             {showSolution && (
-              <div className="mt-6 p-5 bg-slate-900/40 border border-slate-800 rounded-2xl animate-fadeIn">
+              <div className="mt-6 p-5 bg-slate-900/40 border border-slate-800/40 rounded-2xl animate-fadeIn">
                 <h3 className="text-sm font-semibold text-purple-400 uppercase tracking-wider mb-4">
                   Rechenweg:
                 </h3>
                 <div className="space-y-3 text-slate-300 text-sm md:text-base">
                   {task.steps.map((step, idx) => (
-                    <div key={idx} className="pb-3 last:pb-0 border-b last:border-0 border-slate-800/40">
+                    <div key={idx} className="pb-3 last:pb-0 border-b last:border-0 border-slate-800/20">
                       <LatexTextRenderer text={step} />
                     </div>
                   ))}

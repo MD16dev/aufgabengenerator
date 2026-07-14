@@ -1,6 +1,7 @@
 import express, { Request, Response, NextFunction } from 'express';
 import cors from 'cors';
 import taskRoutes from './routes/taskRoutes';
+import authRoutes from './routes/authRoutes';
 
 const app = express();
 
@@ -10,6 +11,7 @@ app.use(express.json());
 
 // Register routes
 app.use('/api/tasks', taskRoutes);
+app.use('/api/auth', authRoutes);
 
 // Health check endpoint
 app.get('/health', (req: Request, res: Response) => {

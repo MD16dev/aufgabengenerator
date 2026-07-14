@@ -20,20 +20,23 @@ Diese Datei dient als Synchronisationspunkt zwischen Entwicklern und KI-Agenten.
   - [x] API-Route für `/api/tasks/determinant` implementiert.
   - [x] Mathematischer Generator für $2 \times 2$ Determinanten mit LaTeX-Musterlösung implementiert.
   - [x] Vitest Unit- und Integrationstests (Supertest) geschrieben (100% Pass).
-  - [x] Prisma ORM mit SQLite initialisiert und Tabellen (`User`, `TaskType`, `SolvedTask`) migriert.
+  - [x] Prisma ORM mit SQLite und Tabellen (`User`, `TaskType`, `SolvedTask`) initialisiert und migriert.
+  - [x] Benutzerregistrierung und Login (JWT-basiert, PBKDF2-Passworthashs) im Backend implementiert.
+  - [x] `/api/tasks/solve` (POST) und `/api/tasks/leaderboard` (GET) Endpunkte implementiert.
   - [x] React-Vite-Client mit TypeScript initialisiert und dedupliziert.
-  - [x] Tailwind CSS v4 in React integriert.
-  - [x] KaTeX-Integration im Client zur LaTeX-Rendrung von Formeln und gemischtem Text (`LatexTextRenderer`).
-  - [x] Antwort-Validierung im Frontend mit sofortigem Feedback und lokalem Session-Score.
-  - [x] Tab-Layout in React (Aufgaben, Bestenliste, Profil) gestaltet.
+  - [x] Tailwind CSS v4 und KaTeX in React integriert.
+  - [x] Light-/Darkmode-Umschalter mit automatischer Systemerkennung (prefers-color-scheme) und CSS-Variablentheming erstellt.
+  - [x] Startseiten-Fächerauswahl-Dashboard (`ModuleSelector`) mit Modulen und Aufgabetypen (sowie bald verfügbaren Lock-Cards) erstellt.
+  - [x] Interaktive Onboarding-Tour (`OnboardingTour`) für Erstbesucher implementiert (gespeichert in LocalStorage).
+  - [x] AuthModal für Login & Registrierung mit Frontend-Anbindung an JWT-Endpoints implementiert.
 * **Aktuell in Arbeit / Unfertig:**
-  - [ ] Echte JWT-Authentifizierung und Anbindung der SQLite-Datenbank an das Frontend (aktuell Mock/Lokaler Score).
+  - [ ] Implementierung weiterer Aufgabengeneratoren (z.B. Analysis oder Betriebssysteme).
 * **Identifizierte Blocker / Probleme:**
-  - Keine Blocker vorhanden. Die Codebases für Server und Client laufen lauffähig parallel.
+  - Keine Blocker vorhanden.
 * **Nächste konkrete Schritte:**
-  1. JWT-basierte Benutzerregistrierung und Login im Express-Backend umsetzen (Phase 2).
-  2. Die `SolvedTask`-Tabelle bei korrekt gelösten Aufgaben über API befüllen.
-  3. API-Endpunkt für das globale Leaderboard (`/api/leaderboard`) bauen und im Client einbinden.
+  1. Mathematischen Generator für Ableitungen (Analysis) im Backend entwerfen.
+  2. Erste Betriebssysteme-Aufgabe (z. B. Speicher-Adressübersetzung) programmieren.
+  3. Leaderboard mit Pagination oder Top-10-Filter ausstatten.
 
 ---
 
@@ -47,6 +50,9 @@ Diese Datei dient als Synchronisationspunkt zwischen Entwicklern und KI-Agenten.
 
 ### Phase 2: User- & Leaderboard-System
 - [x] DB: Schema für User und gelöste Aufgaben definiert
-- [ ] Backend: JWT-basierte Authentifizierung (Register/Login)
-- [ ] Backend: API-Endpunkt für Highscores (`/api/leaderboard`)
-- [ ] Frontend: Leaderboard-Tab und Profil-Ansicht mit echten Backend-Daten füttern
+- [x] Backend: JWT-basierte Authentifizierung (Register/Login)
+- [x] Backend: API-Endpunkt für Highscores (`/api/leaderboard`)
+- [x] Frontend: Leaderboard-Tab und Profil-Ansicht mit echten Backend-Daten füttern
+- [x] Frontend: Onboarding-Tutorial für neue User
+- [x] Frontend: Light/Darkmode-Toggle
+- [x] Frontend: Modulauswahl-Startseite (Dashboard)

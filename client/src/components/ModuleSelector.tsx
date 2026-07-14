@@ -1,0 +1,220 @@
+import React, { useState } from 'react';
+import { Binary, Cpu, Network, GitFork, Lock, ArrowRight, BookOpen } from 'lucide-react';
+
+interface ModuleSelectorProps {
+  onSelectTask: (taskId: string) => void;
+}
+
+interface TaskTypeInfo {
+  id: string;
+  name: string;
+  description: string;
+  isActive: boolean;
+}
+
+interface ModuleInfo {
+  id: string;
+  name: string;
+  icon: React.ReactNode;
+  description: string;
+  tasks: TaskTypeInfo[];
+}
+
+export const ModuleSelector: React.FC<ModuleSelectorProps> = ({ onSelectTask }) => {
+  const [selectedModule, setSelectedModule] = useState<string>('lin_alg');
+
+  const modules: ModuleInfo[] = [
+    {
+      id: 'lin_alg',
+      name: 'Lineare Algebra',
+      icon: <Binary className="w-6 h-6 text-purple-400" />,
+      description: 'Matrizen, Determinanten, lineare Gleichungssysteme und Vektorräume.',
+      tasks: [
+        {
+          id: 'lin_alg_det',
+          name: '2x2 Determinante bestimmen',
+          description: 'Berechne die Determinante einer zufällig generierten 2x2 Matrix.',
+          isActive: true
+        },
+        {
+          id: 'lin_alg_det3x3',
+          name: '3x3 Determinante (Sarrus)',
+          description: 'Berechne die Determinante einer 3x3 Matrix mit der Regel von Sarrus.',
+          isActive: false
+        },
+        {
+          id: 'lin_alg_matmul',
+          name: 'Matrizenmultiplikation',
+          description: 'Multipliziere zwei kompatible ganzzahlige Matrizen.',
+          isActive: false
+        }
+      ]
+    },
+    {
+      id: 'os',
+      name: 'Betriebssysteme',
+      icon: <Cpu className="w-6 h-6 text-emerald-400" />,
+      description: 'Seitentabellen, Speicherverwaltung, Scheduling und CPU-Prozesse.',
+      tasks: [
+        {
+          id: 'os_page_table',
+          name: 'Adressübersetzung',
+          description: 'Übersetze virtuelle in physikalische Adressen mit Seitentabellen.',
+          isActive: false
+        },
+        {
+          id: 'os_scheduling',
+          name: 'Scheduling (FIFO / Round-Robin)',
+          description: 'Berechne Wartezeiten und Durchlaufzeiten für Prozess-Scheduling.',
+          isActive: false
+        }
+      ]
+    },
+    {
+      id: 'formal_sys',
+      name: 'Formale Systeme',
+      icon: <Network className="w-6 h-6 text-blue-400" />,
+      description: 'Automaten, formale Sprachen, Prozesse, Grammatiken und Aussagenlogik.',
+      tasks: [
+        {
+          id: 'formal_dfa_regex',
+          name: 'DFA in Regulären Ausdruck',
+          description: 'Konvertiere einen deterministischen endlichen Automaten in eine Regex.',
+          isActive: false
+        },
+        {
+          id: 'formal_truth_table',
+          name: 'Wahrheitstabellen erzeugen',
+          description: 'Bestimme die Erfüllbarkeit aussagenlogischer Formeln via Wahrheitstabelle.',
+          isActive: false
+        }
+      ]
+    },
+    {
+      id: 'algo_struct',
+      name: 'Algorithmen & Datenstrukturen',
+      icon: <GitFork className="w-6 h-6 text-pink-400" />,
+      description: 'Bäume, Sortieralgorithmen, Graphentheorie und Komplexitätsanalyse.',
+      tasks: [
+        {
+          id: 'algo_avl_rot',
+          name: 'AVL-Baum Rotationen',
+          description: 'Führe Links-/Rechts-Balancierungen auf AVL-Bäumen durch.',
+          isActive: false
+        },
+        {
+          id: 'algo_dijkstra',
+          name: 'Dijkstra-Wegfindung',
+          description: 'Finde den kürzesten Pfad in einem gewichteten Graphen.',
+          isActive: false
+        }
+      ]
+    }
+  ];
+
+  const activeModuleData = modules.find(m => m.id === selectedModule) || modules[0];
+
+  return (
+    <div className="w-full max-w-5xl mx-auto px-4 py-6" id="module-selector-dashboard">
+      <div className="text-center mb-10">
+        <h2 className="text-3xl md:text-4xl font-extrabold font-display bg-gradient-to-r from-slate-100 to-purple-400 bg-clip-text text-transparent mb-3">
+          Wähle ein Studienfach aus
+        </h2>
+        <p className="text-slate-400 text-sm md:text-base max-w-xl mx-auto">
+          Wähle das Modul und den Aufgabetyp, den du heute üben möchtest. Jede Aufgabe wird bei Klick frisch generiert!
+        </p>
+      </div>
+
+      {/* Module Navigation Grid */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-10">
+        {modules.map((mod) => {
+          const isSelected = mod.id === selectedModule;
+          return (
+            <button
+              key={mod.id}
+              onClick={() => setSelectedModule(mod.id)}
+              className={`p-5 rounded-2xl border text-left flex flex-col justify-between interactive-card cursor-pointer ${
+                isSelected
+                  ? 'bg-purple-500/10 border-purple-500/50 shadow-md shadow-purple-500/10'
+                  : 'bg-slate-900/30 border-slate-800/40'
+              }`}
+              id={`module-btn-${mod.id}`}
+            >
+              <div className="flex items-center justify-between mb-4">
+                <div className="p-2.5 bg-slate-800/40 rounded-xl border border-slate-700/30">
+                  {mod.icon}
+                </div>
+                {isSelected && (
+                  <span className="w-2.5 h-2.5 rounded-full bg-purple-500 animate-pulse" />
+                )}
+              </div>
+              <div>
+                <h3 className={`font-bold font-display text-base transition-colors ${
+                  isSelected ? 'text-purple-400' : 'text-slate-200'
+                }`}>
+                  {mod.name}
+                </h3>
+                <p className="text-slate-400 text-xs mt-1.5 leading-relaxed line-clamp-2">
+                  {mod.description}
+                </p>
+              </div>
+            </button>
+          );
+        })}
+      </div>
+
+      {/* Tasks Section for the Active Module */}
+      <div className="glass-panel rounded-3xl p-6 md:p-8 glow-purple">
+        <div className="flex items-center gap-3 mb-6">
+          <BookOpen className="w-5 h-5 text-purple-400" />
+          <h3 className="text-lg font-bold font-display text-slate-100">
+            Aufgabentypen in "{activeModuleData.name}"
+          </h3>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {activeModuleData.tasks.map((task) => (
+            <div
+              key={task.id}
+              className={`p-5 rounded-2xl border flex flex-col justify-between transition-all ${
+                task.isActive
+                  ? 'bg-slate-900/30 hover:bg-slate-900/50 border-slate-800/50 hover:border-purple-500/30 group cursor-pointer'
+                  : 'bg-slate-950/20 border-slate-900/40 opacity-55'
+              }`}
+              onClick={() => task.isActive && onSelectTask(task.id)}
+              id={`task-card-${task.id}`}
+            >
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <h4 className="font-bold text-slate-200 group-hover:text-purple-400 transition-colors">
+                    {task.name}
+                  </h4>
+                  {task.isActive ? (
+                    <span className="text-xs font-semibold px-2.5 py-0.5 bg-emerald-500/10 text-emerald-400 rounded-full border border-emerald-500/20">
+                      Aktiv
+                    </span>
+                  ) : (
+                    <div className="flex items-center gap-1 text-slate-500 text-xs font-medium">
+                      <Lock className="w-3 h-3" /> Bald
+                    </div>
+                  )}
+                </div>
+                <p className="text-slate-400 text-xs md:text-sm leading-relaxed mb-4">
+                  {task.description}
+                </p>
+              </div>
+
+              {task.isActive && (
+                <div className="flex items-center gap-1.5 text-xs font-semibold text-purple-400 group-hover:text-purple-300 mt-2">
+                  Jetzt starten <ArrowRight className="w-3.5 h-3.5 transition-transform group-hover:translate-x-1" />
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default ModuleSelector;
