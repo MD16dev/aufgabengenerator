@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { MathRenderer, LatexTextRenderer } from './MathRenderer';
-import { CheckCircle2, XCircle, HelpCircle, ArrowRight, RefreshCw, ArrowLeft } from 'lucide-react';
+import { CheckCircle2, XCircle, HelpCircle, ArrowRight, RefreshCw, ArrowLeft, Lock } from 'lucide-react';
 
 interface TaskData {
   type: string;
@@ -23,6 +23,8 @@ export const DeterminantTask: React.FC<DeterminantTaskProps> = ({ user, onSolved
   const [userAnswer, setUserAnswer] = useState<string>('');
   const [status, setStatus] = useState<'idle' | 'correct' | 'incorrect'>('idle');
   const [showSolution, setShowSolution] = useState<boolean>(false);
+  const [isLocked, setIsLocked] = useState<boolean>(false); // Track task locking state
+  
   const [localScore, setLocalScore] = useState<number>(() => {
     const saved = localStorage.getItem('aufgabengenerator_score');
     return saved ? parseInt(saved, 10) : 0;
@@ -37,6 +39,7 @@ export const DeterminantTask: React.FC<DeterminantTaskProps> = ({ user, onSolved
       setUserAnswer('');
       setStatus('idle');
       setShowSolution(false);
+      setIsLocked(false); // Reset lock state for the new task
       
       const response = await fetch('http://localhost:5000/api/tasks/determinant');
       if (!response.ok) {
@@ -63,7 +66,7 @@ export const DeterminantTask: React.FC<DeterminantTaskProps> = ({ user, onSolved
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!task || userAnswer.trim() === '') return;
+    if (!task || userAnswer.trim() === '' || isLocked) return;
 
     const parsedAnswer = parseFloat(userAnswer.replace(',', '.'));
     if (isNaN(parsedAnswer)) {
@@ -88,7 +91,6 @@ export const DeterminantTask: React.FC<DeterminantTaskProps> = ({ user, onSolved
           });
           
           if (response.ok) {
-            // Success: Notify parent to refresh scores/profile/leaderboard
             onSolved();
           }
         } catch (err) {
@@ -106,13 +108,18 @@ export const DeterminantTask: React.FC<DeterminantTaskProps> = ({ user, onSolved
     }
   };
 
+  const handleRevealSolution = () => {
+    setShowSolution(true);
+    setIsLocked(true); // Lock task permanently when solution is revealed
+  };
+
   return (
-    <div className="w-full max-w-2xl mx-auto px-4 py-8 animate-fadeIn">
+    <div className="w-full max-w-2xl mx-auto px-4 py-8 animate-fadeIn" id="determinant-task-solver">
       {/* Back button and title bar */}
       <div className="flex justify-between items-center mb-6">
         <button
           onClick={onBackToSelector}
-          className="flex items-center gap-1.5 text-sm font-semibold text-slate-400 hover:text-slate-200 transition-colors cursor-pointer"
+          className="flex items-center gap-1.5 text-sm font-semibold text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 transition-colors cursor-pointer"
         >
           <ArrowLeft className="w-4 h-4" /> Zurück zur Fächerauswahl
         </button>
@@ -125,7 +132,7 @@ export const DeterminantTask: React.FC<DeterminantTaskProps> = ({ user, onSolved
         {loading ? (
           <div className="flex flex-col items-center justify-center py-16 gap-4">
             <RefreshCw className="w-8 h-8 text-purple-500 animate-spin" />
-            <p className="text-slate-400 text-sm font-medium">Neue Aufgabe wird generiert...</p>
+            <p className="text-slate-500 dark:text-slate-400 text-sm font-medium">Neue Aufgabe wird generiert...</p>
           </div>
         ) : error ? (
           <div className="text-center py-12">
@@ -143,19 +150,19 @@ export const DeterminantTask: React.FC<DeterminantTaskProps> = ({ user, onSolved
           <div>
             {/* Header info */}
             <div className="flex justify-between items-center mb-6">
-              <span className="text-xs font-semibold uppercase tracking-wider px-3 py-1 bg-purple-500/10 text-purple-300 rounded-full border border-purple-500/20">
+              <span className="text-xs font-semibold uppercase tracking-wider px-3 py-1 bg-purple-500/10 text-purple-600 dark:text-purple-300 rounded-full border border-purple-500/25">
                 Lineare Algebra
               </span>
-              <span className="text-xs text-slate-400">Typ: 2x2 Determinante</span>
+              <span className="text-xs text-slate-500 dark:text-slate-400">Typ: 2x2 Determinante</span>
             </div>
 
             {/* Task prompt */}
-            <h2 className="text-xl md:text-2xl font-bold font-display text-slate-100 mb-6 leading-snug">
+            <h2 className="text-xl md:text-2xl font-bold font-display text-slate-800 dark:text-slate-100 mb-6 leading-snug">
               Berechne die Determinante der folgenden Matrix:
             </h2>
 
             {/* Math Render Block */}
-            <div className="flex justify-center my-8 select-none scale-110 md:scale-125 transition-transform">
+            <div className="flex justify-center my-8 select-none scale-110 md:scale-125 transition-transform" id="task-math-expression">
               <MathRenderer math={`M = ${task.latex}`} block />
             </div>
 
@@ -166,11 +173,12 @@ export const DeterminantTask: React.FC<DeterminantTaskProps> = ({ user, onSolved
                   <input
                     ref={inputRef}
                     type="text"
-                    disabled={status === 'correct'}
+                    disabled={status === 'correct' || isLocked}
                     value={userAnswer}
                     onChange={(e) => setUserAnswer(e.target.value)}
-                    placeholder="Ergebnis eingeben (z.B. -5)"
-                    className="w-full px-4 py-3.5 bg-slate-950/40 border border-slate-700/60 rounded-xl text-slate-200 placeholder-slate-500 focus:outline-none focus:border-purple-500 focus:ring-1 focus:ring-purple-500 transition-all font-medium text-lg disabled:opacity-60 disabled:cursor-not-allowed"
+                    placeholder={isLocked ? "Gesperrt (Lösung wurde angezeigt)" : "Ergebnis eingeben (z.B. -5)"}
+                    className="w-full px-4 py-3.5 bg-slate-100/50 dark:bg-slate-950/40 border border-slate-300 dark:border-slate-700/60 rounded-xl text-slate-800 dark:text-slate-200 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:border-purple-500 focus:ring-1 focus:ring-purple-500 transition-all font-medium text-lg disabled:opacity-60 disabled:cursor-not-allowed"
+                    id="task-answer-input"
                   />
                   {status === 'correct' && (
                     <CheckCircle2 className="absolute right-4 top-1/2 -translate-y-1/2 w-6 h-6 text-emerald-400 animate-bounce" />
@@ -178,13 +186,17 @@ export const DeterminantTask: React.FC<DeterminantTaskProps> = ({ user, onSolved
                   {status === 'incorrect' && (
                     <XCircle className="absolute right-4 top-1/2 -translate-y-1/2 w-6 h-6 text-rose-400" />
                   )}
+                  {isLocked && status !== 'correct' && (
+                    <Lock className="absolute right-4 top-1/2 -translate-y-1/2 w-5 h-5 text-amber-500" />
+                  )}
                 </div>
 
-                {status !== 'correct' ? (
+                {status !== 'correct' && !isLocked ? (
                   <button
                     type="submit"
                     disabled={userAnswer.trim() === ''}
                     className="w-full sm:w-auto px-6 py-3.5 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 disabled:from-purple-800 disabled:to-indigo-800 disabled:opacity-40 disabled:cursor-not-allowed text-white font-semibold rounded-xl transition-all shadow-lg hover:shadow-purple-500/25 flex items-center justify-center gap-2 cursor-pointer"
+                    id="submit-answer-btn"
                   >
                     Antwort prüfen
                   </button>
@@ -193,6 +205,7 @@ export const DeterminantTask: React.FC<DeterminantTaskProps> = ({ user, onSolved
                     type="button"
                     onClick={fetchTask}
                     className="w-full sm:w-auto px-6 py-3.5 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-semibold rounded-xl transition-all shadow-lg hover:shadow-emerald-500/25 flex items-center justify-center gap-2 cursor-pointer animate-fadeIn"
+                    id="next-task-btn"
                   >
                     Nächste Aufgabe <ArrowRight className="w-5 h-5" />
                   </button>
@@ -202,38 +215,50 @@ export const DeterminantTask: React.FC<DeterminantTaskProps> = ({ user, onSolved
 
             {/* Answer Feedbacks */}
             {status === 'incorrect' && (
-              <div className="mt-4 p-3.5 bg-rose-500/10 border border-rose-500/20 text-rose-300 rounded-xl text-sm font-medium flex items-start gap-2.5 animate-fadeIn">
-                <XCircle className="w-5 h-5 text-rose-400 shrink-0 mt-0.5" />
+              <div className="mt-4 p-3.5 bg-rose-500/10 border border-rose-500/20 text-rose-600 dark:text-rose-300 rounded-xl text-sm font-medium flex items-start gap-2.5 animate-fadeIn">
+                <XCircle className="w-5 h-5 text-rose-500 dark:text-rose-400 shrink-0 mt-0.5" />
                 <div>
                   Leider nicht korrekt. Rechne noch mal nach oder lass dir den Rechenweg anzeigen!
                 </div>
               </div>
             )}
             {status === 'correct' && (
-              <div className="mt-4 p-3.5 bg-emerald-500/10 border border-emerald-500/20 text-emerald-300 rounded-xl text-sm font-medium flex items-start gap-2.5 animate-fadeIn">
-                <CheckCircle2 className="w-5 h-5 text-emerald-400 shrink-0 mt-0.5" />
+              <div className="mt-4 p-3.5 bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-300 rounded-xl text-sm font-medium flex items-start gap-2.5 animate-fadeIn">
+                <CheckCircle2 className="w-5 h-5 text-emerald-500 dark:text-emerald-400 shrink-0 mt-0.5" />
                 <div>
                   Korrekt! Hervorragende Arbeit. Klicke auf "Nächste Aufgabe", um fortzufahren.
                 </div>
               </div>
             )}
+            {isLocked && status !== 'correct' && (
+              <div className="mt-4 p-3.5 bg-amber-500/10 border border-amber-500/20 text-amber-700 dark:text-amber-300 rounded-xl text-sm font-medium flex items-start gap-2.5 animate-fadeIn">
+                <Lock className="w-5 h-5 text-amber-600 dark:text-amber-500 shrink-0 mt-0.5" />
+                <div>
+                  Diese Aufgabe ist gesperrt, da der Rechenweg angezeigt wurde. Sie wird nicht für die Bestenliste gewertet. Generiere eine neue Aufgabe, um Punkte zu sammeln!
+                </div>
+              </div>
+            )}
 
             {/* Actions for Solution and Reload */}
-            <div className="flex flex-wrap justify-between items-center gap-3 mt-8 pt-6 border-t border-slate-800/60">
+            <div className="flex flex-wrap justify-between items-center gap-3 mt-8 pt-6 border-t border-slate-200 dark:border-slate-800/60">
               <button
                 type="button"
-                onClick={() => setShowSolution(!showSolution)}
-                className="flex items-center gap-2 text-sm font-medium text-slate-400 hover:text-purple-400 transition-colors cursor-pointer"
+                onClick={handleRevealSolution}
+                disabled={showSolution}
+                className={`flex items-center gap-2 text-sm font-medium transition-colors cursor-pointer ${
+                  showSolution ? 'text-purple-600 dark:text-purple-400' : 'text-slate-500 dark:text-slate-400 hover:text-purple-600 dark:hover:text-purple-400'
+                }`}
+                id="show-solution-btn"
               >
                 <HelpCircle className="w-4 h-4" />
-                {showSolution ? 'Lösung ausblenden' : 'Rechenweg anzeigen'}
+                {showSolution ? 'Lösung angezeigt' : 'Rechenweg anzeigen'}
               </button>
 
               {status !== 'correct' && (
                 <button
                   type="button"
                   onClick={fetchTask}
-                  className="flex items-center gap-2 text-sm font-medium text-slate-400 hover:text-slate-200 transition-colors cursor-pointer"
+                  className="flex items-center gap-2 text-sm font-medium text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 transition-colors cursor-pointer"
                 >
                   <RefreshCw className="w-4 h-4" /> Überspringen
                 </button>
@@ -242,13 +267,13 @@ export const DeterminantTask: React.FC<DeterminantTaskProps> = ({ user, onSolved
 
             {/* Solution Display */}
             {showSolution && (
-              <div className="mt-6 p-5 bg-slate-900/40 border border-slate-800/40 rounded-2xl animate-fadeIn">
-                <h3 className="text-sm font-semibold text-purple-400 uppercase tracking-wider mb-4">
+              <div className="mt-6 p-5 bg-slate-100/50 dark:bg-slate-900/40 border border-slate-200 dark:border-slate-800/40 rounded-2xl animate-fadeIn">
+                <h3 className="text-sm font-semibold text-purple-600 dark:text-purple-400 uppercase tracking-wider mb-4">
                   Rechenweg:
                 </h3>
-                <div className="space-y-3 text-slate-300 text-sm md:text-base">
+                <div className="space-y-3 text-slate-700 dark:text-slate-300 text-sm md:text-base">
                   {task.steps.map((step, idx) => (
-                    <div key={idx} className="pb-3 last:pb-0 border-b last:border-0 border-slate-800/20">
+                    <div key={idx} className="pb-3 last:pb-0 border-b last:border-0 border-slate-200 dark:border-slate-850">
                       <LatexTextRenderer text={step} />
                     </div>
                   ))}

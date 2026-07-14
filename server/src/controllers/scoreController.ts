@@ -50,16 +50,31 @@ export const solveTask = async (req: AuthenticatedRequest, res: Response, next: 
 };
 
 /**
- * Retrieve the highscore leaderboard list.
+ * Retrieve the highscore leaderboard list. Supports optional filters ?module=... or ?taskId=...
  */
 export const getLeaderboard = async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
   try {
-    // Get all users with their solved task details
+    const { module, taskId } = req.query;
+
+    // Build the conditional filter clause for solvedTasks
+    const solvedTasksWhereClause: any = {};
+    if (taskId) {
+      solvedTasksWhereClause.taskTypeId = String(taskId);
+    } else if (module) {
+      solvedTasksWhereClause.taskType = {
+        module: String(module)
+      };
+    }
+
+    // Get all users with filtered solved task counts
     const users = await prisma.user.findMany({
       select: {
         id: true,
         username: true,
+        displayName: true,
+        profilePic: true,
         solvedTasks: {
+          where: solvedTasksWhereClause,
           select: {
             taskType: {
               select: {
@@ -78,11 +93,16 @@ export const getLeaderboard = async (req: AuthenticatedRequest, res: Response, n
       
       return {
         username: user.username,
+        displayName: user.displayName || user.username,
+        profilePic: user.profilePic,
         solvedCount,
         module: lastSolvedModule,
         isUser: req.user ? req.user.userId === user.id : false
       };
-    }).sort((a, b) => b.solvedCount - a.solvedCount);
+    })
+    // For specific leaderboards, filter out users who haven't solved any tasks in that category
+    .filter(item => item.solvedCount > 0 || (!taskId && !module))
+    .sort((a, b) => b.solvedCount - a.solvedCount);
 
     res.json(leaderboard);
   } catch (error) {

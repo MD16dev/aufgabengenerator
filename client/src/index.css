@@ -116,3 +116,14 @@ body {
 .animate-fadeIn {
   animation: fadeIn 0.3s ease forwards;
 }
+
+/* Spotlight highlighting for onboarding tour */
+.spotlight-active {
+  position: relative !important;
+  z-index: 50 !important;
+  box-shadow: 0 0 0 9999px rgba(15, 23, 42, 0.85), 0 0 20px 4px rgba(168, 85, 247, 0.5) !important;
+  pointer-events: auto !important;
+  border-color: rgba(168, 85, 247, 0.6) !important;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
