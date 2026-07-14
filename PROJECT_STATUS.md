@@ -18,17 +18,21 @@ Diese Datei dient als Synchronisationspunkt zwischen Entwicklern und KI-Agenten.
 * **Was wurde erledigt:**
   - [x] Express-Grundgerüst mit TypeScript und modularer Verzeichnisstruktur eingerichtet.
   - [x] API-Route für `/api/tasks/determinant` implementiert.
-  - [x] Mathematischer Generator für $2 \times 2$ Determinanten mit LaTeX-Musterlösung implementiert.
-  - [x] Vitest Unit- und Integrationstests (Supertest) geschrieben (100% Pass).
+  - [x] Mathematischer Generator für $2 \times 2$ Determinanten mit LaTeX-Musterlösung.
+  - [x] Vitest Unit- und Integrationstests (Supertest) geschrieben (14/14 Pass).
   - [x] Prisma ORM mit SQLite und Tabellen (`User`, `TaskType`, `SolvedTask`) initialisiert und migriert.
   - [x] Benutzerregistrierung und Login (JWT-basiert, PBKDF2-Passworthashs) im Backend implementiert.
   - [x] `/api/tasks/solve` (POST) und `/api/tasks/leaderboard` (GET) Endpunkte implementiert.
   - [x] React-Vite-Client mit TypeScript initialisiert und dedupliziert.
   - [x] Tailwind CSS v4 und KaTeX in React integriert.
-  - [x] Light-/Darkmode-Umschalter mit automatischer Systemerkennung (prefers-color-scheme) und CSS-Variablentheming erstellt.
-  - [x] Startseiten-Fächerauswahl-Dashboard (`ModuleSelector`) mit Modulen und Aufgabetypen (sowie bald verfügbaren Lock-Cards) erstellt.
-  - [x] Interaktive Onboarding-Tour (`OnboardingTour`) für Erstbesucher implementiert (gespeichert in LocalStorage).
-  - [x] AuthModal für Login & Registrierung mit Frontend-Anbindung an JWT-Endpoints implementiert.
+  - [x] Light-/Darkmode-Umschalter mit automatischer Systemerkennung (prefers-color-scheme).
+  - [x] Startseiten-Fächerauswahl-Dashboard (`ModuleSelector`) mit Modulen und Aufgabetypen.
+  - [x] Echte JWT-Authentifizierung und Profileinstellungen (Name, Passwort ändern, Base64-Avatar-Upload).
+  - [x] Dedizierte Startseite (Home) mit Schnellnavigation, Statistiken und Pomodoro-Timer-Konfiguration.
+  - [x] Anpassbarer & persistenter Pomodoro-Timer (schwebendes Widget in der Ecke, das auf allen Seiten sichtbar ist, mit Synth-Chime-Glockensound bei Ablauf).
+  - [x] Getrenntes Split-Screen-Layout auf der Aufgaben-Seite (links: Aufgaben/Rechnen, rechts: Modul-/Aufgaben-Rangliste).
+  - [x] Live-Aktualisierung der rechten Rangliste bei korrekt gelösten Aufgaben.
+  - [x] Flüssig gleitende und morphende Spotlight-Onboarding-Tour (über ein einziges, transformiertes Masken-Overlay).
 * **Aktuell in Arbeit / Unfertig:**
   - [ ] Implementierung weiterer Aufgabengeneratoren (z.B. Analysis oder Betriebssysteme).
 * **Identifizierte Blocker / Probleme:**
@@ -56,3 +60,7 @@ Diese Datei dient als Synchronisationspunkt zwischen Entwicklern und KI-Agenten.
 - [x] Frontend: Onboarding-Tutorial für neue User
 - [x] Frontend: Light/Darkmode-Toggle
 - [x] Frontend: Modulauswahl-Startseite (Dashboard)
+- [x] Frontend: Eigene Startseite (Home) mit Pomodoro-Timer
+- [x] Frontend: Persistentes Pomodoro-Timer-Widget
+- [x] Frontend: Split-Screen-Layout mit Live-Ranglisten-Updates
+- [x] Frontend: Profil bearbeiten (Anzeigename, Passwort, Avatar-Upload)

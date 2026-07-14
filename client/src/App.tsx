@@ -6,10 +6,11 @@ import { AuthModal } from './components/AuthModal';
 import { OnboardingTour } from './components/OnboardingTour';
 import { 
   GraduationCap, Trophy, User, BookOpen, Clock, Medal, 
-  LogIn, LogOut, RefreshCw, Sparkles, HelpCircle, Edit, Save, Camera
+  LogIn, LogOut, RefreshCw, Sparkles, HelpCircle, Edit, Save, Camera,
+  Play, Pause, RotateCcw, Home, ArrowRight, ShieldCheck, Zap, Compass
 } from 'lucide-react';
 
-type TabType = 'tasks' | 'leaderboard' | 'profile';
+type TabType = 'home' | 'tasks' | 'leaderboard' | 'profile';
 type LeaderboardFilterType = 'global' | 'module' | 'task';
 
 interface UserProfile {
@@ -31,8 +32,9 @@ interface LeaderboardItem {
 }
 
 function App() {
-  const [activeTab, setActiveTab] = useState<TabType>('tasks');
+  const [activeTab, setActiveTab] = useState<TabType>('home');
   const [activeTaskId, setActiveTaskId] = useState<string | null>(null);
+  const [activeModuleId, setActiveModuleId] = useState<string>('lin_alg');
   const [user, setUser] = useState<UserProfile | null>(null);
   const [loadingUser, setLoadingUser] = useState<boolean>(true);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState<boolean>(false);
@@ -46,18 +48,51 @@ function App() {
   const [savingProfile, setSavingProfile] = useState<boolean>(false);
   const [profileMessage, setProfileMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
-  // Leaderboard state & filters
+  // Dedicated Leaderboard Tab state & filters
   const [leaderboard, setLeaderboard] = useState<LeaderboardItem[]>([]);
   const [loadingLeaderboard, setLoadingLeaderboard] = useState<boolean>(false);
   const [leaderboardFilter, setLeaderboardFilter] = useState<LeaderboardFilterType>('global');
   const [selectedModuleFilter, setSelectedModuleFilter] = useState<string>('Lineare Algebra');
   const [selectedTaskFilter, setSelectedTaskFilter] = useState<string>('lin_alg_det');
 
+  // Side-by-side tasks tab leaderboard state
+  const [sideLeaderboard, setSideLeaderboard] = useState<LeaderboardItem[]>([]);
+  const [loadingSideLeaderboard, setLoadingSideLeaderboard] = useState<boolean>(false);
+
+  // Pomodoro State
+  const [pomodoroWorkTime, setPomodoroWorkTime] = useState<number>(25);
+  const [pomodoroBreakTime, setPomodoroBreakTime] = useState<number>(5);
+  const [pomodoroMinutes, setPomodoroMinutes] = useState<number>(25);
+  const [pomodoroSeconds, setPomodoroSeconds] = useState<number>(0);
+  const [pomodoroIsActive, setPomodoroIsActive] = useState<boolean>(false);
+  const [pomodoroMode, setPomodoroMode] = useState<'work' | 'break'>('work');
+  const [isWidgetExpanded, setIsWidgetExpanded] = useState<boolean>(false);
+
   // Local storage reading fallback for guest score
   const [guestScore, setGuestScore] = useState<number>(() => {
     const saved = localStorage.getItem('aufgabengenerator_score');
     return saved ? parseInt(saved, 10) : 0;
   });
+
+  // Synthesize a soft bell alarm sound when pomodoro ends
+  const playChime = () => {
+    try {
+      const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(587.33, ctx.currentTime); // D5
+      osc.frequency.setValueAtTime(880.00, ctx.currentTime + 0.12); // A5
+      gain.gain.setValueAtTime(0.12, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.5);
+      osc.start();
+      osc.stop(ctx.currentTime + 0.55);
+    } catch (e) {
+      console.error('Audio alert chime could not play:', e);
+    }
+  };
 
   // Verify token and fetch user session on load
   const checkUserSession = async () => {
@@ -118,6 +153,35 @@ function App() {
     }
   };
 
+  // Fetch side leaderboard for split layout
+  const fetchSideLeaderboard = async (filterType: 'module' | 'task', filterValue: string) => {
+    setLoadingSideLeaderboard(true);
+    const token = localStorage.getItem('auth_token');
+    const headers: HeadersInit = {};
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
+
+    let url = 'http://localhost:5000/api/tasks/leaderboard';
+    if (filterType === 'module') {
+      url += `?module=${encodeURIComponent(filterValue)}`;
+    } else if (filterType === 'task') {
+      url += `?taskId=${encodeURIComponent(filterValue)}`;
+    }
+
+    try {
+      const response = await fetch(url, { headers });
+      if (response.ok) {
+        const data = await response.json();
+        setSideLeaderboard(data);
+      }
+    } catch (err) {
+      console.error('Side leaderboard failed to fetch:', err);
+    } finally {
+      setLoadingSideLeaderboard(false);
+    }
+  };
+
   useEffect(() => {
     checkUserSession();
     
@@ -128,12 +192,89 @@ function App() {
     }
   }, []);
 
-  // Fetch leaderboard when switching to its tab or changing filters
+  // Fetch dedicated leaderboard on filters updates
   useEffect(() => {
     if (activeTab === 'leaderboard') {
       fetchLeaderboard();
     }
   }, [activeTab, leaderboardFilter, selectedModuleFilter, selectedTaskFilter]);
+
+  // Fetch side leaderboard based on active task or active module selection card
+  useEffect(() => {
+    if (activeTab === 'tasks') {
+      if (activeTaskId) {
+        fetchSideLeaderboard('task', activeTaskId);
+      } else {
+        const moduleNameMap: Record<string, string> = {
+          'lin_alg': 'Lineare Algebra',
+          'os': 'Betriebssysteme',
+          'formal_sys': 'Formale Systeme',
+          'algo_struct': 'Algorithmen & Datenstrukturen'
+        };
+        fetchSideLeaderboard('module', moduleNameMap[activeModuleId] || 'Lineare Algebra');
+      }
+    }
+  }, [activeTab, activeTaskId, activeModuleId]);
+
+  // Pomodoro ticking interval hook
+  useEffect(() => {
+    let timerInterval: any = null;
+    if (pomodoroIsActive) {
+      timerInterval = setInterval(() => {
+        if (pomodoroSeconds > 0) {
+          setPomodoroSeconds(prev => prev - 1);
+        } else {
+          if (pomodoroMinutes > 0) {
+            setPomodoroMinutes(prev => prev - 1);
+            setPomodoroSeconds(59);
+          } else {
+            // Timer Finished! Play Alert chime and swap states
+            playChime();
+            const nextMode = pomodoroMode === 'work' ? 'break' : 'work';
+            setPomodoroMode(nextMode);
+            const nextMins = nextMode === 'work' ? pomodoroWorkTime : pomodoroBreakTime;
+            setPomodoroMinutes(nextMins);
+            setPomodoroSeconds(0);
+            
+            // Show alert notification
+            setTimeout(() => {
+              alert(
+                nextMode === 'break' 
+                  ? 'Fokuszeit beendet! Nimm dir eine kurze Pause. ☕' 
+                  : 'Pause beendet! Zeit sich wieder zu fokussieren. 🧠'
+              );
+            }, 100);
+          }
+        }
+      }, 1000);
+    } else {
+      clearInterval(timerInterval);
+    }
+    return () => clearInterval(timerInterval);
+  }, [pomodoroIsActive, pomodoroMinutes, pomodoroSeconds, pomodoroMode, pomodoroWorkTime, pomodoroBreakTime]);
+
+  const handleWorkTimeChange = (mins: number) => {
+    setPomodoroWorkTime(mins);
+    if (!pomodoroIsActive && pomodoroMode === 'work') {
+      setPomodoroMinutes(mins);
+      setPomodoroSeconds(0);
+    }
+  };
+
+  const handleBreakTimeChange = (mins: number) => {
+    setPomodoroBreakTime(mins);
+    if (!pomodoroIsActive && pomodoroMode === 'break') {
+      setPomodoroMinutes(mins);
+      setPomodoroSeconds(0);
+    }
+  };
+
+  const resetPomodoro = () => {
+    setPomodoroIsActive(false);
+    setPomodoroMode('work');
+    setPomodoroMinutes(pomodoroWorkTime);
+    setPomodoroSeconds(0);
+  };
 
   const handleAuthSuccess = () => {
     checkUserSession();
@@ -144,12 +285,16 @@ function App() {
     localStorage.removeItem('auth_token');
     setUser(null);
     setIsEditMode(false);
-    setActiveTab('tasks');
+    setActiveTab('home');
   };
 
   const handleSolved = () => {
     if (user) {
       checkUserSession();
+      // Live leaderboard update!
+      if (activeTaskId) {
+        fetchSideLeaderboard('task', activeTaskId);
+      }
     } else {
       const saved = localStorage.getItem('aufgabengenerator_score');
       setGuestScore(saved ? parseInt(saved, 10) : 0);
@@ -222,6 +367,16 @@ function App() {
     return user ? user.solvedCount : guestScore;
   };
 
+  const formatTime = (mins: number, secs: number) => {
+    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+  };
+
+  const getProgressPercentage = () => {
+    const totalSecs = pomodoroMode === 'work' ? pomodoroWorkTime * 60 : pomodoroBreakTime * 60;
+    const remainingSecs = pomodoroMinutes * 60 + pomodoroSeconds;
+    return ((totalSecs - remainingSecs) / totalSecs) * 100;
+  };
+
   return (
     <div className="min-h-screen flex flex-col transition-colors duration-300">
       {/* Decorative blobs */}
@@ -235,7 +390,7 @@ function App() {
           {/* Logo & Slogan */}
           <div 
             className="flex items-center gap-3 cursor-pointer" 
-            onClick={() => { setActiveTab('tasks'); setActiveTaskId(null); }}
+            onClick={() => { setActiveTab('home'); setActiveTaskId(null); }}
             id="brand-logo-panel"
           >
             <div className="p-2 bg-gradient-to-tr from-purple-600 to-indigo-600 rounded-xl shadow-lg shadow-purple-500/20">
@@ -252,8 +407,18 @@ function App() {
           {/* Navigation Tabs */}
           <nav className="flex bg-slate-200/50 dark:bg-slate-900/40 p-1 rounded-xl border border-slate-300 dark:border-slate-800/60" id="navigation-tabs-list">
             <button
+              onClick={() => { setActiveTab('home'); setActiveTaskId(null); }}
+              className={`flex items-center gap-1.5 px-3 py-2 text-xs font-semibold rounded-lg transition-all cursor-pointer ${
+                activeTab === 'home'
+                  ? 'bg-purple-600 text-white shadow-md'
+                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200'
+              }`}
+            >
+              <Home className="w-4 h-4" /> Start
+            </button>
+            <button
               onClick={() => setActiveTab('tasks')}
-              className={`flex items-center gap-1.5 px-4 py-2 text-xs font-semibold rounded-lg transition-all cursor-pointer ${
+              className={`flex items-center gap-1.5 px-3 py-2 text-xs font-semibold rounded-lg transition-all cursor-pointer ${
                 activeTab === 'tasks'
                   ? 'bg-purple-600 text-white shadow-md'
                   : 'text-slate-600 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200'
@@ -263,7 +428,7 @@ function App() {
             </button>
             <button
               onClick={() => setActiveTab('leaderboard')}
-              className={`flex items-center gap-1.5 px-4 py-2 text-xs font-semibold rounded-lg transition-all cursor-pointer ${
+              className={`flex items-center gap-1.5 px-3 py-2 text-xs font-semibold rounded-lg transition-all cursor-pointer ${
                 activeTab === 'leaderboard'
                   ? 'bg-purple-600 text-white shadow-md'
                   : 'text-slate-600 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200'
@@ -273,7 +438,7 @@ function App() {
             </button>
             <button
               onClick={() => setActiveTab('profile')}
-              className={`flex items-center gap-1.5 px-4 py-2 text-xs font-semibold rounded-lg transition-all cursor-pointer ${
+              className={`flex items-center gap-1.5 px-3 py-2 text-xs font-semibold rounded-lg transition-all cursor-pointer ${
                 activeTab === 'profile'
                   ? 'bg-purple-600 text-white shadow-md'
                   : 'text-slate-600 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200'
@@ -322,22 +487,310 @@ function App() {
       </header>
 
       {/* Main Content Area */}
-      <main className="flex-grow flex items-center justify-center py-8 z-10">
+      <main className="flex-grow flex items-center justify-center py-6 px-4 z-10">
         
-        {/* Dynamic tasks flow */}
-        {activeTab === 'tasks' && (
-          activeTaskId === 'lin_alg_det' ? (
-            <DeterminantTask 
-              user={user} 
-              onSolved={handleSolved}
-              onBackToSelector={() => setActiveTaskId(null)} 
-            />
-          ) : (
-            <ModuleSelector onSelectTask={(taskId) => setActiveTaskId(taskId)} />
-          )
+        {/* TAB 1: Startseite / Dashboard */}
+        {activeTab === 'home' && (
+          <div className="w-full max-w-4xl mx-auto space-y-6 animate-fadeIn">
+            {/* Welcoming Card */}
+            <div className="glass-panel rounded-3xl p-6 md:p-8 relative overflow-hidden glow-purple">
+              <div className="absolute top-0 right-0 w-64 h-64 bg-purple-500/10 rounded-full blur-3xl pointer-events-none" />
+              <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+                <div>
+                  <h2 className="text-3xl font-extrabold font-display text-slate-800 dark:text-slate-100 mb-2">
+                    Hallo, {user ? user.displayName : 'Gast'}! 👋
+                  </h2>
+                  <p className="text-slate-600 dark:text-slate-400 text-sm md:text-base max-w-lg leading-relaxed">
+                    Willkommen zurück auf deinem Aufgabengenerator-Dashboard. Wähle unten ein Lernfach aus oder setze deinen Pomodoro-Fokus-Timer, um direkt loszulegen!
+                  </p>
+                </div>
+                <div className="flex gap-4 shrink-0">
+                  <div className="text-center p-4 bg-slate-100/50 dark:bg-slate-900/30 border border-slate-200 dark:border-slate-800/40 rounded-2xl w-24">
+                    <span className="block text-2xl font-extrabold text-slate-800 dark:text-slate-100">{getActiveScore()}</span>
+                    <span className="text-[10px] text-slate-500 uppercase font-semibold">Punkte</span>
+                  </div>
+                  <div className="text-center p-4 bg-slate-100/50 dark:bg-slate-900/30 border border-slate-200 dark:border-slate-800/40 rounded-2xl w-24">
+                    <span className="block text-2xl font-extrabold text-slate-800 dark:text-slate-100">{user ? 1 : 0}</span>
+                    <span className="text-[10px] text-slate-500 uppercase font-semibold">Module</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Main Home Grid (Quicknav & Pomodoro Config) */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              
+              {/* Quick Navigation Panel */}
+              <div className="glass-panel rounded-3xl p-6 glow-purple flex flex-col justify-between">
+                <div>
+                  <h3 className="text-lg font-bold font-display text-slate-800 dark:text-slate-100 mb-4 flex items-center gap-2">
+                    <Compass className="w-5 h-5 text-purple-650" /> Schnellzugriff
+                  </h3>
+                  <div className="space-y-3">
+                    <button
+                      onClick={() => setActiveTab('tasks')}
+                      className="w-full flex items-center justify-between p-4 bg-slate-100/50 dark:bg-slate-900/30 hover:bg-slate-200/60 dark:hover:bg-slate-900/50 border border-slate-200 dark:border-slate-800/40 rounded-2xl transition-all cursor-pointer group text-left"
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="p-2.5 bg-purple-500/10 rounded-xl border border-purple-500/20 text-purple-600 dark:text-purple-400">
+                          <BookOpen className="w-5 h-5" />
+                        </div>
+                        <div>
+                          <span className="font-bold text-slate-850 dark:text-slate-200 block text-sm">Übungsaufgaben rechnen</span>
+                          <span className="text-slate-500 text-xs">Unendliche Fragen generieren & loesen</span>
+                        </div>
+                      </div>
+                      <ArrowRight className="w-4 h-4 text-slate-400 group-hover:translate-x-1 transition-transform" />
+                    </button>
+
+                    <button
+                      onClick={() => setActiveTab('leaderboard')}
+                      className="w-full flex items-center justify-between p-4 bg-slate-100/50 dark:bg-slate-900/30 hover:bg-slate-200/60 dark:hover:bg-slate-900/50 border border-slate-200 dark:border-slate-800/40 rounded-2xl transition-all cursor-pointer group text-left"
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="p-2.5 bg-emerald-500/10 rounded-xl border border-emerald-500/20 text-emerald-600 dark:text-emerald-400">
+                          <Trophy className="w-5 h-5" />
+                        </div>
+                        <div>
+                          <span className="font-bold text-slate-850 dark:text-slate-200 block text-sm">Bestenliste einsehen</span>
+                          <span className="text-slate-500 text-xs">Vergleiche deine Leistungen mit anderen</span>
+                        </div>
+                      </div>
+                      <ArrowRight className="w-4 h-4 text-slate-400 group-hover:translate-x-1 transition-transform" />
+                    </button>
+
+                    <button
+                      onClick={() => setActiveTab('profile')}
+                      className="w-full flex items-center justify-between p-4 bg-slate-100/50 dark:bg-slate-900/30 hover:bg-slate-200/60 dark:hover:bg-slate-900/50 border border-slate-200 dark:border-slate-800/40 rounded-2xl transition-all cursor-pointer group text-left"
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="p-2.5 bg-blue-500/10 rounded-xl border border-blue-500/20 text-blue-600 dark:text-blue-400">
+                          <User className="w-5 h-5" />
+                        </div>
+                        <div>
+                          <span className="font-bold text-slate-850 dark:text-slate-200 block text-sm">Mein Profil bearbeiten</span>
+                          <span className="text-slate-500 text-xs">Passwort, Name und Profilbild anpassen</span>
+                        </div>
+                      </div>
+                      <ArrowRight className="w-4 h-4 text-slate-400 group-hover:translate-x-1 transition-transform" />
+                    </button>
+                  </div>
+                </div>
+                <div className="mt-4 pt-4 border-t border-slate-200 dark:border-slate-800/65 flex items-center gap-2 text-xs text-slate-500">
+                  <ShieldCheck className="w-4 h-4 text-emerald-500" />
+                  <span>Deine Daten werden sicher in der SQLite-Datenbank verschlüsselt.</span>
+                </div>
+              </div>
+
+              {/* Pomodoro Timer Configuration & Visual Panel */}
+              <div className="glass-panel rounded-3xl p-6 glow-purple flex flex-col justify-between">
+                <div>
+                  <h3 className="text-lg font-bold font-display text-slate-800 dark:text-slate-100 mb-4 flex items-center gap-2">
+                    <Clock className="w-5 h-5 text-purple-650" /> Pomodoro Timer
+                  </h3>
+
+                  {/* Circular Timer Visual Display */}
+                  <div className="flex flex-col items-center justify-center py-4 relative">
+                    <div className="relative w-36 h-36 flex items-center justify-center">
+                      {/* SVG Circular Ring */}
+                      <svg className="w-full h-full -rotate-90">
+                        <circle
+                          cx="72"
+                          cy="72"
+                          r="64"
+                          className="stroke-slate-200 dark:stroke-slate-800 fill-none"
+                          strokeWidth="6"
+                        />
+                        <circle
+                          cx="72"
+                          cy="72"
+                          r="64"
+                          className={`fill-none transition-all duration-1000 ${
+                            pomodoroMode === 'work' ? 'stroke-purple-600' : 'stroke-emerald-500'
+                          }`}
+                          strokeWidth="7"
+                          strokeDasharray={402}
+                          strokeDashoffset={402 - (402 * getProgressPercentage()) / 100}
+                          strokeLinecap="round"
+                        />
+                      </svg>
+                      <div className="absolute flex flex-col items-center justify-center">
+                        <span className="text-2xl font-extrabold text-slate-800 dark:text-slate-100 tabular-nums">
+                          {formatTime(pomodoroMinutes, pomodoroSeconds)}
+                        </span>
+                        <span className={`text-[10px] font-bold uppercase tracking-wider mt-1 ${
+                          pomodoroMode === 'work' ? 'text-purple-600 dark:text-purple-400' : 'text-emerald-500'
+                        }`}>
+                          {pomodoroMode === 'work' ? 'Fokuszeit' : 'Pause'}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Quick controls */}
+                    <div className="flex items-center gap-3 mt-4">
+                      <button
+                        onClick={() => setPomodoroIsActive(!pomodoroIsActive)}
+                        className={`p-2.5 rounded-xl border transition-all cursor-pointer ${
+                          pomodoroIsActive 
+                            ? 'bg-rose-500/10 hover:bg-rose-500/20 border-rose-500/20 text-rose-600 dark:text-rose-450' 
+                            : 'bg-purple-600 hover:bg-purple-500 text-white border-transparent shadow-md'
+                        }`}
+                      >
+                        {pomodoroIsActive ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
+                      </button>
+                      <button
+                        onClick={resetPomodoro}
+                        className="p-2.5 bg-slate-100/50 dark:bg-slate-900/30 hover:bg-slate-200/50 dark:hover:bg-slate-800/40 border border-slate-300 dark:border-slate-800 rounded-xl text-slate-500 hover:text-slate-700 dark:hover:text-slate-200 transition-colors cursor-pointer"
+                        title="Timer zurücksetzen"
+                      >
+                        <RotateCcw className="w-4 h-4" />
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Customizable durations */}
+                  <div className="grid grid-cols-2 gap-3 mt-4 border-t border-slate-200 dark:border-slate-800/60 pt-4">
+                    <div>
+                      <label className="block text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">
+                        Fokuszeit (min)
+                      </label>
+                      <input
+                        type="number"
+                        min="1"
+                        max="180"
+                        value={pomodoroWorkTime}
+                        onChange={(e) => handleWorkTimeChange(parseInt(e.target.value, 10) || 25)}
+                        className="w-full px-3 py-1.5 bg-slate-200/40 dark:bg-slate-950/40 border border-slate-300 dark:border-slate-700/60 rounded-xl text-slate-800 dark:text-slate-200 text-xs font-semibold focus:outline-none"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">
+                        Pause (min)
+                      </label>
+                      <input
+                        type="number"
+                        min="1"
+                        max="120"
+                        value={pomodoroBreakTime}
+                        onChange={(e) => handleBreakTimeChange(parseInt(e.target.value, 10) || 5)}
+                        className="w-full px-3 py-1.5 bg-slate-200/40 dark:bg-slate-950/40 border border-slate-300 dark:border-slate-700/60 rounded-xl text-slate-800 dark:text-slate-200 text-xs font-semibold focus:outline-none"
+                      />
+                    </div>
+                  </div>
+
+                </div>
+              </div>
+
+            </div>
+          </div>
         )}
 
-        {/* Dynamic Leaderboard tab */}
+        {/* TAB 2: Aufgaben (Split Screen Dashboard Layout) */}
+        {activeTab === 'tasks' && (
+          <div className="w-full max-w-6xl mx-auto flex flex-col lg:flex-row gap-6 items-stretch animate-fadeIn" id="tasks-split-layout">
+            
+            {/* Left Side: Selector or Task Solver */}
+            <div className="flex-grow flex items-center justify-center">
+              {activeTaskId === 'lin_alg_det' ? (
+                <DeterminantTask 
+                  user={user} 
+                  onSolved={handleSolved}
+                  onBackToSelector={() => setActiveTaskId(null)} 
+                />
+              ) : (
+                <ModuleSelector 
+                  activeModule={activeModuleId}
+                  onActiveModuleChange={setActiveModuleId}
+                  onSelectTask={(taskId) => setActiveTaskId(taskId)} 
+                />
+              )}
+            </div>
+
+            {/* Right Side: Contextual live-updating module/task Leaderboard */}
+            <div className="w-full lg:w-[350px] shrink-0">
+              <div className="glass-panel rounded-3xl p-5 glow-purple h-full flex flex-col justify-between min-h-[400px]">
+                <div>
+                  <div className="flex items-center gap-2 mb-2">
+                    <Trophy className="w-4 h-4 text-purple-600 dark:text-purple-400" />
+                    <h3 className="font-bold font-display text-sm text-slate-850 dark:text-slate-100">
+                      {activeTaskId ? 'Aufgaben-Rangliste' : 'Fach-Rangliste'}
+                    </h3>
+                  </div>
+                  <span className="text-[10px] font-semibold text-slate-500 block mb-4 uppercase tracking-wider border-b border-slate-200 dark:border-slate-800/60 pb-2">
+                    {activeTaskId ? 'Typ: 2x2 Determinante' : `Modul: ${
+                      activeModuleId === 'lin_alg' ? 'Lineare Algebra' :
+                      activeModuleId === 'os' ? 'Betriebssysteme' :
+                      activeModuleId === 'formal_sys' ? 'Formale Systeme' :
+                      'Algorithmen & Datenstrukturen'
+                    }`}
+                  </span>
+
+                  {loadingSideLeaderboard ? (
+                    <div className="flex flex-col items-center justify-center py-16 gap-3">
+                      <RefreshCw className="w-6 h-6 text-purple-500 animate-spin" />
+                      <p className="text-[10px] text-slate-500">Rangliste wird geladen...</p>
+                    </div>
+                  ) : sideLeaderboard.length > 0 ? (
+                    <div className="space-y-2 max-h-[450px] overflow-y-auto pr-1">
+                      {sideLeaderboard.map((item, idx) => (
+                        <div
+                          key={idx}
+                          className={`flex items-center justify-between p-3 rounded-xl border text-xs transition-all ${
+                            item.isUser
+                              ? 'bg-purple-500/10 dark:bg-purple-500/15 border-purple-500/30'
+                              : 'bg-slate-100/50 dark:bg-slate-900/20 border-slate-200 dark:border-slate-850'
+                          }`}
+                        >
+                          <div className="flex items-center gap-2.5 min-w-0">
+                            <span className={`w-5 h-5 rounded-full flex items-center justify-center font-bold text-[10px] shrink-0 ${
+                              idx === 0 ? 'bg-amber-500/20 text-amber-600 dark:text-amber-400' :
+                              idx === 1 ? 'bg-slate-400/25 text-slate-600 dark:text-slate-300' :
+                              idx === 2 ? 'bg-amber-700/20 text-amber-800 dark:text-amber-600' :
+                              'bg-slate-200 dark:bg-slate-800/40 text-slate-550'
+                            }`}>
+                              {idx + 1}
+                            </span>
+
+                            {/* Avatar image */}
+                            <div className="w-7 h-7 rounded-lg bg-purple-500/10 flex items-center justify-center overflow-hidden border border-slate-300 dark:border-slate-800 shrink-0">
+                              {item.profilePic ? (
+                                <img src={item.profilePic} className="w-full h-full object-cover" alt="" />
+                              ) : (
+                                <span className="text-[10px] font-bold text-purple-650 uppercase">{item.displayName.substring(0, 2)}</span>
+                              )}
+                            </div>
+
+                            <div className="truncate">
+                              <span className="font-semibold text-slate-800 dark:text-slate-250 block truncate">{item.displayName}</span>
+                              <span className="block text-[9px] text-slate-500 truncate">@{item.username}</span>
+                            </div>
+                          </div>
+
+                          <div className="flex items-center gap-1 shrink-0 font-bold text-slate-800 dark:text-slate-100 ml-2">
+                            <span>{item.solvedCount}</span>
+                            <span className="text-[10px] text-slate-500 font-normal">pts</span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="text-center py-12 text-slate-500 text-xs">
+                      Noch keine Einträge vorhanden. Löse Aufgaben, um hier zu erscheinen!
+                    </div>
+                  )}
+                </div>
+
+                <div className="mt-4 pt-3 border-t border-slate-200 dark:border-slate-800/60 flex items-center gap-1.5 text-[10px] text-slate-500">
+                  <Zap className="w-3.5 h-3.5 text-purple-500 animate-pulse" />
+                  <span>Aktualisiert sich live beim Lösen!</span>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        )}
+
+        {/* TAB 3: Bestenliste (Dedicated Tabs filter rankings view) */}
         {activeTab === 'leaderboard' && (
           <div className="w-full max-w-2xl mx-auto px-4 animate-fadeIn" id="leaderboard-ranking-panel">
             <div className="glass-panel rounded-3xl p-6 md:p-8 glow-purple">
@@ -417,7 +870,7 @@ function App() {
                           index === 0 ? 'bg-amber-500/20 text-amber-600 dark:text-amber-400 border border-amber-500/35' :
                           index === 1 ? 'bg-slate-400/25 text-slate-600 dark:text-slate-300 border border-slate-400/35' :
                           index === 2 ? 'bg-amber-700/20 text-amber-800 dark:text-amber-600 border border-amber-700/35' :
-                          'bg-slate-200 dark:bg-slate-800/40 text-slate-500 dark:text-slate-400 border border-slate-300 dark:border-transparent'
+                          'bg-slate-200 dark:bg-slate-800/40 text-slate-550 border border-slate-300 dark:border-transparent'
                         }`}>
                           {index + 1}
                         </span>
@@ -427,7 +880,7 @@ function App() {
                           {item.profilePic ? (
                             <img src={item.profilePic} className="w-full h-full object-cover" alt="" />
                           ) : (
-                            <span className="text-xs font-bold text-purple-600 dark:text-purple-400 uppercase">{item.displayName.substring(0, 2)}</span>
+                            <span className="text-xs font-bold text-purple-650 uppercase">{item.displayName.substring(0, 2)}</span>
                           )}
                         </div>
 
@@ -453,7 +906,7 @@ function App() {
           </div>
         )}
 
-        {/* Dynamic Profile tab */}
+        {/* TAB 4: Profil (Profile Settings Panel) */}
         {activeTab === 'profile' && (
           <div className="w-full max-w-2xl mx-auto px-4 animate-fadeIn" id="profile-details-panel">
             {user ? (
@@ -486,7 +939,7 @@ function App() {
                         setEditPassword('');
                         setProfileMessage(null);
                       }}
-                      className="px-4 py-2 border border-slate-300 dark:border-slate-800 hover:border-purple-500/40 text-slate-600 dark:text-slate-400 hover:text-purple-600 dark:hover:text-purple-400 text-xs font-bold rounded-xl flex items-center gap-1.5 transition-colors cursor-pointer"
+                      className="px-4 py-2 border border-slate-300 dark:border-slate-800 hover:border-purple-500/40 text-slate-650 dark:text-slate-400 hover:text-purple-600 dark:hover:text-purple-400 text-xs font-bold rounded-xl flex items-center gap-1.5 transition-colors cursor-pointer"
                     >
                       <Edit className="w-3.5 h-3.5" /> Bearbeiten
                     </button>
@@ -529,7 +982,7 @@ function App() {
                         required
                         value={editDisplayName}
                         onChange={(e) => setEditDisplayName(e.target.value)}
-                        className="w-full px-4 py-2.5 bg-slate-100/50 dark:bg-slate-950/40 border border-slate-300 dark:border-slate-700/60 rounded-xl text-slate-800 dark:text-slate-250 text-sm font-medium focus:outline-none focus:border-purple-500"
+                        className="w-full px-4 py-2.5 bg-slate-100/50 dark:bg-slate-950/40 border border-slate-300 dark:border-slate-700/60 rounded-xl text-slate-850 dark:text-slate-250 text-sm font-medium focus:outline-none focus:border-purple-500"
                       />
                     </div>
 
@@ -543,7 +996,7 @@ function App() {
                         value={editPassword}
                         onChange={(e) => setEditPassword(e.target.value)}
                         placeholder="Freilassen, falls unverändert"
-                        className="w-full px-4 py-2.5 bg-slate-100/50 dark:bg-slate-950/40 border border-slate-300 dark:border-slate-700/60 rounded-xl text-slate-800 dark:text-slate-250 text-sm font-medium focus:outline-none focus:border-purple-500"
+                        className="w-full px-4 py-2.5 bg-slate-100/50 dark:bg-slate-950/40 border border-slate-300 dark:border-slate-700/60 rounded-xl text-slate-850 dark:text-slate-250 text-sm font-medium focus:outline-none focus:border-purple-500"
                       />
                     </div>
 
@@ -552,7 +1005,7 @@ function App() {
                       <div className={`p-3 text-xs font-medium rounded-xl leading-relaxed ${
                         profileMessage.type === 'success'
                           ? 'bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-300'
-                          : 'bg-rose-500/10 border border-rose-500/20 text-rose-600 dark:text-rose-300'
+                          : 'bg-rose-500/10 border border-rose-500/20 text-rose-600 dark:text-rose-350'
                       }`}>
                         {profileMessage.text}
                       </div>
@@ -589,7 +1042,7 @@ function App() {
                 {/* Stats Grid */}
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
                   <div className="p-4 bg-slate-100/50 dark:bg-slate-900/30 border border-slate-200 dark:border-slate-800/50 rounded-2xl flex flex-col justify-between" id="solved-tasks-badge">
-                    <div className="flex justify-between items-start text-purple-600 dark:text-purple-400 mb-2">
+                    <div className="flex justify-between items-start text-purple-650 dark:text-purple-400 mb-2">
                       <Trophy className="w-5 h-5" />
                       <span className="text-xs text-slate-500 font-semibold uppercase">Punkte</span>
                     </div>
@@ -600,7 +1053,7 @@ function App() {
                   </div>
 
                   <div className="p-4 bg-slate-100/50 dark:bg-slate-900/30 border border-slate-200 dark:border-slate-800/50 rounded-2xl flex flex-col justify-between">
-                    <div className="flex justify-between items-start text-emerald-600 dark:text-emerald-400 mb-2">
+                    <div className="flex justify-between items-start text-emerald-650 dark:text-emerald-400 mb-2">
                       <BookOpen className="w-5 h-5" />
                       <span className="text-xs text-slate-500 font-semibold uppercase">Module</span>
                     </div>
@@ -613,7 +1066,7 @@ function App() {
                   </div>
 
                   <div className="p-4 bg-slate-100/50 dark:bg-slate-900/30 border border-slate-200 dark:border-slate-800/50 rounded-2xl flex flex-col justify-between">
-                    <div className="flex justify-between items-start text-blue-600 dark:text-blue-400 mb-2">
+                    <div className="flex justify-between items-start text-blue-650 dark:text-blue-400 mb-2">
                       <Clock className="w-5 h-5" />
                       <span className="text-xs text-slate-500 font-semibold uppercase">Status</span>
                     </div>
@@ -670,7 +1123,7 @@ function App() {
                       Aktuelle Session (Gast)
                     </span>
                     <div className="flex justify-between items-center">
-                      <span className="text-sm font-medium text-slate-600 dark:text-slate-300">Punkte gesammelt:</span>
+                      <span className="text-sm font-medium text-slate-600 dark:text-slate-350">Punkte gesammelt:</span>
                       <span className="text-lg font-bold text-purple-600 dark:text-purple-400">{guestScore}</span>
                     </div>
                   </div>
@@ -692,6 +1145,98 @@ function App() {
       <footer className="py-6 border-t border-slate-200 dark:border-slate-800/40 text-center text-xs text-slate-500 transition-colors duration-300">
         <p>© {new Date().getFullYear()} AufgabenGenerator. Entwickelt für Uni-Kommilitonen.</p>
       </footer>
+
+      {/* Persistent Floating Glassmorphic Pomodoro Widget (expandable/collapsible) */}
+      <div className="fixed bottom-6 right-6 z-40 pointer-events-none">
+        {!isWidgetExpanded ? (
+          <button
+            onClick={() => setIsWidgetExpanded(true)}
+            style={{ transition: 'all 0.3s cubic-bezier(0.25, 1, 0.5, 1)' }}
+            className={`pointer-events-auto p-3.5 rounded-full glass-panel border border-purple-500/25 shadow-2xl flex items-center gap-2 hover:scale-105 cursor-pointer glow-purple animate-fadeIn ${
+              pomodoroIsActive ? 'animate-pulse' : ''
+            }`}
+          >
+            <Clock className={`w-5 h-5 ${pomodoroMode === 'work' ? 'text-purple-600 dark:text-purple-400' : 'text-emerald-500'}`} />
+            <span className="text-xs font-bold text-slate-800 dark:text-slate-200 tabular-nums">
+              {formatTime(pomodoroMinutes, pomodoroSeconds)}
+            </span>
+          </button>
+        ) : (
+          <div className="pointer-events-auto p-5 rounded-2xl glass-panel border border-purple-500/25 shadow-2xl glow-purple w-64 animate-fadeIn">
+            <div className="flex justify-between items-center mb-4">
+              <span className="text-xs font-bold text-slate-700 dark:text-slate-350">Pomodoro Timer</span>
+              <button
+                onClick={() => setIsWidgetExpanded(false)}
+                className="text-[10px] font-bold text-slate-500 hover:text-slate-800 dark:hover:text-slate-250 cursor-pointer"
+              >
+                Minimieren
+              </button>
+            </div>
+
+            {/* Visual Progress ring inside Widget */}
+            <div className="flex flex-col items-center justify-center mb-4">
+              <div className="relative w-24 h-24 flex items-center justify-center">
+                <svg className="w-full h-full -rotate-90">
+                  <circle
+                    cx="48"
+                    cy="48"
+                    r="42"
+                    className="stroke-slate-200 dark:stroke-slate-850 fill-none"
+                    strokeWidth="4"
+                  />
+                  <circle
+                    cx="48"
+                    cy="48"
+                    r="42"
+                    className={`fill-none transition-all duration-1000 ${
+                      pomodoroMode === 'work' ? 'stroke-purple-650' : 'stroke-emerald-500'
+                    }`}
+                    strokeWidth="5"
+                    strokeDasharray={264}
+                    strokeDashoffset={264 - (264 * getProgressPercentage()) / 100}
+                    strokeLinecap="round"
+                  />
+                </svg>
+                <div className="absolute flex flex-col items-center">
+                  <span className="text-base font-extrabold text-slate-800 dark:text-slate-100 tabular-nums">
+                    {formatTime(pomodoroMinutes, pomodoroSeconds)}
+                  </span>
+                  <span className={`text-[8px] font-extrabold uppercase ${
+                    pomodoroMode === 'work' ? 'text-purple-600 dark:text-purple-400' : 'text-emerald-500'
+                  }`}>
+                    {pomodoroMode === 'work' ? 'Fokus' : 'Pause'}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* Small inline widget controls */}
+            <div className="flex justify-center gap-2">
+              <button
+                onClick={() => setPomodoroIsActive(!pomodoroIsActive)}
+                className="flex-grow py-1.5 bg-purple-650 hover:bg-purple-500 text-white font-bold rounded-lg text-xs cursor-pointer flex justify-center items-center gap-1 shadow-sm"
+              >
+                {pomodoroIsActive ? (
+                  <>
+                    <Pause className="w-3 h-3" /> Pause
+                  </>
+                ) : (
+                  <>
+                    <Play className="w-3 h-3" /> Start
+                  </>
+                )}
+              </button>
+              <button
+                onClick={resetPomodoro}
+                className="p-1.5 bg-slate-200/60 dark:bg-slate-900/40 hover:bg-slate-300 dark:hover:bg-slate-800 border border-slate-350 dark:border-slate-800 text-slate-500 hover:text-slate-850 rounded-lg cursor-pointer"
+                title="Zurücksetzen"
+              >
+                <RotateCcw className="w-3.5 h-3.5" />
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
 
       {/* Popups & Tour Overlays */}
       <AuthModal 

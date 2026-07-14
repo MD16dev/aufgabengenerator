@@ -1,7 +1,9 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { Binary, Cpu, Network, GitFork, Lock, ArrowRight, BookOpen } from 'lucide-react';
 
 interface ModuleSelectorProps {
+  activeModule: string;
+  onActiveModuleChange: (moduleId: string) => void;
   onSelectTask: (taskId: string) => void;
 }
 
@@ -20,8 +22,8 @@ interface ModuleInfo {
   tasks: TaskTypeInfo[];
 }
 
-export const ModuleSelector: React.FC<ModuleSelectorProps> = ({ onSelectTask }) => {
-  const [selectedModule, setSelectedModule] = useState<string>('lin_alg');
+export const ModuleSelector: React.FC<ModuleSelectorProps> = ({ activeModule, onActiveModuleChange, onSelectTask }) => {
+
 
   const modules: ModuleInfo[] = [
     {
@@ -112,7 +114,7 @@ export const ModuleSelector: React.FC<ModuleSelectorProps> = ({ onSelectTask }) 
     }
   ];
 
-  const activeModuleData = modules.find(m => m.id === selectedModule) || modules[0];
+  const activeModuleData = modules.find(m => m.id === activeModule) || modules[0];
 
   return (
     <div className="w-full max-w-5xl mx-auto px-4 py-6 animate-fadeIn" id="module-selector-dashboard">
@@ -128,11 +130,11 @@ export const ModuleSelector: React.FC<ModuleSelectorProps> = ({ onSelectTask }) 
       {/* Module Navigation Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-10">
         {modules.map((mod) => {
-          const isSelected = mod.id === selectedModule;
+          const isSelected = mod.id === activeModule;
           return (
             <button
               key={mod.id}
-              onClick={() => setSelectedModule(mod.id)}
+              onClick={() => onActiveModuleChange(mod.id)}
               className={`p-5 rounded-2xl border text-left flex flex-col justify-between interactive-card cursor-pointer ${
                 isSelected
                   ? 'bg-purple-500/10 border-purple-500/50 shadow-md shadow-purple-500/10 dark:shadow-purple-500/5'
