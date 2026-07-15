@@ -8,7 +8,7 @@ Um eine reibungslose Zusammenarbeit zwischen menschlichen Entwicklern und andere
 
 ## 1. Code-Architektur & Modularität (Clean Code)
 Wir legen extremen Wert auf Wartbarkeit. Schreibe keinen monolithischen Code.
-* **Keine Riesen-Dateien:** Lagere Logik konsequent aus. Keine Datei sollte mehr als **400 Zeilen** Code enthalten, es sei denn, es ist absolut unumgänglich. (Früher lag das Limit bei 150–200 Zeilen; es wurde bewusst auf 400 angehoben, um pragmatische Komponenten/Hooks ohne künstliche Splitterei zuzulassen.)
+* **Keine Riesen-Dateien:** Lagere Logik konsequent aus. Keine Datei sollte mehr als **400 Zeilen** Code enthalten, es sei denn, es ist absolut unumgänglich.
 * **Strikte Verzeichnisstruktur:** * Im **Backend (Express)**: Nutze eine klare Struktur mit `/controllers`, `/routes`, `/models`, `/middleware`, `/services` und `/utils`.
   * Im **Frontend (React)**: Nutze `/components` (atomare UI-Elemente), `/hooks` (Custom React Hooks für State/API), `/pages` (Seiten-Layouts) und `/utils` (z. B. mathematische Hilfsfunktionen).
 * **Single Responsibility Principle:** Jede Funktion, jede Komponente und jede Datei hat genau *eine* Aufgabe. Mathematische Generierungs-Algorithmen gehören in eigene Utility-Dateien, nicht direkt in die React-Komponenten oder Express-Controller.
