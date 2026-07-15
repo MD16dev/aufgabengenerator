@@ -4,6 +4,42 @@ import type { LeaderboardItem, LeaderboardFilterType } from '../types';
 const API_BASE = 'http://localhost:5000';
 
 /**
+ * Shared module -> task mapping used by the leaderboard "Aufgabe" filter so the
+ * task chips can be grouped by module. Keep in sync with ModuleSelector.tsx.
+ */
+export const LEADERBOARD_MODULE_TASKS: { module: string; tasks: { id: string; label: string }[] }[] = [
+  {
+    module: 'Lineare Algebra',
+    tasks: [
+      { id: 'lin_alg_det', label: '2x2 Determinante' },
+      { id: 'lin_alg_det3x3', label: '3x3 Determinante (Sarrus)' },
+      { id: 'lin_alg_matmul', label: 'Matrizenmultiplikation' },
+    ],
+  },
+  {
+    module: 'Betriebssysteme',
+    tasks: [
+      { id: 'os_page_table', label: 'Adressübersetzung' },
+      { id: 'os_scheduling', label: 'Scheduling (FIFO / RR)' },
+    ],
+  },
+  {
+    module: 'Formale Systeme',
+    tasks: [
+      { id: 'formal_dfa_regex', label: 'DFA → Regulärer Ausdruck' },
+      { id: 'formal_truth_table', label: 'Wahrheitstabellen' },
+    ],
+  },
+  {
+    module: 'Algorithmen & Datenstrukturen',
+    tasks: [
+      { id: 'algo_avl_rot', label: 'AVL-Baum Rotationen' },
+      { id: 'algo_dijkstra', label: 'Dijkstra-Wegfindung' },
+    ],
+  },
+];
+
+/**
  * Fetches the global leaderboard (with optional module/task filters) and the
  * contextual side leaderboard used in the split-screen tasks view.
  */
@@ -13,6 +49,7 @@ export function useLeaderboard() {
   const [leaderboardFilter, setLeaderboardFilter] = useState<LeaderboardFilterType>('global');
   const [selectedModuleFilter, setSelectedModuleFilter] = useState<string>('Lineare Algebra');
   const [selectedTaskFilter, setSelectedTaskFilter] = useState<string>('lin_alg_det');
+  const [selectedTaskModuleFilter, setSelectedTaskModuleFilter] = useState<string>('Lineare Algebra');
 
   const [sideLeaderboard, setSideLeaderboard] = useState<LeaderboardItem[]>([]);
   const [loadingSideLeaderboard, setLoadingSideLeaderboard] = useState<boolean>(false);
@@ -76,6 +113,7 @@ export function useLeaderboard() {
   return {
     leaderboard, setLeaderboard, loadingLeaderboard, leaderboardFilter, setLeaderboardFilter,
     selectedModuleFilter, setSelectedModuleFilter, selectedTaskFilter, setSelectedTaskFilter,
+    selectedTaskModuleFilter, setSelectedTaskModuleFilter,
     sideLeaderboard, setSideLeaderboard, loadingSideLeaderboard,
     fetchLeaderboard, fetchSideLeaderboard,
   };

@@ -27,6 +27,7 @@ export default function App() {
   const {
     leaderboard, loadingLeaderboard, leaderboardFilter, setLeaderboardFilter,
     selectedModuleFilter, setSelectedModuleFilter, selectedTaskFilter, setSelectedTaskFilter,
+    selectedTaskModuleFilter, setSelectedTaskModuleFilter,
     sideLeaderboard, loadingSideLeaderboard, fetchLeaderboard, fetchSideLeaderboard,
   } = useLeaderboard();
 
@@ -129,6 +130,8 @@ export default function App() {
             setModuleFilter={setSelectedModuleFilter}
             taskFilter={selectedTaskFilter}
             setTaskFilter={setSelectedTaskFilter}
+            taskModuleFilter={selectedTaskModuleFilter}
+            setTaskModuleFilter={setSelectedTaskModuleFilter}
           />
         )}
 
