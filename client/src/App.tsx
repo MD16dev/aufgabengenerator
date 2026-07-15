@@ -4,13 +4,16 @@ import { DeterminantTask } from './components/DeterminantTask';
 import { ThemeToggle } from './components/ThemeToggle';
 import { AuthModal } from './components/AuthModal';
 import { OnboardingTour } from './components/OnboardingTour';
+import { FeedbackModal } from './components/FeedbackModal';
+import { AdminPanel } from './components/AdminPanel';
 import { 
   GraduationCap, Trophy, User, BookOpen, Clock, Medal, 
   LogIn, LogOut, RefreshCw, Sparkles, HelpCircle, Edit, Save, Camera,
-  Play, Pause, RotateCcw, Home, ArrowRight, ShieldCheck, Zap, Compass, Github
+  Play, Pause, RotateCcw, Home, ArrowRight, ShieldCheck, Zap, Compass, Github,
+  MessageSquare
 } from 'lucide-react';
 
-type TabType = 'home' | 'tasks' | 'leaderboard' | 'profile';
+type TabType = 'home' | 'tasks' | 'leaderboard' | 'profile' | 'admin';
 type LeaderboardFilterType = 'global' | 'module' | 'task';
 
 interface UserProfile {
@@ -39,6 +42,10 @@ function App() {
   const [loadingUser, setLoadingUser] = useState<boolean>(true);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState<boolean>(false);
   const [isOnboardingOpen, setIsOnboardingOpen] = useState<boolean>(false);
+  const [isFeedbackOpen, setIsFeedbackOpen] = useState<boolean>(false);
+
+  const adminUsername = import.meta.env.VITE_ADMIN_USERNAME || 'MD16';
+  const isAdmin = user?.username === adminUsername;
 
   // Profile Edit State
   const [isEditMode, setIsEditMode] = useState<boolean>(false);
@@ -446,10 +453,30 @@ function App() {
             >
               <User className="w-4 h-4" /> Profil
             </button>
+            {isAdmin && (
+              <button
+                onClick={() => setActiveTab('admin')}
+                className={`flex items-center gap-1.5 px-3 py-2 text-xs font-semibold rounded-lg transition-all cursor-pointer ${
+                  activeTab === 'admin'
+                    ? 'bg-purple-600 text-white shadow-md'
+                    : 'text-theme-secondary hover:text-theme-primary'
+                }`}
+              >
+                <ShieldCheck className="w-4 h-4" /> Admin
+              </button>
+            )}
           </nav>
 
           {/* Actions: Theme Toggle & Login/Logout */}
           <div className="flex items-center gap-2.5">
+            <button
+              onClick={() => setIsFeedbackOpen(true)}
+              className="p-2.5 bg-theme-card hover:bg-purple-500/10 border border-theme-border hover:border-purple-500/30 rounded-xl text-theme-muted hover:text-purple-600 transition-all cursor-pointer shadow-sm flex items-center justify-center"
+              title="Bug melden / Feedback"
+            >
+              <MessageSquare className="w-5 h-5" />
+            </button>
+
             <button
               onClick={() => setIsOnboardingOpen(true)}
               className="p-2.5 bg-theme-card hover:bg-purple-500/10 border border-theme-border hover:border-purple-500/30 rounded-xl text-theme-muted hover:text-purple-600 transition-all cursor-pointer shadow-sm flex items-center justify-center"
@@ -918,6 +945,11 @@ function App() {
           </div>
         )}
 
+        {/* TAB 5: Admin Panel */}
+        {activeTab === 'admin' && isAdmin && (
+          <AdminPanel />
+        )}
+
         {/* TAB 4: Profil (Profile Settings Panel) */}
         {activeTab === 'profile' && (
           <div className="w-full max-w-2xl mx-auto px-4 animate-fadeIn" id="profile-details-panel">
@@ -1268,6 +1300,12 @@ function App() {
       {isOnboardingOpen && (
         <OnboardingTour onClose={() => setIsOnboardingOpen(false)} />
       )}
+
+      <FeedbackModal 
+        isOpen={isFeedbackOpen}
+        onClose={() => setIsFeedbackOpen(false)}
+        currentUser={user}
+      />
     </div>
   );
 }
