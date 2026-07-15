@@ -33,3 +33,13 @@ model SolvedTask {
   user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   taskType TaskType @relation(fields: [taskTypeId], references: [id], onDelete: Cascade)
 }
+
+model Feedback {
+  id             String   @id @default(uuid())
+  category       String   // "BUG" or "FEEDBACK"
+  message        String
+  email          String?  // Optional sender contact
+  userId         String?
+  githubIssueUrl String?  // Link to the created GitHub issue
+  createdAt      DateTime @default(now())
+}
