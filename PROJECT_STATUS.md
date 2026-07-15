@@ -5,8 +5,8 @@ Diese Datei dient als Synchronisationspunkt zwischen Entwicklern und KI-Agenten.
 ---
 
 ## 1. Aktueller Gesamtstatus
-* **Letztes Update:** 14. Juli 2026
-* **Aktiver Branch:** `main` (mit Remote tracking auf `origin/main`)
+* **Letztes Update:** 15. Juli 2026
+* **Aktiver Branch:** `cursor/feedback-admin-panel` (mit Remote tracking auf `origin/cursor/feedback-admin-panel`)
 * **Datenbank-Status:** SQLite lokal eingerichtet, Schema migriert (`dev.db`), Prisma Client generiert.
 
 ---
@@ -14,12 +14,12 @@ Diese Datei dient als Synchronisationspunkt zwischen Entwicklern und KI-Agenten.
 ## 2. Letztes Handoff-Protokoll
 *(Dieses Protokoll wird von der KI am Ende jeder Session aktualisiert)*
 
-* **Ausführender Agent / Entwickler:** Antigravity (Gemini 3.5 Flash)
+* **Ausführender Agent / Entwickler:** GitHub Copilot (Tencent: Hy3)
 * **Was wurde erledigt:**
   - [x] Express-Grundgerüst mit TypeScript und modularer Verzeichnisstruktur eingerichtet.
   - [x] API-Route für `/api/tasks/determinant` und mathematischer Generator mit LaTeX-Musterlösung.
   - [x] Vitest Unit- und Integrationstests (Supertest) geschrieben (14/14 Pass).
-  - [x] Prisma ORM mit SQLite und Tabellen (`User`, `TaskType`, `SolvedTask`) initialisiert und migriert.
+  - [x] Prisma ORM mit SQLite und Tabellen (`User`, `TaskType`, `SolvedTask`, `Feedback`) initialisiert und migriert.
   - [x] Benutzerregistrierung und Login (JWT-basiert, PBKDF2-Passworthashs) im Backend.
   - [x] Profileinstellungen im Frontend (Anzeigename, Passwort ändern, Base64-Avatar-Upload).
   - [x] Dedizierte Startseite (Home) mit Schnellnavigation, Statistiken und Pomodoro-Timer-Konfiguration.
@@ -30,14 +30,21 @@ Diese Datei dient als Synchronisationspunkt zwischen Entwicklern und KI-Agenten.
   - [x] Fehlerfreie Farbdarstellung im Dark- & Whitemode durch Bereinigung nicht-standardmäßiger Tailwind-Klassen (z. B. `slate-850` zu `slate-800`).
   - [x] Integration des `@custom-variant dark` in `index.css` zur Aktivierung der Tailwind v4 CSS-Klassen-Kopplung.
   - [x] GitHub-Verweis im Footer inklusive offiziellem GitHub-Logo, der das Repository in einem neuen Tab öffnet.
+  - [x] **Feedback-System:** Einreichung (Bug/Feedback) im Frontend (`FeedbackModal`), Admin-Abruf (`GET /api/feedback`) und Speicherung via Prisma.
+  - [x] **Feedback löschen:** Admin kann Einträge über `DELETE /api/feedback/:id` (Backend + Löschen-Button im `AdminPanel`) entfernen.
+  - [x] **GitHub-Issue mit Eingabemodal:** Beim Erstellen eines Issues öffnet sich ein Modal (`GitHubIssueModal`), in dem Titel und Beschreibung vorab befüllt und anpassbar sind; Backend akzeptiert optionale `title`/`body`.
+  - [x] **PII-Bereinigung im Issue-Template:** Absender (E-Mail) und Benutzer-ID wurden aus dem Standard-Issue-Body entfernt – es erscheinen nur noch Erstellungsdatum und App-Hinweis.
+  - [x] **Dev-Skript:** `npm run dev` startet Server + Client parallel via `scripts/dev.sh`.
 * **Aktuell in Arbeit / Unfertig:**
+  - [ ] PR von `cursor/feedback-admin-panel` nach `main` mergen (wartet auf Review).
   - [ ] Implementierung weiterer Aufgabengeneratoren (z.B. Analysis oder Betriebssysteme).
 * **Identifizierte Blocker / Probleme:**
   - Keine Blocker vorhanden.
 * **Nächste konkrete Schritte:**
-  1. Mathematischen Generator für Ableitungen (Analysis) im Backend entwerfen.
-  2. Erste Betriebssysteme-Aufgabe (z. B. Speicher-Adressübersetzung) programmieren.
-  3. Leaderboard mit Pagination oder Top-10-Filter ausstatten.
+  1. PR `cursor/feedback-admin-panel` → `main` reviewen und mergen.
+  2. Mathematischen Generator für Ableitungen (Analysis) im Backend entwerfen.
+  3. Erste Betriebssysteme-Aufgabe (z. B. Speicher-Adressübersetzung) programmieren.
+  4. Leaderboard mit Pagination oder Top-10-Filter ausstatten.
 
 ---
 
@@ -61,3 +68,7 @@ Diese Datei dient als Synchronisationspunkt zwischen Entwicklern und KI-Agenten.
 - [x] Frontend: Persistentes Pomodoro-Timer-Widget
 - [x] Frontend: Split-Screen-Layout mit Live-Ranglisten-Updates
 - [x] Frontend: Profil bearbeiten (Anzeigename, Passwort, Avatar-Upload)
+- [x] Backend: Feedback-System (Einreichung, Admin-Abruf, Löschen)
+- [x] Backend: GitHub-Issue-Erstellung aus Feedback mit editierbarem Titel/Beschreibung
+- [x] Frontend: Admin-Panel zum Verwalten/Löschen von Feedback und Erstellen von GitHub-Issues
+- [x] Frontend: FeedbackModal zur Einreichung von Bugs/Feedback durch Nutzer
