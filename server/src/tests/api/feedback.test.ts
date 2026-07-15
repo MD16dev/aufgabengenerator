@@ -160,6 +160,44 @@ describe('Feedback API Endpoints', () => {
     await prisma.user.delete({ where: { id: adminUserId } });
   });
 
+  it('should allow admin to delete a feedback entry', async () => {
+    const originalAdmin = process.env.ADMIN_USERNAME;
+    process.env.ADMIN_USERNAME = `del_admin_${Date.now()}`;
+
+    const adminRegisterRes = await request(app)
+      .post('/api/auth/register')
+      .send({ username: process.env.ADMIN_USERNAME, password: 'password123' })
+      .expect(201);
+
+    const adminToken = adminRegisterRes.body.token;
+    const adminUserId = adminRegisterRes.body.user.id;
+    const feedbackId = createdFeedbackIds[0];
+
+    await request(app)
+      .delete(`/api/feedback/${feedbackId}`)
+      .set('Authorization', `Bearer ${adminToken}`)
+      .expect(200);
+
+    const deleted = await prisma.feedback.findUnique({ where: { id: feedbackId } });
+    expect(deleted).toBeNull();
+
+    createdFeedbackIds = createdFeedbackIds.filter(id => id !== feedbackId);
+
+    process.env.ADMIN_USERNAME = originalAdmin;
+    await prisma.user.delete({ where: { id: adminUserId } });
+  });
+
+  it('should reject feedback deletion for non-admin users', async () => {
+    const feedbackId = createdFeedbackIds[0];
+
+    const res = await request(app)
+      .delete(`/api/feedback/${feedbackId}`)
+      .set('Authorization', `Bearer ${token}`)
+      .expect(403);
+
+    expect(res.body.error).toHaveProperty('message');
+  });
+
   it('should reject GitHub issue creation without GITHUB_TOKEN', async () => {
     const originalAdmin = process.env.ADMIN_USERNAME;
     const originalToken = process.env.GITHUB_TOKEN;
@@ -178,6 +216,10 @@ describe('Feedback API Endpoints', () => {
     const res = await request(app)
       .post(`/api/feedback/${feedbackId}/github-issue`)
       .set('Authorization', `Bearer ${adminToken}`)
+      .send({
+        title: '[BUG] Custom test title',
+        body: 'Custom issue body for testing validation.'
+      })
       .expect(500);
 
     expect(res.body.error.message).toContain('GITHUB_TOKEN');

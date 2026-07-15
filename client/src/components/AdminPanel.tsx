@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import {
   RefreshCw, AlertTriangle, MessageSquare, ExternalLink,
-  Github, AlertCircle, Inbox
+  Github, AlertCircle, Inbox, Trash2
 } from 'lucide-react';
+import { GitHubIssueModal } from './GitHubIssueModal';
 
 const API_BASE = 'http://localhost:5000';
 
@@ -23,14 +24,15 @@ export const AdminPanel: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [categoryFilter, setCategoryFilter] = useState<CategoryFilter>('ALL');
-  const [creatingIssueFor, setCreatingIssueFor] = useState<string | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [issueModalFeedback, setIssueModalFeedback] = useState<FeedbackItem | null>(null);
 
   const fetchFeedbacks = useCallback(async () => {
     setLoading(true);
     setError(null);
 
     try {
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem('auth_token');
       const response = await fetch(`${API_BASE}/api/feedback`, {
         headers: { Authorization: `Bearer ${token}` }
       });
@@ -53,34 +55,56 @@ export const AdminPanel: React.FC = () => {
     fetchFeedbacks();
   }, [fetchFeedbacks]);
 
-  const handleCreateGitHubIssue = async (feedbackId: string) => {
-    setCreatingIssueFor(feedbackId);
+  const handleDelete = async (feedbackId: string) => {
+    if (!confirm('Diesen Eintrag wirklich löschen?')) return;
+
+    setDeletingId(feedbackId);
 
     try {
-      const token = localStorage.getItem('token');
-      const response = await fetch(`${API_BASE}/api/feedback/${feedbackId}/github-issue`, {
-        method: 'POST',
+      const token = localStorage.getItem('auth_token');
+      const response = await fetch(`${API_BASE}/api/feedback/${feedbackId}`, {
+        method: 'DELETE',
         headers: { Authorization: `Bearer ${token}` }
       });
 
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.error?.message || 'GitHub Issue konnte nicht erstellt werden.');
+        throw new Error(data.error?.message || 'Eintrag konnte nicht gelöscht werden.');
       }
 
-      setFeedbacks(prev =>
-        prev.map(item =>
-          item.id === feedbackId
-            ? { ...item, githubIssueUrl: data.githubIssueUrl }
-            : item
-        )
-      );
+      setFeedbacks(prev => prev.filter(item => item.id !== feedbackId));
     } catch (err: any) {
-      alert(err.message || 'Fehler beim Erstellen des GitHub Issues.');
+      alert(err.message || 'Fehler beim Löschen.');
     } finally {
-      setCreatingIssueFor(null);
+      setDeletingId(null);
     }
+  };
+
+  const handleCreateGitHubIssue = async (feedbackId: string, title: string, body: string) => {
+    const token = localStorage.getItem('auth_token');
+    const response = await fetch(`${API_BASE}/api/feedback/${feedbackId}/github-issue`, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ title, body })
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.error?.message || 'GitHub Issue konnte nicht erstellt werden.');
+    }
+
+    setFeedbacks(prev =>
+      prev.map(item =>
+        item.id === feedbackId
+          ? { ...item, githubIssueUrl: data.githubIssueUrl }
+          : item
+      )
+    );
   };
 
   const filteredFeedbacks = feedbacks.filter(item => {
@@ -111,7 +135,6 @@ export const AdminPanel: React.FC = () => {
           </button>
         </div>
 
-        {/* Stats */}
         <div className="grid grid-cols-3 gap-3 mb-6">
           <div className="p-4 bg-theme-card border border-theme-border rounded-2xl text-center">
             <span className="block text-2xl font-extrabold text-theme-primary">{feedbacks.length}</span>
@@ -127,7 +150,6 @@ export const AdminPanel: React.FC = () => {
           </div>
         </div>
 
-        {/* Filter Tabs */}
         <div className="flex gap-2 mb-6 p-1 bg-theme-card border border-theme-border rounded-xl">
           {(['ALL', 'BUG', 'FEEDBACK'] as CategoryFilter[]).map(filter => (
             <button
@@ -179,6 +201,18 @@ export const AdminPanel: React.FC = () => {
                       {new Date(item.createdAt).toLocaleString('de-DE')}
                     </span>
                   </div>
+
+                  <button
+                    onClick={() => handleDelete(item.id)}
+                    disabled={deletingId === item.id}
+                    className="p-2 rounded-lg text-theme-muted hover:text-red-600 hover:bg-red-500/10 border border-transparent hover:border-red-500/20 transition-all cursor-pointer disabled:opacity-50"
+                    title="Eintrag löschen"
+                  >
+                    {deletingId === item.id
+                      ? <RefreshCw className="w-4 h-4 animate-spin" />
+                      : <Trash2 className="w-4 h-4" />
+                    }
+                  </button>
                 </div>
 
                 <p className="text-theme-primary text-sm font-medium leading-relaxed whitespace-pre-wrap mb-3">
@@ -206,21 +240,11 @@ export const AdminPanel: React.FC = () => {
                       </a>
                     ) : (
                       <button
-                        onClick={() => handleCreateGitHubIssue(item.id)}
-                        disabled={creatingIssueFor === item.id}
-                        className="inline-flex items-center gap-2 px-4 py-2 bg-theme-input hover:bg-purple-500/10 border border-theme-border hover:border-purple-500/30 rounded-xl text-theme-primary text-xs font-bold transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                        onClick={() => setIssueModalFeedback(item)}
+                        className="inline-flex items-center gap-2 px-4 py-2 bg-theme-input hover:bg-purple-500/10 border border-theme-border hover:border-purple-500/30 rounded-xl text-theme-primary text-xs font-bold transition-all cursor-pointer"
                       >
-                        {creatingIssueFor === item.id ? (
-                          <>
-                            <RefreshCw className="w-4 h-4 animate-spin" />
-                            Issue wird erstellt...
-                          </>
-                        ) : (
-                          <>
-                            <Github className="w-4 h-4" />
-                            GitHub Issue erstellen
-                          </>
-                        )}
+                        <Github className="w-4 h-4" />
+                        GitHub Issue erstellen
                       </button>
                     )}
                   </div>
@@ -235,6 +259,13 @@ export const AdminPanel: React.FC = () => {
           </div>
         )}
       </div>
+
+      <GitHubIssueModal
+        feedback={issueModalFeedback}
+        isOpen={!!issueModalFeedback}
+        onClose={() => setIssueModalFeedback(null)}
+        onSubmit={handleCreateGitHubIssue}
+      />
     </div>
   );
 };

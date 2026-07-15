@@ -33,7 +33,7 @@ export const FeedbackModal: React.FC<FeedbackModalProps> = ({ isOpen, onClose, c
       };
 
       // If user is authenticated, attach the token
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem('auth_token');
       if (token) {
         headers['Authorization'] = `Bearer ${token}`;
       }
