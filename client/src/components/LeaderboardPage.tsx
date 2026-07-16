@@ -167,23 +167,26 @@ export const LeaderboardPage: React.FC<LeaderboardPageProps> = ({
         </div>
 
         {/* The list stays mounted with the previous data during a refetch and is
-            simply swapped in place when new data arrives -> no flicker, no dim. */}
-        {leaderboard.length > 0 ? (
-          <div className="space-y-2.5">
-            {leaderboard.map((item, index) => (
-              <LeaderboardRow key={index} item={item} rank={index} />
-            ))}
-          </div>
-        ) : loading ? (
-          <div className="flex flex-col items-center justify-center py-16 gap-4">
-            <RefreshCw className="w-8 h-8 text-purple-500 animate-spin" />
-            <p className="text-theme-muted text-xs">Bestenliste wird geladen…</p>
-          </div>
-        ) : (
-          <div className="text-center py-12 text-theme-muted text-sm">
-            Keine Einträge für diese Filter-Auswahl vorhanden. Löse Aufgaben, um hier zu erscheinen!
-          </div>
-        )}
+            simply swapped in place when new data arrives -> no flicker, no dim.
+            The loading state is shown ONLY via the absolutely-positioned top bar
+            and corner spinner above. We must NOT render a separate spinner block
+            here: when the previous list was empty, that block would briefly resize
+            the panel (taller spinner) and then collapse again -> the "flicker".
+            A fixed min-height keeps the panel stable when switching between a
+            populated list and the empty-state message. */}
+        <div className="min-h-[18rem]">
+          {leaderboard.length > 0 ? (
+            <div className="space-y-2.5">
+              {leaderboard.map((item, index) => (
+                <LeaderboardRow key={index} item={item} rank={index} />
+              ))}
+            </div>
+          ) : (
+            <div className="flex flex-col items-center justify-center h-[18rem] text-theme-muted text-sm">
+              Keine Einträge für diese Filter-Auswahl vorhanden. Löse Aufgaben, um hier zu erscheinen!
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
