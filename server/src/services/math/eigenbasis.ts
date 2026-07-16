@@ -107,14 +107,14 @@ function gaussEchelon(M: Frac[][]): { echelon: Frac[][]; steps: string[] } {
 
     if (pivot !== r) {
       [A[r], A[pivot]] = [A[pivot], A[r]];
-      steps.push(`Tausche Zeile ${r + 1} und Zeile ${pivot + 1}: $${fracMatToLatex(A)}$`);
+      steps.push('Tausche Zeile ' + (r + 1) + ' und Zeile ' + (pivot + 1) + ': $$' + fracMatToLatex(A) + '$$');
     }
 
     // Normalize pivot row so the pivot becomes 1
     const pv = A[r][lead];
     if (pv.n !== 0 && !(pv.n === 1 && pv.d === 1)) {
       for (let c = 0; c < cols; c++) A[r][c] = fMul(A[r][c], { n: pv.d, d: pv.n });
-      steps.push(`Teile Zeile ${r + 1} durch ${fToLatex(pv)}: $${fracMatToLatex(A)}$`);
+      steps.push('Teile Zeile ' + (r + 1) + ' durch ' + fToLatex(pv) + ': $$' + fracMatToLatex(A) + '$$');
     }
 
     // Eliminate below
@@ -124,7 +124,7 @@ function gaussEchelon(M: Frac[][]): { echelon: Frac[][]; steps: string[] } {
       for (let c = 0; c < cols; c++) {
         A[i][c] = fAdd(A[i][c], fMul(fNeg(factor), A[r][c]));
       }
-      steps.push(`Zeile ${i + 1} \\leftarrow Zeile ${i + 1} - (${fToLatex(factor)})\\cdot \\text{Zeile } ${r + 1}: $${fracMatToLatex(A)}$`);
+      steps.push('Zeile ' + (i + 1) + ' \\leftarrow Zeile ' + (i + 1) + ' - (' + fToLatex(factor) + ')\\cdot \\text{Zeile } ' + (r + 1) + ': $$' + fracMatToLatex(A) + '$$');
     }
     lead++;
     r++;
