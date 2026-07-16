@@ -40,12 +40,6 @@ export const ModuleSelector: React.FC<ModuleSelectorProps> = ({ activeModule, on
           isActive: true
         },
         {
-          id: 'lin_alg_det3x3',
-          name: '3x3 Determinante (Sarrus)',
-          description: 'Berechne die Determinante einer 3x3 Matrix mit der Regel von Sarrus.',
-          isActive: false
-        },
-        {
           id: 'calc_gl_n_cardinality',
           name: 'Kardinalität von GL_n(F_p)',
           description: 'Berechne die Anzahl invertierbarer Matrizen über F_p mit der Produktformel.',

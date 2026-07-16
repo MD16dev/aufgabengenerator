@@ -173,7 +173,7 @@ export const GenericTaskRunner: React.FC<GenericTaskRunnerProps> = ({
 
             {task.prompt && (
               <h2 className="text-xl md:text-2xl font-bold font-display text-theme-primary mb-6 leading-snug">
-                {task.prompt}
+                <LatexTextRenderer text={task.prompt} />
               </h2>
             )}
 
@@ -228,7 +228,9 @@ export const GenericTaskRunner: React.FC<GenericTaskRunnerProps> = ({
             </form>
 
             {task.inputHint && (
-              <p className="mt-3 text-xs text-theme-muted font-medium">{task.inputHint}</p>
+              <div className="mt-3 text-xs text-theme-muted font-medium">
+                <LatexTextRenderer text={task.inputHint} />
+              </div>
             )}
 
             {status === 'incorrect' && (
