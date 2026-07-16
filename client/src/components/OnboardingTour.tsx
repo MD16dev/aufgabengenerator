@@ -251,6 +251,12 @@ export const OnboardingTour: React.FC<OnboardingTourProps> = ({ onClose, onNavig
         }}
       />
 
+      {/* On the welcome step the spotlight hole has zero size, so we add a
+          separate full-screen dim backdrop to darken the entire page. */}
+      {step.targetId === '' && (
+        <div className="absolute inset-0 bg-slate-950/80 backdrop-blur-sm pointer-events-auto transition-opacity duration-500 animate-fadeIn" />
+      )}
+
       {/* Floating Tour Speech Bubble Dialog */}
       <div
         style={{
