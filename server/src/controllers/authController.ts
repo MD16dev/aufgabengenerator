@@ -8,7 +8,7 @@ import { AuthenticatedRequest } from '../middleware/auth';
  */
 export const register = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const { username, password } = req.body;
+    const { username, password, displayName } = req.body;
 
     if (!username || !password) {
       return res.status(400).json({ error: { message: 'Bitte Benutzername und Passwort eingeben.' } });
@@ -36,7 +36,7 @@ export const register = async (req: Request, res: Response, next: NextFunction) 
     const user = await prisma.user.create({
       data: {
         username: username.trim(),
-        displayName: username.trim(),
+        displayName: (displayName && displayName.trim()) || username.trim(),
         passwordHash,
       },
     });

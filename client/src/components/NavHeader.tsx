@@ -14,6 +14,7 @@ interface NavHeaderProps {
   onLogout: () => void;
   onOpenFeedback: () => void;
   onOpenOnboarding: () => void;
+  onOpenAuth: () => void;
 }
 
 const TABS: { id: TabType; label: string; icon: React.ReactNode }[] = [
@@ -25,7 +26,7 @@ const TABS: { id: TabType; label: string; icon: React.ReactNode }[] = [
 
 export const NavHeader: React.FC<NavHeaderProps> = ({
   activeTab, setActiveTab, setActiveTaskId, user, loadingUser, isAdmin,
-  onLogout, onOpenFeedback, onOpenOnboarding,
+  onLogout, onOpenFeedback, onOpenOnboarding, onOpenAuth,
 }) => {
   const goHome = () => { setActiveTab('home'); setActiveTaskId(null); };
 
@@ -108,7 +109,7 @@ export const NavHeader: React.FC<NavHeaderProps> = ({
             </button>
           ) : (
             <button
-              onClick={() => setActiveTab('profile')}
+              onClick={onOpenAuth}
               className="flex items-center gap-1.5 px-4 py-2.5 bg-purple-600 hover:bg-purple-500 text-white font-semibold rounded-xl text-xs shadow-md shadow-purple-500/10 transition-all cursor-pointer"
               id="login-btn"
             >

@@ -100,6 +100,7 @@ export default function App() {
         onLogout={handleLogout}
         onOpenFeedback={() => setIsFeedbackOpen(true)}
         onOpenOnboarding={() => setIsOnboardingOpen(true)}
+        onOpenAuth={() => setIsAuthModalOpen(true)}
       />
 
       <main className="flex-grow flex items-center justify-center py-6 px-4 z-10">
