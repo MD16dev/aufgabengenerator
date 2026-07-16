@@ -93,9 +93,15 @@ export const LeaderboardPage: React.FC<LeaderboardPageProps> = ({
             with pointer-events-none, prevents the hidden section from overlapping
             and intercepting clicks on the visible one. */}
         <div className="overflow-hidden">
+          {/* Module chips stay visible for BOTH the "Modul" and "Aufgabe" tabs so
+              that switching between those two tabs only animates the task row in
+              and out (smooth), instead of collapsing/expanding the module row too.
+              They are hidden only on the "Gesamt" tab. */}
           <div
             className={`grid transition-all duration-300 ease-out ${
-              filter === 'module' ? 'grid-rows-[1fr] opacity-100 mb-4' : 'grid-rows-[0fr] opacity-0 pointer-events-none'
+              filter === 'module' || filter === 'task'
+                ? 'grid-rows-[1fr] opacity-100 mb-4'
+                : 'grid-rows-[0fr] opacity-0 pointer-events-none'
             }`}
           >
             <div className="overflow-hidden">
