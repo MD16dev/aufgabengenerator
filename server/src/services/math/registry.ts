@@ -1,5 +1,6 @@
 import { TaskData } from './types';
 import { generateDeterminant } from './determinant';
+import { generateGLnCardinality } from './glCardinality';
 
 /**
  * Registry mapping a task type id (sent by the frontend) to its generator
@@ -8,6 +9,7 @@ import { generateDeterminant } from './determinant';
  */
 export const taskGenerators: Record<string, () => TaskData> = {
   'lin_alg_det': generateDeterminant,
+  'calc_gl_n_cardinality': generateGLnCardinality,
   // 'lin_alg_det3x3': generateDeterminant3x3,
   // 'os_page_table': generatePageTable,
   // ...new task types go here
