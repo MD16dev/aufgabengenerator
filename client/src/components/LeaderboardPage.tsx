@@ -28,11 +28,6 @@ const MODULES: { value: string; label: string }[] = [
   { value: 'Algorithmen & Datenstrukturen', label: 'DSAL' },
 ];
 
-// Map a full module name to its abbreviation (used in the Aufgabe tab).
-const MODULE_ABBR: Record<string, string> = Object.fromEntries(
-  MODULES.map((m) => [m.value, m.label])
-);
-
 export const LeaderboardPage: React.FC<LeaderboardPageProps> = ({
   leaderboard, loading, filter, setFilter,
   moduleFilter, setModuleFilter, taskFilter, setTaskFilter,
@@ -93,10 +88,11 @@ export const LeaderboardPage: React.FC<LeaderboardPageProps> = ({
             with pointer-events-none, prevents the hidden section from overlapping
             and intercepting clicks on the visible one. */}
         <div className="overflow-hidden">
-          {/* Module chips stay visible for BOTH the "Modul" and "Aufgabe" tabs so
-              that switching between those two tabs only animates the task row in
-              and out (smooth), instead of collapsing/expanding the module row too.
-              They are hidden only on the "Gesamt" tab. */}
+          {/* The module chips are the SINGLE module selector, reused by BOTH the
+              "Modul" and "Aufgabe" tabs (hidden only on "Gesamt"). On the
+              "Aufgabe" tab they also drive which module's tasks are shown, so
+              there is only ONE module row instead of two. Switching between
+              Modul and Aufgabe now only animates the task row in/out. */}
           <div
             className={`grid transition-all duration-300 ease-out ${
               filter === 'module' || filter === 'task'
@@ -110,7 +106,17 @@ export const LeaderboardPage: React.FC<LeaderboardPageProps> = ({
                   <button
                     key={m.value}
                     type="button"
-                    onClick={() => setModuleFilter(m.value)}
+                    onClick={() => {
+                      setModuleFilter(m.value);
+                      // Reuse the same module selection for the Aufgabe tab so the
+                      // task list follows the chosen module and we avoid a second,
+                      // duplicate module row.
+                      setTaskModuleFilter(m.value);
+                      const firstTask = LEADERBOARD_MODULE_TASKS.find(
+                        (x) => x.module === m.value
+                      )?.tasks[0];
+                      if (firstTask) setTaskFilter(firstTask.id);
+                    }}
                     className={`px-3.5 py-1.5 rounded-full text-xs font-semibold border transition-all ${
                       moduleFilter === m.value
                         ? 'bg-purple-500/15 border-purple-500/40 text-purple-600 dark:text-purple-400'
@@ -124,49 +130,29 @@ export const LeaderboardPage: React.FC<LeaderboardPageProps> = ({
             </div>
           </div>
 
-          {/* Task filter: first pick a module (abbreviated), then a task within it */}
+          {/* Task filter: the module is already chosen via the shared module
+              chips above, so here we only show the tasks of that module. */}
           <div
             className={`grid transition-all duration-300 ease-out ${
               filter === 'task' ? 'grid-rows-[1fr] opacity-100 mb-4' : 'grid-rows-[0fr] opacity-0 pointer-events-none'
             }`}
           >
             <div className="overflow-hidden">
-              <div className="flex flex-col gap-3">
-                <div className="flex flex-wrap gap-2">
-                  {LEADERBOARD_MODULE_TASKS.map((m) => (
-                    <button
-                      key={m.module}
-                      type="button"
-                      onClick={() => {
-                        setTaskModuleFilter(m.module);
-                        if (m.tasks[0]) setTaskFilter(m.tasks[0].id);
-                      }}
-                      className={`px-3.5 py-1.5 rounded-full text-xs font-semibold border transition-all ${
-                        taskModuleFilter === m.module
-                          ? 'bg-purple-500/15 border-purple-500/40 text-purple-600 dark:text-purple-400'
-                          : 'bg-theme-card border-theme-border text-theme-muted hover:text-theme-secondary hover:border-theme-muted/40'
-                      }`}
-                    >
-                      {MODULE_ABBR[m.module] ?? m.module}
-                    </button>
-                  ))}
-                </div>
-                <div className="flex flex-wrap gap-2">
-                  {taskModule?.tasks.map((t) => (
-                    <button
-                      key={t.id}
-                      type="button"
-                      onClick={() => setTaskFilter(t.id)}
-                      className={`px-3.5 py-1.5 rounded-full text-xs font-semibold border transition-all ${
-                        taskFilter === t.id
-                          ? 'bg-purple-500/15 border-purple-500/40 text-purple-600 dark:text-purple-400'
-                          : 'bg-theme-card border-theme-border text-theme-muted hover:text-theme-secondary hover:border-theme-muted/40'
-                      }`}
-                    >
-                      {t.label}
-                    </button>
-                  ))}
-                </div>
+              <div className="flex flex-wrap gap-2">
+                {taskModule?.tasks.map((t) => (
+                  <button
+                    key={t.id}
+                    type="button"
+                    onClick={() => setTaskFilter(t.id)}
+                    className={`px-3.5 py-1.5 rounded-full text-xs font-semibold border transition-all ${
+                      taskFilter === t.id
+                        ? 'bg-purple-500/15 border-purple-500/40 text-purple-600 dark:text-purple-400'
+                        : 'bg-theme-card border-theme-border text-theme-muted hover:text-theme-secondary hover:border-theme-muted/40'
+                    }`}
+                  >
+                    {t.label}
+                  </button>
+                ))}
               </div>
             </div>
           </div>
