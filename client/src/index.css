@@ -105,7 +105,35 @@ body {
   padding: 0.2em 0;
 }
 
-/* Onboarding spotlight animations */
-.spotlight-overlay-box {
-  transition: all 0.4s cubic-bezier(0.25, 1, 0.5, 1);
+/* Onboarding: the spotlight "hole" punches through the dim overlay.
+   The element itself is transparent; only its huge box-shadow dims the
+   rest of the page, leaving the targeted area fully visible. */
+.onboarding-spotlight {
+  position: absolute;
+  border-radius: 16px;
+  box-shadow: 0 0 0 9999px rgba(2, 6, 23, 0.78);
+  pointer-events: none;
+  transition: top 0.45s cubic-bezier(0.25, 1, 0.5, 1),
+              left 0.45s cubic-bezier(0.25, 1, 0.5, 1),
+              width 0.45s cubic-bezier(0.25, 1, 0.5, 1),
+              height 0.45s cubic-bezier(0.25, 1, 0.5, 1),
+              opacity 0.45s ease;
+  z-index: 50;
+}
+
+/* Subtle pulsing ring around the highlighted element to draw the eye */
+.onboarding-spotlight::after {
+  content: '';
+  position: absolute;
+  inset: -4px;
+  border-radius: 18px;
+  border: 2px solid rgba(168, 85, 247, 0.9);
+  box-shadow: 0 0 18px 2px rgba(168, 85, 247, 0.45);
+  animation: onboardingPulse 1.6s ease-in-out infinite;
+  pointer-events: none;
+}
+
+@keyframes onboardingPulse {
+  0%, 100% { opacity: 0.55; transform: scale(1); }
+  50% { opacity: 1; transform: scale(1.015); }
 }

@@ -152,7 +152,15 @@ export default function App() {
       <PomodoroWidget />
 
       <AuthModal isOpen={isAuthModalOpen} onClose={() => setIsAuthModalOpen(false)} onAuthSuccess={handleAuthSuccess} />
-      {isOnboardingOpen && <OnboardingTour onClose={() => setIsOnboardingOpen(false)} />}
+      {isOnboardingOpen && (
+        <OnboardingTour
+          onClose={() => setIsOnboardingOpen(false)}
+          onNavigate={({ tab, taskId }) => {
+            setActiveTab(tab);
+            setActiveTaskId(taskId !== undefined ? taskId : null);
+          }}
+        />
+      )}
       <FeedbackModal isOpen={isFeedbackOpen} onClose={() => setIsFeedbackOpen(false)} currentUser={user} />
     </div>
   );

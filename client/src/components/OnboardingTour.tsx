@@ -1,15 +1,20 @@
 import React, { useState, useEffect } from 'react';
-import { X, ArrowRight, ArrowLeft, Check, Compass, BookOpen, HelpCircle, Trophy } from 'lucide-react';
+import { X, ArrowRight, ArrowLeft, Check, Compass, BookOpen, HelpCircle, Trophy, Clock, MessageSquare, Calculator, Sparkles } from 'lucide-react';
 
 interface OnboardingTourProps {
   onClose: () => void;
+  /** Called when a step wants to navigate to a specific tab / task. */
+  onNavigate?: (target: { tab: 'home' | 'tasks' | 'leaderboard' | 'profile' | 'admin'; taskId?: string | null }) => void;
 }
 
 interface TourStep {
   title: string;
   description: string;
   icon: React.ReactNode;
+  /** DOM id of the element to highlight. Empty string = centered welcome step. */
   targetId: string;
+  /** Where to navigate before showing this step (so the target exists). */
+  navigateTo?: { tab: 'home' | 'tasks' | 'leaderboard' | 'profile' | 'admin'; taskId?: string | null };
 }
 
 interface Coords {
@@ -26,7 +31,7 @@ interface SpotlightCoords {
   opacity: number;
 }
 
-export const OnboardingTour: React.FC<OnboardingTourProps> = ({ onClose }) => {
+export const OnboardingTour: React.FC<OnboardingTourProps> = ({ onClose, onNavigate }) => {
   const [currentStep, setCurrentStep] = useState<number>(0);
   
   // Coordinates for the floating speech bubble
@@ -56,21 +61,68 @@ export const OnboardingTour: React.FC<OnboardingTourProps> = ({ onClose }) => {
       title: 'Fächer & Aufgaben auswählen 📚',
       description: 'Hier siehst du die verfügbaren Module. Wähle das gewünschte Fach und klicke auf einen aktiven Aufgabetyp wie „2x2 Determinante“. Bei jedem Start wird eine komplett neue Aufgabe generiert!',
       icon: <BookOpen className="w-10 h-10 text-emerald-500" />,
-      targetId: 'module-selector-dashboard'
+      targetId: 'module-selector-dashboard',
+      navigateTo: { tab: 'tasks' }
+    },
+    {
+      title: 'Aufgaben lösen & Punkte sammeln 🧮',
+      description: 'Gib dein Ergebnis ein und prüfe es sofort. Richtig gelöst? Du bekommst Punkte! Kommst du nicht weiter, zeigt „Rechenweg anzeigen“ die Schritte – die Aufgabe wird dann aber nicht für die Bestenliste gewertet.',
+      icon: <Calculator className="w-10 h-10 text-purple-500" />,
+      targetId: 'determinant-task-solver',
+      navigateTo: { tab: 'tasks', taskId: 'lin_alg_det' }
+    },
+    {
+      title: 'Live-Bestenliste auf der Aufgabenseite 🏅',
+      description: 'Rechts neben deiner Aufgabe siehst du die Rangliste – live aktualisiert, sobald jemand eine Aufgabe löst. Schau vorbei und klettere selbst nach oben!',
+      icon: <Trophy className="w-10 h-10 text-amber-500" />,
+      targetId: 'tasks-split-layout',
+      navigateTo: { tab: 'tasks', taskId: 'lin_alg_det' }
+    },
+    {
+      title: 'Globale Bestenliste 🌍',
+      description: 'Unter „Bestenliste“ vergleichst du dich mit allen Kommilitonen. Filtere nach Gesamt, Modul oder einzelnem Aufgabentyp und finde heraus, wo du gerade stehst.',
+      icon: <Trophy className="w-10 h-10 text-pink-500" />,
+      targetId: 'leaderboard-ranking-panel',
+      navigateTo: { tab: 'leaderboard' }
+    },
+    {
+      title: 'Profil & Fortschritt 🏆',
+      description: 'Klicke hier, um dich einzuloggen oder einen kostenlosen Account zu erstellen. So werden deine erarbeiteten Punkte sicher gespeichert, du steigst im Level auf und kletterst auf die Bestenliste!',
+      icon: <Sparkles className="w-10 h-10 text-pink-500" />,
+      targetId: 'login-btn',
+      navigateTo: { tab: 'home' }
+    },
+    {
+      title: 'Pomodoro-Fokus-Timer ⏱️',
+      description: 'Lerne in Intervallen! Stelle Fokus- und Pausenzeit über die Slider ein und starte den Timer. Das schwebende Widget unten rechts begleitet dich auf jeder Seite.',
+      icon: <Clock className="w-10 h-10 text-emerald-500" />,
+      targetId: 'home-pomodoro-panel',
+      navigateTo: { tab: 'home' }
+    },
+    {
+      title: 'Feedback & Hilfe geben 💬',
+      description: 'Du hast einen Bug gefunden oder eine Idee? Über das Sprechblasen-Symbol meldest du Feedback – wir erstellen daraus sogar automatisch ein GitHub-Issue. Das Fragezeichen startet diese Tour jederzeit erneut.',
+      icon: <MessageSquare className="w-10 h-10 text-blue-500" />,
+      targetId: 'feedback-btn',
+      navigateTo: { tab: 'home' }
     },
     {
       title: 'Theme umschalten ☀️ / 🌙',
       description: 'Lernst du lieber tagsüber oder nachts? Über diesen Toggler kannst du jederzeit zwischen dem Darkmode und dem Whitemode (Lightmode) umschalten. Standardmäßig passen wir uns deinem Betriebssystem an.',
       icon: <HelpCircle className="w-10 h-10 text-blue-500" />,
-      targetId: 'theme-toggle-btn'
-    },
-    {
-      title: 'Profil & Fortschritt 🏆',
-      description: 'Klicke hier, um dich einzuloggen oder einen kostenlosen Account zu erstellen. So werden deine erarbeiteten Punkte sicher gespeichert, du steigst im Level auf und kletterst auf die Bestenliste!',
-      icon: <Trophy className="w-10 h-10 text-pink-500" />,
-      targetId: 'login-btn'
+      targetId: 'theme-toggle-btn',
+      navigateTo: { tab: 'home' }
     }
   ];
+
+  // Navigate to the correct page whenever the step changes (so the target exists)
+  useEffect(() => {
+    const step = steps[currentStep];
+    if (step.navigateTo && onNavigate) {
+      onNavigate(step.navigateTo);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentStep]);
 
   const updatePositions = () => {
     const step = steps[currentStep];
@@ -146,17 +198,19 @@ export const OnboardingTour: React.FC<OnboardingTourProps> = ({ onClose }) => {
   };
 
   useEffect(() => {
-    // Initial run and update positions on step change
-    updatePositions();
+    // Wait a tick so the navigation (tab switch) has rendered the target element
+    const timer = setTimeout(updatePositions, 350);
 
     // Event listeners to handle resizing or manual scrolling
     window.addEventListener('resize', updatePositions);
     window.addEventListener('scroll', updatePositions);
 
     return () => {
+      clearTimeout(timer);
       window.removeEventListener('resize', updatePositions);
       window.removeEventListener('scroll', updatePositions);
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentStep]);
 
   const handleNext = () => {
@@ -182,14 +236,11 @@ export const OnboardingTour: React.FC<OnboardingTourProps> = ({ onClose }) => {
 
   return (
     <div className="fixed inset-0 z-50 pointer-events-none">
-      {/* Semi-transparent backdrop when in welcome step */}
-      {step.targetId === '' && (
-        <div className="absolute inset-0 bg-black/75 backdrop-blur-md pointer-events-auto transition-opacity duration-500 animate-fadeIn" />
-      )}
-
-      {/* Spotlight highlight overlay box (hardware-accelerated sliding & sizing transitions) */}
+      {/* Dim overlay with a "hole" punched out at the spotlight position.
+          When in the welcome step the hole has zero size, so the whole
+          screen is dimmed. */}
       <div
-        className="spotlight-overlay-box pointer-events-auto"
+        className="onboarding-spotlight"
         style={{
           top: `${spotlightCoords.top}px`,
           left: `${spotlightCoords.left}px`,
