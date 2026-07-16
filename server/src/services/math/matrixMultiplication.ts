@@ -74,8 +74,9 @@ export function generateMatrixMultiplicationTask(): MatrixMultiplicationTask {
     `Gesucht ist das Produkt $C = A \\cdot B$. Da die Anzahl der Spalten von $A$ ($${m}$$) mit der Anzahl der Zeilen von $B$ ($${m}$$) übereinstimmt, ist die Multiplikation definiert. Die Produktmatrix $C$ hat die Dimension $${n} \\times ${k}$$.`,
   ];
 
-  let calcSteps = `Wir berechnen die einzelnen Einträge $C_{i,j}$ (Zeile $i$, Spalte $j$) der Ergebnismatrix nach dem Schema „Zeile mal Spalte“:\n\n`;
+  let calcSteps = `Wir berechnen die einzelnen Einträge $C_{i,j}$ (Zeile $i$, Spalte $j$) der Ergebnismatrix nach dem Schema „Zeile mal Spalte“:`;
 
+  const calcLines: string[] = [];
   for (let i = 0; i < n; i++) {
     for (let j = 0; j < k; j++) {
       const terms: string[] = [];
@@ -90,10 +91,10 @@ export function generateMatrixMultiplicationTask(): MatrixMultiplicationTask {
       const termProducts = matrixA[i].map((valA, p) => valA * matrixB[p][j]);
       const termProductsStr = termProducts.map(fmt).join(' + ');
 
-      calcSteps += `* **$C_{${i+1},${j+1}}$** (Zeile ${i+1} von $A$, Spalte ${j+1} von $B$):
-        $$C_{${i+1},${j+1}} = ${sumExpr} = ${termProductsStr} = ${sumVal}$$\n`;
+      calcLines.push(`C_{${i+1},${j+1}} = ${sumExpr} = ${termProductsStr} = ${sumVal}`);
     }
   }
+  calcSteps += ` $${calcLines.join(' \\\\ ')}$$`;
   steps.push(calcSteps);
 
   steps.push(`Wir setzen die berechneten Werte in die Produktmatrix ein:
