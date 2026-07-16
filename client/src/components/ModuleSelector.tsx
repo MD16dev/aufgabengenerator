@@ -1,5 +1,6 @@
 import React from 'react';
 import { Binary, Cpu, Network, GitFork, Lock, ArrowRight, BookOpen } from 'lucide-react';
+import { LatexTextRenderer } from './MathRenderer';
 
 interface ModuleSelectorProps {
   activeModule: string;
@@ -41,32 +42,32 @@ export const ModuleSelector: React.FC<ModuleSelectorProps> = ({ activeModule, on
         },
         {
           id: 'calc_gl_n_cardinality',
-          name: 'Kardinalität von GL_n(F_p)',
-          description: 'Berechne die Anzahl invertierbarer Matrizen über F_p mit der Produktformel.',
+          name: 'Kardinalität von $GL_n(\\mathbb{F}_p)$',
+          description: 'Berechne die Anzahl invertierbarer Matrizen über $\\mathbb{F}_p$ mit der Produktformel.',
           isActive: true
         },
         {
           id: 'calc_param_determinant_finite_field',
-          name: 'Determinante mit Parameter (F_p)',
-          description: 'Determinante einer 3x3 Matrix mit Variable a über einem endlichen Körper.',
+          name: 'Determinante mit Parameter ($\\mathbb{F}_p$)',
+          description: 'Determinante einer $3\\times 3$ Matrix mit Variable $a$ über einem endlichen Körper.',
           isActive: true
         },
         {
           id: 'calc_poly_mapping_matrix',
           name: 'Darstellungsmatrix (Polynomräume)',
-          description: 'Finde M_B^B(φ) einer linearen Abbildung auf Polynomräumen.',
+          description: 'Finde $M_B^B(\\varphi)$ einer linearen Abbildung auf Polynomräumen.',
           isActive: true
         },
         {
           id: 'calc_eigenbasis',
           name: 'Eigenbasis berechnen',
-          description: 'Basis des Eigenraums zum größten Eigenwert einer 3x3 Matrix.',
+          description: 'Basis des Eigenraums zum größten Eigenwert einer $3\\times 3$ Matrix.',
           isActive: true
         },
         {
           id: 'calc_linear_code_parameters',
           name: 'Parameter linearer Codes',
-          description: 'Bestimme [n,k,d] eines linearen Blockcodes über F_2.',
+          description: 'Bestimme $[n,k,d]$ eines linearen Blockcodes über $\\mathbb{F}_2$.',
           isActive: true
         }
       ]
@@ -219,7 +220,7 @@ export const ModuleSelector: React.FC<ModuleSelectorProps> = ({ activeModule, on
                 <div>
                   <div className="flex items-center justify-between mb-2">
                     <h4 className="font-bold text-theme-primary group-hover:text-purple-600 dark:group-hover:text-purple-400 transition-colors">
-                      {task.name}
+                      <LatexTextRenderer text={task.name} />
                     </h4>
                     {task.isActive ? (
                       <span className="text-xs font-bold px-2.5 py-0.5 bg-emerald-500/10 text-emerald-600 dark:text-emerald-455 rounded-full border border-emerald-500/20">
@@ -232,7 +233,7 @@ export const ModuleSelector: React.FC<ModuleSelectorProps> = ({ activeModule, on
                     )}
                   </div>
                   <p className="text-theme-muted text-xs md:text-sm leading-relaxed mb-4 font-medium">
-                    {task.description}
+                    <LatexTextRenderer text={task.description} />
                   </p>
                 </div>
 
