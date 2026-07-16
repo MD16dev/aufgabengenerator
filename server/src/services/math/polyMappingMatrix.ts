@@ -107,11 +107,26 @@ export function generatePolyMappingMatrix(): TaskData {
 
   const mathQuery = `M_B^B(\\varphi) \\text{ mit } B = \\{X^3, X^2, X, 1\\}`;
 
+  // Basis vectors in order B = {X^3, X^2, X, 1}
+  const basisNames = ['X^3', 'X^2', 'X', '1'];
+  const imageLatex = rule.images.map((img, i) => {
+    // Build polynomial string from coordinate vector [c3,c2,c1,c0].
+    const [c3, c2, c1, c0] = img;
+    const terms: string[] = [];
+    if (c3) terms.push(c3 === 1 ? 'X^3' : `${c3}X^3`);
+    if (c2) terms.push(c2 === 1 ? 'X^2' : `${c2}X^2`);
+    if (c1) terms.push(c1 === 1 ? 'X' : `${c1}X`);
+    if (c0) terms.push(String(c0));
+    const poly = terms.length ? terms.join(' + ') : '0';
+    return `\\varphi(${basisNames[i]}) = ${poly}`;
+  });
+
   const explanation = [
-    `Die Abbildung ist gegeben durch $${rule.description}$$ (Regel im Aufgabentext).`,
-    `Wir wenden $\\varphi$ auf jede Basisvektor $b_i \\in B = \\{X^3, X^2, X, 1\\}$ an.`,
-    `Die Koordinaten von $\\varphi(b_i)$ bezüglich $B$ bilden die $i$-te Spalte der Matrix.`,
-    `Ergebnis: $${formatMatrix(matrix)}$$`
+    `Gegeben ist die lineare Abbildung $${rule.description}$ auf dem Polynomraum $P_3$ mit Basis $B = \\{X^3, X^2, X, 1\\}$.`,
+    `Wir bestimmen das Bild jedes Basisvektors und schreiben es als Linearkombination der Basis:`,
+    imageLatex.map((s) => `$$${s}$$`).join(' '),
+    `Die Koeffizienten von $\\varphi(b_i)$ sind genau die $i$-te Spalte der Darstellungsmatrix $M_B^B(\\varphi)$.`,
+    `Damit erhalten wir: $${formatMatrix(matrix)}$$`
   ];
 
   return {

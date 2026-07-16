@@ -91,16 +91,29 @@ export function generateParamDeterminantFiniteField(): TaskData {
   } while ((det.length <= 1 || det.every((c) => c === 0)) && attempts < 50);
 
   // Build LaTeX representation of the matrix.
-  const latexRows = matrix
-    .map((row) => row.map((entry) => (entry.length > 1 ? 'a' : String(entry[0]))).join(' & '))
-    .join(' \\\\ ');
+  const disp = matrix.map((row) => row.map((entry) => (entry.length > 1 ? 'a' : String(entry[0]))));
+  const latexRows = disp.map((row) => row.join(' & ')).join(' \\\\ ');
   const mathQuery = `\\det\\begin{pmatrix} ${latexRows} \\end{pmatrix} \\quad \\text{in } \\mathbb{F}_{${p}}`;
 
+  // Sarrus expansion with the concrete entries (a stays symbolic).
+  const m = (r: number, c: number) => disp[r][c];
+  const term = (a: string, b: string, c: string) => `${a}\\cdot ${b}\\cdot ${c}`;
+  const sarrusPos = [
+    term(m(0, 0), m(1, 1), m(2, 2)),
+    term(m(0, 1), m(1, 2), m(2, 0)),
+    term(m(0, 2), m(1, 0), m(2, 1))
+  ];
+  const sarrusNeg = [
+    term(m(0, 2), m(1, 1), m(2, 0)),
+    term(m(0, 0), m(1, 2), m(2, 1)),
+    term(m(0, 1), m(1, 0), m(2, 2))
+  ];
+
   const explanation = [
-    `Gesucht ist die Determinante der Matrix über dem Körper $\\mathbb{F}_{${p}}$; die Variable ist $a$.`,
-    `Wir entwickeln die Determinante und fassen nach Potenzen von $a$ zusammen.`,
-    `Alle Koeffizienten werden modulo $p = ${p}$ reduziert.`,
-    `Das Ergebnis ist das Polynom: $${formatPoly(det)}$$`
+    `Wir berechnen die Determinante der $3\\times 3$ Matrix über $\\mathbb{F}_{${p}}$ mit der Regel von Sarrus. Die Variable ist $a$.`,
+    `$$\\det = ${sarrusPos.join(' + ')} - \\left(${sarrusNeg.join(' + ')}\\right)$$`,
+    `Jetzt fassen wir nach Potenzen von $a$ zusammen. Da wir in $\\mathbb{F}_{${p}}$ rechnen, werden alle Koeffizienten modulo $p = ${p}$ reduziert.`,
+    `Das liefert das Polynom in $a$: $${formatPoly(det)}$$`
   ];
 
   return {

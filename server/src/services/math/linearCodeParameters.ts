@@ -81,12 +81,27 @@ export function generateLinearCodeParameters(): TaskData {
 
   const mathQuery = `A = \\begin{pmatrix} ${A.map((r) => r.join(' & ')).join(' \\\\ ')} \\end{pmatrix}`;
 
+  // Find a concrete minimal-weight non-zero codeword to illustrate d.
+  const codewords: number[][] = [];
+  for (let mask = 1; mask < (1 << k); mask++) {
+    const cw = new Array(cols).fill(0);
+    for (let r = 0; r < rows; r++) {
+      if ((mask >> r) & 1) {
+        for (let c = 0; c < cols; c++) cw[c] ^= A[r][c];
+      }
+    }
+    codewords.push(cw);
+  }
+  const minCodeword = codewords.reduce((best, cw) =>
+    weight(cw) < weight(best) ? cw : best
+  );
+
   const explanation = [
-    `$n$ ist die Spaltenanzahl der Erzeugermatrix: $n = ${n}$.`,
-    `$k$ ist der Rang der Matrix über $\\mathbb{F}_2$: $k = ${k}$.`,
-    `Die Minimaldistanz $d$ ist das kleinste Hamming-Gewicht eines von Null verschiedenen Codeworts.`,
-    `Unter allen $2^{${k}}-1$ Codewörtern ist das minimale Gewicht $d = ${d}$.`,
-    `Damit hat der Code die Parameter: $${answer}$$`
+    `$n$ ist die Länge des Codes, also die Spaltenanzahl der Erzeugermatrix: $n = ${n}$.`,
+    `$k$ ist die Dimension, gleich dem Zeilenrang von $A$ über $\\mathbb{F}_2$ (nach Zeilenstufenform): $k = ${k}$. Es gibt also $2^{${k}}$ Codewörter.`,
+    `Die Minimaldistanz $d$ ist das kleinste Hamming-Gewicht eines von Null verschiedenen Codeworts. Wir betrachten alle $2^{${k}}-1$ nichttrivialen Linearkombinationen der Zeilen.`,
+    `Ein Codewort mit minimalem Gewicht ist $c = (${minCodeword.join('\\;')})$ mit Hamming-Gewicht $\\operatorname{wt}(c) = ${d}$.`,
+    `Also gilt $d = ${d}$, und der Code hat die Parameter: $${answer}$$`
   ];
 
   return {

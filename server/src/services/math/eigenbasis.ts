@@ -108,11 +108,20 @@ export function generateEigenbasis(): TaskData {
 
   const mathQuery = `A = \\begin{pmatrix} ${A.map((r) => r.join(' & ')).join(' \\\\ ')} \\end{pmatrix}`;
 
+  // Show the eigenvector v (the column of T belonging to the largest eigenvalue)
+  // and verify A v = lambda * v.
+  const vRaw = eigenspaceCols[0];
+  const vNorm = basis[0];
+  const Av = A.map((row) => row.reduce((s, x, j) => s + x * vRaw[j], 0));
+  const lambdaV = vRaw.map((x) => x * largest);
+
   const explanation = [
-    `Die Matrix $A$ hat die Eigenwerte $\\lambda_1=${eigenvalues[0]}, \\lambda_2=${eigenvalues[1]}, \\lambda_3=${eigenvalues[2]}$.`,
-    `Der größte Eigenwert ist $\\lambda_{\\max}=${largest}$.`,
-    `Der Eigenraum zu $\\lambda_{\\max}$ wird von den Spalten von $T$ aufgespannt, die zu diesem Eigenwert gehören.`,
-    `Normiert (erster Nicht-Null-Eintrag = 1) ergibt das die Basis: $${answer}$$`
+    `Die Matrix $A$ hat die drei Eigenwerte $\\lambda_1=${eigenvalues[0]},\\; \\lambda_2=${eigenvalues[1]},\\; \\lambda_3=${eigenvalues[2]}$.`,
+    `Gesucht ist der Eigenraum zum größten Eigenwert $\\lambda_{\\max}=${largest}$.`,
+    `Ein zugehöriger Eigenvektor ist $v = \\begin{pmatrix} ${vRaw.join(' \\\\ ')} \\end{pmatrix}$. Wir prüfen $A\\,v = \\lambda_{\\max}\\,v$:`,
+    `$$A\\,v = \\begin{pmatrix} ${Av.join(' \\\\ ')} \\end{pmatrix} = ${largest}\\cdot\\begin{pmatrix} ${vRaw.join(' \\\\ ')} \\end{pmatrix} = \\begin{pmatrix} ${lambdaV.join(' \\\\ ')} \\end{pmatrix} = \\lambda_{\\max}\\,v$$`,
+    `Der Eigenraum wird von diesem Vektor aufgespannt. Wir normieren ihn, sodass der erste Nicht-Null-Eintrag $1$ ist: $v \\mapsto \\begin{pmatrix} ${vNorm.join(' \\\\ ')} \\end{pmatrix}$.`,
+    `Eine Basis des Eigenraums ist damit: $${answer}$$`
   ];
 
   return {

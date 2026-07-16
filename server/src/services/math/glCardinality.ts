@@ -23,12 +23,17 @@ export function generateGLnCardinality(): TaskData {
 
   const mathQuery = `\\left|\\operatorname{GL}_{${n}}(\\mathbb{F}_{${p}})\\right|`;
 
+  // Concrete factors of the product formula.
+  const factors: number[] = [];
+  for (let i = 0; i < n; i++) factors.push(pPowN - Math.pow(p, i));
+  const factorStr = factors.map((f) => String(f)).join(' \\cdot ');
+
   const explanation = [
-    `Gesucht ist die Anzahl der invertierbaren Matrizen in $\\mathbb{F}_{${p}}^{${n} \\times ${n}}$, also $\\left|\\operatorname{GL}_{${n}}(\\mathbb{F}_{${p}})\\right|$.`,
-    `Die erste Spalte einer invertierbaren Matrix kann ein beliebiger Vektor $\\neq 0$ sein: es gibt $p^{${n}} - 1 = ${pPowN - 1}$ Möglichkeiten.`,
-    `Die zweite Spalte darf nicht im Span der ersten liegen: $p^{${n}} - p = ${pPowN - p}$ Möglichkeiten.`,
-    `Allgemein hat die $i$-te Spalte $p^{${n}} - p^{i-1}$ Möglichkeiten. Damit gilt die Produktformel:`,
-    `$$\\left|\\operatorname{GL}_{${n}}(\\mathbb{F}_{${p}})\\right| = \\prod_{i=0}^{${n - 1}} \\left(p^{${n}} - p^{i}\\right) = ${cardinality}$$`
+    `Gesucht ist die Anzahl der invertierbaren $n\\times n$-Matrizen über $\\mathbb{F}_{${p}}$, also $\\left|\\operatorname{GL}_{${n}}(\\mathbb{F}_{${p}})\\right|$.`,
+    `Wir bauen die Matrix spaltenweise: die 1. Spalte kann ein beliebiger Vektor $\\neq 0$ sein $\\Rightarrow p^{${n}}-1 = ${factors[0]}$ Möglichkeiten.`,
+    `Die 2. Spalte darf nicht im Span der 1. liegen $\\Rightarrow p^{${n}}-p = ${factors[1]}$ Möglichkeiten${n > 2 ? `, usw.` : ``}.`,
+    `Allgemein hat die $(i+1)$-te Spalte $p^{${n}}-p^{i}$ Möglichkeiten. Die Formel lautet:`,
+    `$$\\left|\\operatorname{GL}_{${n}}(\\mathbb{F}_{${p}})\\right| = \\prod_{i=0}^{${n - 1}} \\left(p^{${n}} - p^{i}\\right) = ${factorStr} = ${cardinality}$$`
   ];
 
   return {
