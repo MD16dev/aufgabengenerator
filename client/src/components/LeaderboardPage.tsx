@@ -1,5 +1,6 @@
 import { RefreshCw } from 'lucide-react';
 import type { LeaderboardItem, LeaderboardFilterType } from '../types';
+import { LEADERBOARD_MODULE_TASKS } from '../hooks/useLeaderboard';
 
 interface LeaderboardPageProps {
   leaderboard: LeaderboardItem[];
@@ -10,76 +11,177 @@ interface LeaderboardPageProps {
   setModuleFilter: (m: string) => void;
   taskFilter: string;
   setTaskFilter: (t: string) => void;
+  taskModuleFilter: string;
+  setTaskModuleFilter: (m: string) => void;
 }
+
+const FILTERS: { value: LeaderboardFilterType; label: string }[] = [
+  { value: 'global', label: 'Gesamt' },
+  { value: 'module', label: 'Modul' },
+  { value: 'task', label: 'Aufgabe' },
+];
+
+const MODULES: { value: string; label: string }[] = [
+  { value: 'Lineare Algebra', label: 'LA' },
+  { value: 'Betriebssysteme', label: 'BUS' },
+  { value: 'Formale Systeme', label: 'FOSAP' },
+  { value: 'Algorithmen & Datenstrukturen', label: 'DSAL' },
+];
 
 export const LeaderboardPage: React.FC<LeaderboardPageProps> = ({
   leaderboard, loading, filter, setFilter,
   moduleFilter, setModuleFilter, taskFilter, setTaskFilter,
+  taskModuleFilter, setTaskModuleFilter,
 }) => {
+  const activeIndex = FILTERS.findIndex((f) => f.value === filter);
+  const taskModule = LEADERBOARD_MODULE_TASKS.find((m) => m.module === taskModuleFilter);
+
   return (
     <div className="w-full max-w-2xl mx-auto px-4 animate-fadeIn" id="leaderboard-ranking-panel">
-      <div className="glass-panel rounded-3xl p-6 md:p-8">
-        <h2 className="text-2xl font-bold font-display text-theme-primary mb-2">Bestenliste</h2>
+      <div className="relative glass-panel rounded-3xl p-6 md:p-8">
+        {/* Layout-independent loading indicator: absolutely positioned so it never
+            shifts the header or list and therefore cannot cause flicker. */}
+        <div
+          className={`absolute top-0 left-0 h-0.5 rounded-t-3xl bg-purple-500 transition-opacity duration-200 ${
+            loading ? 'opacity-100' : 'opacity-0'
+          }`}
+          style={{ width: '40%' }}
+          aria-hidden="true"
+        />
+
+        <div className="relative flex items-center justify-between mb-2">
+          <h2 className="text-2xl font-bold font-display text-theme-primary">Bestenliste</h2>
+          {/* Spinner is absolutely positioned -> no layout shift, no wackeln. */}
+          {loading && leaderboard.length > 0 && (
+            <RefreshCw className="absolute right-0 top-1/2 -translate-y-1/2 w-4 h-4 text-purple-500 animate-spin" />
+          )}
+        </div>
         <p className="text-theme-secondary text-sm mb-6">Messe dich mit deinen Kommilitonen.</p>
 
-        <div className="flex flex-col sm:flex-row gap-3 mb-6 p-4 bg-theme-card border border-theme-border rounded-2xl">
-          <div className="flex-grow">
-            <label className="block text-[10px] font-bold text-theme-muted uppercase tracking-wider mb-1">Bestenlisten-Typ</label>
-            <select
-              value={filter}
-              onChange={(e) => setFilter(e.target.value as LeaderboardFilterType)}
-              className="w-full px-3 py-2 bg-theme-input border border-theme-border rounded-xl text-theme-primary text-sm font-medium focus:outline-none focus:border-purple-500"
+        {/* Segmented control for the leaderboard type */}
+        <div className="relative flex p-1 mb-4 bg-theme-input border border-theme-border rounded-2xl">
+          <span
+            className="absolute top-1 bottom-1 rounded-xl bg-purple-500/15 border border-purple-500/30 transition-transform duration-300 ease-out"
+            style={{
+              width: 'calc((100% - 0.5rem) / 3)',
+              transform: `translateX(${activeIndex * 100}%)`,
+            }}
+          />
+          {FILTERS.map((f) => (
+            <button
+              key={f.value}
+              type="button"
+              onClick={() => setFilter(f.value)}
+              className={`relative z-10 flex-1 px-3 py-2 text-sm font-semibold rounded-xl transition-colors ${
+                filter === f.value
+                  ? 'text-purple-600 dark:text-purple-400'
+                  : 'text-theme-muted hover:text-theme-secondary'
+              }`}
             >
-              <option value="global">Gesamte Bestenliste</option>
-              <option value="module">Nach Modul</option>
-              <option value="task">Nach Aufgabe</option>
-            </select>
-          </div>
-          {filter === 'module' && (
-            <div className="flex-grow animate-fadeIn">
-              <label className="block text-[10px] font-bold text-theme-muted uppercase tracking-wider mb-1">Wähle Modul</label>
-              <select
-                value={moduleFilter}
-                onChange={(e) => setModuleFilter(e.target.value)}
-                className="w-full px-3 py-2 bg-theme-input border border-theme-border rounded-xl text-theme-primary text-sm font-medium focus:outline-none focus:border-purple-500"
-              >
-                <option value="Lineare Algebra">LA - Lineare Algebra</option>
-                <option value="Betriebssysteme">BUS - Betriebssysteme</option>
-                <option value="Formale Systeme">FOSAP - Formale Systeme</option>
-                <option value="Algorithmen & Datenstrukturen">DSAL - Algorithmen & Datenstrukturen</option>
-              </select>
+              {f.label}
+            </button>
+          ))}
+        </div>
+
+        {/* Contextual chip selectors. Collapsing uses the CSS-grid trick
+            (grid-rows 1fr/0fr) which reliably collapses height to 0 and, combined
+            with pointer-events-none, prevents the hidden section from overlapping
+            and intercepting clicks on the visible one. */}
+        <div className="overflow-hidden">
+          {/* The module chips are the SINGLE module selector, reused by BOTH the
+              "Modul" and "Aufgabe" tabs (hidden only on "Gesamt"). On the
+              "Aufgabe" tab they also drive which module's tasks are shown, so
+              there is only ONE module row instead of two. Switching between
+              Modul and Aufgabe now only animates the task row in/out. */}
+          <div
+            className={`grid transition-all duration-300 ease-out ${
+              filter === 'module' || filter === 'task'
+                ? 'grid-rows-[1fr] opacity-100 mb-4'
+                : 'grid-rows-[0fr] opacity-0 pointer-events-none'
+            }`}
+          >
+            <div className="overflow-hidden">
+              <div className="flex flex-wrap gap-2">
+                {MODULES.map((m) => (
+                  <button
+                    key={m.value}
+                    type="button"
+                    onClick={() => {
+                      setModuleFilter(m.value);
+                      // Reuse the same module selection for the Aufgabe tab so the
+                      // task list follows the chosen module and we avoid a second,
+                      // duplicate module row.
+                      setTaskModuleFilter(m.value);
+                      const firstTask = LEADERBOARD_MODULE_TASKS.find(
+                        (x) => x.module === m.value
+                      )?.tasks[0];
+                      if (firstTask) setTaskFilter(firstTask.id);
+                    }}
+                    className={`px-3.5 py-1.5 rounded-full text-xs font-semibold border transition-all ${
+                      moduleFilter === m.value
+                        ? 'bg-purple-500/15 border-purple-500/40 text-purple-600 dark:text-purple-400'
+                        : 'bg-theme-card border-theme-border text-theme-muted hover:text-theme-secondary hover:border-theme-muted/40'
+                    }`}
+                  >
+                    {m.label}
+                  </button>
+                ))}
+              </div>
             </div>
-          )}
-          {filter === 'task' && (
-            <div className="flex-grow animate-fadeIn">
-              <label className="block text-[10px] font-bold text-theme-muted uppercase tracking-wider mb-1">Wähle Aufgabe</label>
-              <select
-                value={taskFilter}
-                onChange={(e) => setTaskFilter(e.target.value)}
-                className="w-full px-3 py-2 bg-theme-input border border-theme-border rounded-xl text-theme-primary text-sm font-medium focus:outline-none focus:border-purple-500"
-              >
-                <option value="lin_alg_det">2x2 Determinante</option>
-              </select>
+          </div>
+
+          {/* Task filter: the module is already chosen via the shared module
+              chips above, so here we only show the tasks of that module. */}
+          <div
+            className={`grid transition-all duration-300 ease-out ${
+              filter === 'task' ? 'grid-rows-[1fr] opacity-100 mb-4' : 'grid-rows-[0fr] opacity-0 pointer-events-none'
+            }`}
+          >
+            <div className="overflow-hidden">
+              <div className="flex flex-wrap gap-2">
+                {taskModule?.tasks.map((t) => (
+                  <button
+                    key={t.id}
+                    type="button"
+                    onClick={() => setTaskFilter(t.id)}
+                    className={`px-3.5 py-1.5 rounded-full text-xs font-semibold border transition-all ${
+                      taskFilter === t.id
+                        ? 'bg-purple-500/15 border-purple-500/40 text-purple-600 dark:text-purple-400'
+                        : 'bg-theme-card border-theme-border text-theme-muted hover:text-theme-secondary hover:border-theme-muted/40'
+                    }`}
+                  >
+                    {t.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* The list stays mounted with the previous data during a refetch and is
+            simply swapped in place when new data arrives -> no flicker, no dim.
+            The loading state is shown ONLY via the absolutely-positioned top bar
+            and corner spinner above. We must NOT render a separate spinner block
+            here: when the previous list was empty, that block would briefly resize
+            the panel (taller spinner) and then collapse again -> the "flicker".
+            A FIXED height (not min-height) keeps the panel stable when switching
+            between a populated list and the empty-state message: a populated list
+            can be much taller than the empty state, so min-height would still let
+            the panel shrink/grow on tab switch -> flicker. With a fixed height the
+            panel never resizes; long lists scroll internally. */}
+        <div className="h-[28rem]">
+          {leaderboard.length > 0 ? (
+            <div className="h-full overflow-y-auto space-y-2.5 pr-1">
+              {leaderboard.map((item, index) => (
+                <LeaderboardRow key={index} item={item} rank={index} />
+              ))}
+            </div>
+          ) : (
+            <div className="flex flex-col items-center justify-center h-full text-theme-muted text-sm">
+              Keine Einträge für diese Filter-Auswahl vorhanden. Löse Aufgaben, um hier zu erscheinen!
             </div>
           )}
         </div>
-
-        {loading ? (
-          <div className="flex flex-col items-center justify-center py-16 gap-4">
-            <RefreshCw className="w-8 h-8 text-purple-500 animate-spin" />
-            <p className="text-theme-muted text-xs">Bestenliste wird aktualisiert...</p>
-          </div>
-        ) : leaderboard.length > 0 ? (
-          <div className="space-y-2.5">
-            {leaderboard.map((item, index) => (
-              <LeaderboardRow key={index} item={item} rank={index} />
-            ))}
-          </div>
-        ) : (
-          <div className="text-center py-12 text-theme-muted text-sm">
-            Keine Einträge für diese Filter-Auswahl vorhanden. Löse Aufgaben, um hier zu erscheinen!
-          </div>
-        )}
       </div>
     </div>
   );
