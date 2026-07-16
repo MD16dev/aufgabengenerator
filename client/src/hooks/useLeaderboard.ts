@@ -1,7 +1,7 @@
 import { useState, useCallback } from 'react';
 import type { LeaderboardItem, LeaderboardFilterType } from '../types';
 
-const API_BASE = 'http://localhost:5000';
+const API_BASE = 'http://localhost:5001';
 
 /**
  * Shared module -> task mapping used by the leaderboard "Aufgabe" filter so the

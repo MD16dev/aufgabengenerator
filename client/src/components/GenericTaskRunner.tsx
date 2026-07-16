@@ -62,9 +62,9 @@ export const GenericTaskRunner: React.FC<GenericTaskRunnerProps> = ({
       setUserAnswer('');
       setStatus('idle');
       setShowSolution(false);
-      setIsLocked(false);
+      setIsLocked(false); // Reset lock state for the new task
 
-      const response = await fetch(`http://localhost:5000/api/tasks/${taskType}`);
+      const response = await fetch(`http://localhost:5001/api/tasks/${taskType}`);
       if (!response.ok) {
         const data = await response.json().catch(() => ({}));
         throw new Error(data?.error?.message || 'Fehler beim Abrufen der Aufgabe');
@@ -101,7 +101,7 @@ export const GenericTaskRunner: React.FC<GenericTaskRunnerProps> = ({
       const token = localStorage.getItem('auth_token');
       if (user && token) {
         try {
-          const response = await fetch('http://localhost:5000/api/tasks/solve', {
+          const response = await fetch('http://localhost:5001/api/tasks/solve', {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',

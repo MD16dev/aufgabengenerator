@@ -13,7 +13,7 @@ cleanup() {
 
 trap cleanup SIGINT SIGTERM
 
-echo "Backend startet auf http://localhost:5000"
+echo "Backend startet auf http://localhost:5001"
 npm run dev:server &
 
 echo "Frontend startet auf http://localhost:5173"

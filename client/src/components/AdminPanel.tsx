@@ -5,7 +5,7 @@ import {
 } from 'lucide-react';
 import { GitHubIssueModal } from './GitHubIssueModal';
 
-const API_BASE = 'http://localhost:5000';
+const API_BASE = 'http://localhost:5001';
 
 interface FeedbackItem {
   id: string;

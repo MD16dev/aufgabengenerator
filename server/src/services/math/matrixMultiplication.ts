@@ -1,0 +1,125 @@
+import { TaskData } from './types';
+
+export interface MatrixMultiplicationTask {
+  type: string;
+  matrixA: number[][];
+  matrixB: number[][];
+  matrixC: number[][];
+  latexA: string;
+  latexB: string;
+  latexC: string;
+  answer: string;
+  steps: string[];
+}
+
+function getRandomInt(min: number, max: number): number {
+  return Math.floor(Math.random() * (max - min + 1)) + min;
+}
+
+function generateMatrix(rows: number, cols: number): number[][] {
+  const matrix: number[][] = [];
+  for (let i = 0; i < rows; i++) {
+    const row: number[] = [];
+    for (let j = 0; j < cols; j++) {
+      row.push(getRandomInt(-4, 4));
+    }
+    matrix.push(row);
+  }
+  return matrix;
+}
+
+function multiplyMatrices(A: number[][], B: number[][]): number[][] {
+  const n = A.length;
+  const m = A[0].length;
+  const k = B[0].length;
+  const C: number[][] = Array.from({ length: n }, () => Array(k).fill(0));
+  for (let i = 0; i < n; i++) {
+    for (let j = 0; j < k; j++) {
+      let sum = 0;
+      for (let p = 0; p < m; p++) {
+        sum += A[i][p] * B[p][j];
+      }
+      C[i][j] = sum;
+    }
+  }
+  return C;
+}
+
+function matrixToLatex(matrix: number[][]): string {
+  const rows = matrix.map(row => row.join(' & ')).join(' \\\\ ');
+  return `\\begin{pmatrix} ${rows} \\end{pmatrix}`;
+}
+
+export function generateMatrixMultiplicationTask(): MatrixMultiplicationTask {
+  // Generate random dimensions n, m, k in [2, 4]
+  const n = getRandomInt(2, 4);
+  const m = getRandomInt(2, 4);
+  const k = getRandomInt(2, 4);
+
+  const matrixA = generateMatrix(n, m);
+  const matrixB = generateMatrix(m, k);
+  const matrixC = multiplyMatrices(matrixA, matrixB);
+
+  const latexA = matrixToLatex(matrixA);
+  const latexB = matrixToLatex(matrixB);
+  const latexC = matrixToLatex(matrixC);
+
+  const answer = matrixC.map(row => row.join(',')).join(';');
+
+  const fmt = (num: number) => num < 0 ? `(${num})` : `${num}`;
+
+  const steps = [
+    `Gegeben sind die Matrizen:
+     $$A = ${latexA} \\quad (${n} \\times ${m}) \\quad \\text{und} \\quad B = ${latexB} \\quad (${m} \\times ${k})$$`,
+    `Gesucht ist das Produkt $C = A \\cdot B$. Da die Anzahl der Spalten von $A$ ($${m}$$) mit der Anzahl der Zeilen von $B$ ($${m}$$) übereinstimmt, ist die Multiplikation definiert. Die Produktmatrix $C$ hat die Dimension $${n} \\times ${k}$$.`,
+  ];
+
+  let calcSteps = `Wir berechnen die einzelnen Einträge $C_{i,j}$ (Zeile $i$, Spalte $j$) der Ergebnismatrix nach dem Schema „Zeile mal Spalte“:\n\n`;
+
+  for (let i = 0; i < n; i++) {
+    for (let j = 0; j < k; j++) {
+      const terms: string[] = [];
+      let sumVal = 0;
+      for (let p = 0; p < m; p++) {
+        const valA = matrixA[i][p];
+        const valB = matrixB[p][j];
+        terms.push(`${fmt(valA)} \\cdot ${fmt(valB)}`);
+        sumVal += valA * valB;
+      }
+      const sumExpr = terms.join(' + ');
+      const termProducts = matrixA[i].map((valA, p) => valA * matrixB[p][j]);
+      const termProductsStr = termProducts.map(fmt).join(' + ');
+
+      calcSteps += `* **$C_{${i+1},${j+1}}$** (Zeile ${i+1} von $A$, Spalte ${j+1} von $B$):
+        $$C_{${i+1},${j+1}} = ${sumExpr} = ${termProductsStr} = ${sumVal}$$\n`;
+    }
+  }
+  steps.push(calcSteps);
+
+  steps.push(`Wir setzen die berechneten Werte in die Produktmatrix ein:
+     $$C = A \\cdot B = ${latexC}$$`);
+
+  return {
+    type: 'lin_alg_matmul',
+    matrixA,
+    matrixB,
+    matrixC,
+    latexA,
+    latexB,
+    latexC,
+    answer,
+    steps
+  };
+}
+
+export function generateMatrixMultiplication(): TaskData {
+  const task = generateMatrixMultiplicationTask();
+  return {
+    type: task.type,
+    mathQuery: `A \\cdot B = ${task.latexA} \\cdot ${task.latexB}`,
+    answer: task.answer,
+    explanation: task.steps,
+    prompt: 'Berechne das Matrixprodukt $C = A \\cdot B$ der folgenden Matrizen:',
+    inputHint: 'Gib das Ergebnis zeilenweise ein, getrennt durch Semikolon, Werte durch Kommata (z.B. 1,2;3,4 für eine 2x2 Matrix).'
+  };
+}

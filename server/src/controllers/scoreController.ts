@@ -22,8 +22,16 @@ export const solveTask = async (req: AuthenticatedRequest, res: Response, next: 
       update: {},
       create: {
         id: taskTypeId,
-        name: taskTypeId === 'lin_alg_det' ? 'Determinante bestimmen' : 'Aufgabe',
-        module: taskTypeId === 'lin_alg_det' ? 'Lineare Algebra' : 'Allgemein'
+        name: taskTypeId === 'lin_alg_det' 
+          ? '2x2 Determinante' 
+          : taskTypeId === 'lin_alg_det3x3' 
+          ? '3x3 Determinante (Sarrus)' 
+          : taskTypeId === 'lin_alg_matmul'
+          ? 'Matrizenmultiplikation'
+          : 'Aufgabe',
+        module: (taskTypeId === 'lin_alg_det' || taskTypeId === 'lin_alg_det3x3' || taskTypeId === 'lin_alg_matmul') 
+          ? 'Lineare Algebra' 
+          : 'Allgemein'
       }
     });
 
