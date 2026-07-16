@@ -76,7 +76,7 @@ Starte sowohl das Backend als auch das Frontend parallel mit einem einzigen Befe
 npm run dev
 ```
 * **Frontend:** Erreichbar unter [http://localhost:5173](http://localhost:5173)
-* **Backend API:** Läuft auf [http://localhost:5000](http://localhost:5000)
+* **Backend API:** Läuft auf [http://localhost:5001](http://localhost:5001)
 
 ---
 

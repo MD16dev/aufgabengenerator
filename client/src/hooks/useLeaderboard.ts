@@ -1,7 +1,7 @@
 import { useState, useCallback } from 'react';
 import type { LeaderboardItem, LeaderboardFilterType } from '../types';
 
-const API_BASE = 'http://localhost:5000';
+const API_BASE = 'http://localhost:5001';
 
 /**
  * Shared module -> task mapping used by the leaderboard "Aufgabe" filter so the
@@ -14,6 +14,11 @@ export const LEADERBOARD_MODULE_TASKS: { module: string; tasks: { id: string; la
       { id: 'lin_alg_det', label: '2x2 Determinante' },
       { id: 'lin_alg_det3x3', label: '3x3 Determinante (Sarrus)' },
       { id: 'lin_alg_matmul', label: 'Matrizenmultiplikation' },
+      { id: 'calc_gl_n_cardinality', label: 'Kardinalität GL_n(F_p)' },
+      { id: 'calc_param_determinant_finite_field', label: 'Determinante mit Parameter (F_p)' },
+      { id: 'calc_poly_mapping_matrix', label: 'Darstellungsmatrix (Polynomräume)' },
+      { id: 'calc_eigenbasis', label: 'Eigenbasis berechnen' },
+      { id: 'calc_linear_code_parameters', label: 'Parameter linearer Codes' },
     ],
   },
   {
