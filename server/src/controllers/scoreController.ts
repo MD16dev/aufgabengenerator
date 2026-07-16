@@ -28,8 +28,21 @@ export const solveTask = async (req: AuthenticatedRequest, res: Response, next: 
           ? '3x3 Determinante (Sarrus)' 
           : taskTypeId === 'lin_alg_matmul'
           ? 'Matrizenmultiplikation'
+          : taskTypeId === 'calc_gl_n_cardinality'
+          ? 'Kardinalität GL_n(F_p)'
+          : taskTypeId === 'calc_param_determinant_finite_field'
+          ? 'Determinante mit Parameter (F_p)'
+          : taskTypeId === 'calc_poly_mapping_matrix'
+          ? 'Darstellungsmatrix (Polynomräume)'
+          : taskTypeId === 'calc_eigenbasis'
+          ? 'Eigenbasis berechnen'
+          : taskTypeId === 'calc_linear_code_parameters'
+          ? 'Parameter linearer Codes'
           : 'Aufgabe',
-        module: (taskTypeId === 'lin_alg_det' || taskTypeId === 'lin_alg_det3x3' || taskTypeId === 'lin_alg_matmul') 
+        module: (taskTypeId === 'lin_alg_det' || taskTypeId === 'lin_alg_det3x3' || taskTypeId === 'lin_alg_matmul'
+          || taskTypeId === 'calc_gl_n_cardinality' || taskTypeId === 'calc_param_determinant_finite_field'
+          || taskTypeId === 'calc_poly_mapping_matrix' || taskTypeId === 'calc_eigenbasis'
+          || taskTypeId === 'calc_linear_code_parameters') 
           ? 'Lineare Algebra' 
           : 'Allgemein'
       }
