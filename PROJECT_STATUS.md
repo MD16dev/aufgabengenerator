@@ -5,8 +5,8 @@ Diese Datei dient als Synchronisationspunkt zwischen Entwicklern und KI-Agenten.
 ---
 
 ## 1. Aktueller Gesamtstatus
-* **Letztes Update:** 15. Juli 2026
-* **Aktiver Branch:** `cursor/feedback-admin-panel` (mit Remote tracking auf `origin/cursor/feedback-admin-panel`)
+* **Letztes Update:** 16. Juli 2026
+* **Aktiver Branch:** `main` (alle Feature-Branches gemerged & aufgeräumt)
 * **Datenbank-Status:** SQLite lokal eingerichtet, Schema migriert (`dev.db`), Prisma Client generiert.
 
 ---
@@ -15,7 +15,12 @@ Diese Datei dient als Synchronisationspunkt zwischen Entwicklern und KI-Agenten.
 *(Dieses Protokoll wird von der KI am Ende jeder Session aktualisiert)*
 
 * **Ausführender Agent / Entwickler:** GitHub Copilot (Tencent: Hy3)
-* **Was wurde erledigt:**
+* **Was wurde erledigt (Session 16.07.2026):**
+  - [x] **Issue #4 behoben – Leaderboard-Flickern beim Filterwechsel:** Spinner-Block im Hauptbereich entfernt (verursachte Größenänderung des Kastens bei leerer vorheriger Liste), Ladezustand nur noch über absolut positionierte Top-Bar + Eck-Spinner.
+  - [x] **Feste Panel-Höhe statt `min-h`:** `h-[28rem]` mit internem Scrollen, damit der Kasten beim Tab-Wechsel (z. B. Gesamt → Modul/DSAL ohne Einträge) nicht mehr schrumpft/wächst.
+  - [x] **Modul-Chips wiederverwendet:** Die Modul-Auswahl ist nun die einzige Modul-Reihe und wird von "Modul"- und "Aufgabe"-Tab geteilt (keine doppelte Modul-Reihe mehr auf dem Aufgabe-Tab). Beim Wechsel Modul ↔ Aufgabe fährt nur die Aufgaben-Reihe rein/raus → smooth.
+  - [x] **PR #5** (`fix/leaderboard-filters`) gegen `main` erstellt und gemerged.
+  - [x] **Branches aufgeräumt:** `fix/leaderboard-filters`, `refactor/app-split` und `cursor/feedback-admin-panel` (lokal + remote) gelöscht; nur `main` verbleibt.
   - [x] Express-Grundgerüst mit TypeScript und modularer Verzeichnisstruktur eingerichtet.
   - [x] API-Route für `/api/tasks/determinant` und mathematischer Generator mit LaTeX-Musterlösung.
   - [x] Vitest Unit- und Integrationstests (Supertest) geschrieben (14/14 Pass).
@@ -36,15 +41,14 @@ Diese Datei dient als Synchronisationspunkt zwischen Entwicklern und KI-Agenten.
   - [x] **PII-Bereinigung im Issue-Template:** Absender (E-Mail) und Benutzer-ID wurden aus dem Standard-Issue-Body entfernt – es erscheinen nur noch Erstellungsdatum und App-Hinweis.
   - [x] **Dev-Skript:** `npm run dev` startet Server + Client parallel via `scripts/dev.sh`.
 * **Aktuell in Arbeit / Unfertig:**
-  - [ ] PR von `cursor/feedback-admin-panel` nach `main` mergen (wartet auf Review).
   - [ ] Implementierung weiterer Aufgabengeneratoren (z.B. Analysis oder Betriebssysteme).
+  - [ ] Leaderboard mit Pagination oder Top-10-Filter ausstatten (optional).
 * **Identifizierte Blocker / Probleme:**
   - Keine Blocker vorhanden.
 * **Nächste konkrete Schritte:**
-  1. PR `cursor/feedback-admin-panel` → `main` reviewen und mergen.
-  2. Mathematischen Generator für Ableitungen (Analysis) im Backend entwerfen.
-  3. Erste Betriebssysteme-Aufgabe (z. B. Speicher-Adressübersetzung) programmieren.
-  4. Leaderboard mit Pagination oder Top-10-Filter ausstatten.
+  1. Mathematischen Generator für Ableitungen (Analysis) im Backend entwerfen.
+  2. Erste Betriebssysteme-Aufgabe (z. B. Speicher-Adressübersetzung) programmieren.
+  3. Weitere Aufgabentypen in `LEADERBOARD_MODULE_TASKS` (useLeaderboard.ts) pflegen, sobald neue Generatoren live sind.
 
 ---
 
