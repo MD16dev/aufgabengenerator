@@ -71,7 +71,7 @@ export function generateMatrixMultiplicationTask(): MatrixMultiplicationTask {
   const steps = [
     `Gegeben sind die Matrizen:
      $$A = ${latexA} \\quad (${n} \\times ${m}) \\quad \\text{und} \\quad B = ${latexB} \\quad (${m} \\times ${k})$$`,
-    `Gesucht ist das Produkt $C = A \\cdot B$. Die Multiplikation ist definiert, weil die Spaltenzahl von $A$ (${m}) gleich der Zeilenzahl von $B$ (${m}) ist. Die Ergebnismatrix $C$ hat die Dimension ${n} \\times ${k}.`,
+    `Gesucht ist das Produkt $C = A \\cdot B$. Die Multiplikation ist definiert, weil die Spaltenzahl von $A$ (${m}) gleich der Zeilenzahl von $B$ (${m}) ist. Die Ergebnismatrix $C$ hat die Dimension $${n} \\times ${k}$.`,
   ];
 
   steps.push(`Wir berechnen die Eintraege von $C$ mit dem Schema "Zeile mal Spalte": jedes $C_{i,j}$ ist das Skalarprodukt aus der $i$-ten Zeile von $A$ und der $j$-ten Spalte von $B$.`);
