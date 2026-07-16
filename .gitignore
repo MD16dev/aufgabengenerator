@@ -2,3 +2,6 @@ node_modules/
 .DS_Store
 *.log
 .vscode/
+
+# Lokale, nicht-versionierte Agent-Notizen (nur für diese Maschine)
+AGENT_LOCAL_NOTES.md
