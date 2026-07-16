@@ -172,17 +172,20 @@ export const LeaderboardPage: React.FC<LeaderboardPageProps> = ({
             and corner spinner above. We must NOT render a separate spinner block
             here: when the previous list was empty, that block would briefly resize
             the panel (taller spinner) and then collapse again -> the "flicker".
-            A fixed min-height keeps the panel stable when switching between a
-            populated list and the empty-state message. */}
-        <div className="min-h-[18rem]">
+            A FIXED height (not min-height) keeps the panel stable when switching
+            between a populated list and the empty-state message: a populated list
+            can be much taller than the empty state, so min-height would still let
+            the panel shrink/grow on tab switch -> flicker. With a fixed height the
+            panel never resizes; long lists scroll internally. */}
+        <div className="h-[28rem]">
           {leaderboard.length > 0 ? (
-            <div className="space-y-2.5">
+            <div className="h-full overflow-y-auto space-y-2.5 pr-1">
               {leaderboard.map((item, index) => (
                 <LeaderboardRow key={index} item={item} rank={index} />
               ))}
             </div>
           ) : (
-            <div className="flex flex-col items-center justify-center h-[18rem] text-theme-muted text-sm">
+            <div className="flex flex-col items-center justify-center h-full text-theme-muted text-sm">
               Keine Einträge für diese Filter-Auswahl vorhanden. Löse Aufgaben, um hier zu erscheinen!
             </div>
           )}
