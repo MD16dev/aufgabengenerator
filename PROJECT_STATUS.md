@@ -29,7 +29,7 @@ Diese Datei dient als Synchronisationspunkt zwischen Entwicklern und KI-Agenten.
   - [x] **PR #5** (`fix/leaderboard-filters`) gegen `main` erstellt und gemerged.
   - [x] **Branches aufgeräumt:** `fix/leaderboard-filters`, `refactor/app-split` und `cursor/feedback-admin-panel` (lokal + remote) gelöscht; nur `main` verbleibt.
   - [x] Express-Grundgerüst mit TypeScript und modularer Verzeichnisstruktur eingerichtet.
-  - [x] API-Route für `/api/tasks/determinant` und mathematischer Generator mit LaTeX-Musterlösung.
+  - [x] **Architektur-Refactor (Feedback Senior-Dev):** Einheitliches Task-JSON (`mathQuery`/`answer`/`explanation`) + **Registry-Pattern** Backend (`server/src/services/math/registry.ts`, Route `/api/tasks/:type`). Frontend nutzt nun generische `GenericTaskRunner`-Komponente statt domänenspezifischer `DeterminantTask`. User-Input wird normalisiert (Leerzeichen/Komma/Kleinschreibung) + UI-Eingabehinweis.
   - [x] Vitest Unit- und Integrationstests (Supertest) geschrieben (14/14 Pass).
   - [x] Prisma ORM mit SQLite und Tabellen (`User`, `TaskType`, `SolvedTask`, `Feedback`) initialisiert und migriert.
   - [x] Benutzerregistrierung und Login (JWT-basiert, PBKDF2-Passworthashs) im Backend.

@@ -1,3 +1,5 @@
+import { TaskData } from './types';
+
 export interface DeterminantTask {
   type: string;
   matrix: number[][];
@@ -58,5 +60,21 @@ export function generate2x2DeterminantTask(): DeterminantTask {
     latex,
     answer,
     steps
+  };
+}
+
+/**
+ * Registry-compatible generator. Returns the unified TaskData shape so the
+ * GenericTaskRunner on the frontend can render it without knowing the domain.
+ */
+export function generateDeterminant(): TaskData {
+  const task = generate2x2DeterminantTask();
+  return {
+    type: task.type,
+    mathQuery: `\\det ${task.latex}`,
+    answer: String(task.answer),
+    explanation: task.steps,
+    prompt: 'Berechne die Determinante der folgenden Matrix:',
+    inputHint: 'Gib das Ergebnis als ganze Zahl ein (z.B. -5).'
   };
 }

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { generate2x2DeterminantTask } from '../../services/math/determinant';
+import { generate2x2DeterminantTask, generateDeterminant } from '../../services/math/determinant';
 
 describe('2x2 Determinant Math Generator', () => {
   it('should generate a valid 2x2 determinant task structure', () => {
@@ -22,5 +22,14 @@ describe('2x2 Determinant Math Generator', () => {
     // Since values are random, it's very unlikely all 5 generated matrices are identical
     const uniqueMatrices = new Set(matrices);
     expect(uniqueMatrices.size).toBeGreaterThan(1);
+  });
+
+  it('should return the unified TaskData shape via generateDeterminant', () => {
+    const task = generateDeterminant();
+    expect(task.type).toBe('lin_alg_det');
+    expect(task).toHaveProperty('mathQuery');
+    expect(task).toHaveProperty('answer');
+    expect(typeof task.answer).toBe('string');
+    expect(Array.isArray(task.explanation)).toBe(true);
   });
 });

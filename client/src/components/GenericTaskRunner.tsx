@@ -2,29 +2,52 @@ import React, { useState, useEffect, useRef } from 'react';
 import { MathRenderer, LatexTextRenderer } from './MathRenderer';
 import { CheckCircle2, XCircle, HelpCircle, ArrowRight, RefreshCw, ArrowLeft, Lock } from 'lucide-react';
 
+/** Unified task shape returned by the backend (matches server/src/services/math/types.ts). */
 interface TaskData {
   type: string;
-  matrix: number[][];
-  latex: string;
-  answer: number;
-  steps: string[];
+  mathQuery: string;
+  answer: string;
+  explanation?: string[];
+  prompt?: string;
+  inputHint?: string;
 }
 
-interface DeterminantTaskProps {
+interface GenericTaskRunnerProps {
+  taskType: string;
   user: { id: string; username: string } | null;
   onSolved: () => void;
   onBackToSelector: () => void;
 }
 
-export const DeterminantTask: React.FC<DeterminantTaskProps> = ({ user, onSolved, onBackToSelector }) => {
+/**
+ * Normalizes a user answer for comparison:
+ * - strips all whitespace
+ * - lowercases (so "X^2" === "x^2")
+ * - normalizes the decimal separator (German "," -> ".")
+ * This is a pragmatic first step. It does NOT evaluate equivalent math
+ * expressions (e.g. "1/2" vs "0.5"); a real math parser would be needed for that.
+ */
+function normalizeInput(input: string): string {
+  return input
+    .replace(/\s+/g, '')
+    .replace(',', '.')
+    .toLowerCase();
+}
+
+export const GenericTaskRunner: React.FC<GenericTaskRunnerProps> = ({
+  taskType,
+  user,
+  onSolved,
+  onBackToSelector,
+}) => {
   const [task, setTask] = useState<TaskData | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [userAnswer, setUserAnswer] = useState<string>('');
   const [status, setStatus] = useState<'idle' | 'correct' | 'incorrect'>('idle');
   const [showSolution, setShowSolution] = useState<boolean>(false);
-  const [isLocked, setIsLocked] = useState<boolean>(false); // Track task locking state
-  
+  const [isLocked, setIsLocked] = useState<boolean>(false);
+
   const [localScore, setLocalScore] = useState<number>(() => {
     const saved = localStorage.getItem('aufgabengenerator_score');
     return saved ? parseInt(saved, 10) : 0;
@@ -39,17 +62,17 @@ export const DeterminantTask: React.FC<DeterminantTaskProps> = ({ user, onSolved
       setUserAnswer('');
       setStatus('idle');
       setShowSolution(false);
-      setIsLocked(false); // Reset lock state for the new task
-      
-      const response = await fetch('http://localhost:5000/api/tasks/determinant');
+      setIsLocked(false);
+
+      const response = await fetch(`http://localhost:5000/api/tasks/${taskType}`);
       if (!response.ok) {
-        throw new Error('Fehler beim Abrufen der Aufgabe');
+        const data = await response.json().catch(() => ({}));
+        throw new Error(data?.error?.message || 'Fehler beim Abrufen der Aufgabe');
       }
-      
+
       const data = await response.json();
       setTask(data);
-      
-      // Auto-focus input
+
       setTimeout(() => {
         inputRef.current?.focus();
       }, 50);
@@ -62,22 +85,19 @@ export const DeterminantTask: React.FC<DeterminantTaskProps> = ({ user, onSolved
 
   useEffect(() => {
     fetchTask();
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [taskType]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!task || userAnswer.trim() === '' || isLocked) return;
 
-    const parsedAnswer = parseFloat(userAnswer.replace(',', '.'));
-    if (isNaN(parsedAnswer)) {
-      alert('Bitte gib eine gültige Zahl ein.');
-      return;
-    }
+    const normalizedUser = normalizeInput(userAnswer);
+    const normalizedAnswer = normalizeInput(task.answer);
 
-    if (parsedAnswer === task.answer) {
+    if (normalizedUser === normalizedAnswer) {
       setStatus('correct');
-      
-      // Record solution in the database if user is logged in
+
       const token = localStorage.getItem('auth_token');
       if (user && token) {
         try {
@@ -85,11 +105,11 @@ export const DeterminantTask: React.FC<DeterminantTaskProps> = ({ user, onSolved
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
-              'Authorization': `Bearer ${token}`
+              Authorization: `Bearer ${token}`,
             },
-            body: JSON.stringify({ taskTypeId: 'lin_alg_det' })
+            body: JSON.stringify({ taskTypeId: task.type }),
           });
-          
+
           if (response.ok) {
             onSolved();
           }
@@ -97,7 +117,6 @@ export const DeterminantTask: React.FC<DeterminantTaskProps> = ({ user, onSolved
           console.error('Fehler beim Speichern der gelösten Aufgabe:', err);
         }
       } else {
-        // Fallback for guest users (local score)
         const newScore = localScore + 1;
         setLocalScore(newScore);
         localStorage.setItem('aufgabengenerator_score', newScore.toString());
@@ -110,12 +129,11 @@ export const DeterminantTask: React.FC<DeterminantTaskProps> = ({ user, onSolved
 
   const handleRevealSolution = () => {
     setShowSolution(true);
-    setIsLocked(true); // Lock task permanently when solution is revealed
+    setIsLocked(true);
   };
 
   return (
-    <div className="w-full max-w-2xl mx-auto px-4 py-8 animate-fadeIn" id="determinant-task-solver">
-      {/* Back button and title bar */}
+    <div className="w-full max-w-2xl mx-auto px-4 py-8 animate-fadeIn" id="generic-task-solver">
       <div className="flex justify-between items-center mb-6">
         <button
           onClick={onBackToSelector}
@@ -126,7 +144,6 @@ export const DeterminantTask: React.FC<DeterminantTaskProps> = ({ user, onSolved
       </div>
 
       <div className="glass-panel rounded-3xl p-6 md:p-8 relative overflow-hidden">
-        {/* Decorative background glow */}
         <div className="absolute top-0 right-0 w-48 h-48 bg-purple-500/10 rounded-full blur-3xl pointer-events-none" />
 
         {loading ? (
@@ -148,25 +165,22 @@ export const DeterminantTask: React.FC<DeterminantTaskProps> = ({ user, onSolved
           </div>
         ) : task ? (
           <div>
-            {/* Header info */}
             <div className="flex justify-between items-center mb-6">
               <span className="text-xs font-bold uppercase tracking-wider px-3 py-1 bg-purple-500/10 text-purple-600 dark:text-purple-400 rounded-full border border-purple-500/25">
-                Lineare Algebra (LA)
+                {task.type}
               </span>
-              <span className="text-xs text-theme-muted font-bold">Typ: 2x2 Determinante</span>
             </div>
 
-            {/* Task prompt */}
-            <h2 className="text-xl md:text-2xl font-bold font-display text-theme-primary mb-6 leading-snug">
-              Berechne die Determinante der folgenden Matrix:
-            </h2>
+            {task.prompt && (
+              <h2 className="text-xl md:text-2xl font-bold font-display text-theme-primary mb-6 leading-snug">
+                {task.prompt}
+              </h2>
+            )}
 
-            {/* Math Render Block */}
             <div className="flex justify-center my-8 select-none scale-110 md:scale-125 transition-transform" id="task-math-expression">
-              <MathRenderer math={`M = ${task.latex}`} block />
+              <MathRenderer math={task.mathQuery} block />
             </div>
 
-            {/* Form */}
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="flex flex-col sm:flex-row gap-3">
                 <div className="relative flex-grow">
@@ -176,7 +190,7 @@ export const DeterminantTask: React.FC<DeterminantTaskProps> = ({ user, onSolved
                     disabled={status === 'correct' || isLocked}
                     value={userAnswer}
                     onChange={(e) => setUserAnswer(e.target.value)}
-                    placeholder={isLocked ? "Gesperrt (Lösung wurde angezeigt)" : "Ergebnis eingeben (z.B. -5)"}
+                    placeholder={isLocked ? 'Gesperrt (Lösung wurde angezeigt)' : 'Ergebnis eingeben'}
                     className="w-full px-4 py-3.5 bg-theme-input border border-theme-border rounded-xl text-theme-primary placeholder-theme-muted focus:outline-none focus:border-purple-500 focus:ring-1 focus:ring-purple-500 transition-all font-semibold text-lg disabled:opacity-60 disabled:cursor-not-allowed"
                     id="task-answer-input"
                   />
@@ -213,7 +227,10 @@ export const DeterminantTask: React.FC<DeterminantTaskProps> = ({ user, onSolved
               </div>
             </form>
 
-            {/* Answer Feedbacks */}
+            {task.inputHint && (
+              <p className="mt-3 text-xs text-theme-muted font-medium">{task.inputHint}</p>
+            )}
+
             {status === 'incorrect' && (
               <div className="mt-4 p-3.5 bg-rose-500/10 border border-rose-500/20 text-rose-600 dark:text-rose-400 rounded-xl text-sm font-bold flex items-start gap-2.5 animate-fadeIn">
                 <XCircle className="w-5 h-5 text-rose-500 dark:text-rose-400 shrink-0 mt-0.5" />
@@ -239,7 +256,6 @@ export const DeterminantTask: React.FC<DeterminantTaskProps> = ({ user, onSolved
               </div>
             )}
 
-            {/* Actions for Solution and Reload */}
             <div className="flex flex-wrap justify-between items-center gap-3 mt-8 pt-6 border-t border-theme-border">
               <button
                 type="button"
@@ -265,14 +281,13 @@ export const DeterminantTask: React.FC<DeterminantTaskProps> = ({ user, onSolved
               )}
             </div>
 
-            {/* Solution Display */}
-            {showSolution && (
+            {showSolution && task.explanation && (
               <div className="mt-6 p-5 bg-theme-card border border-theme-border rounded-2xl animate-fadeIn">
                 <h3 className="text-sm font-bold text-purple-600 dark:text-purple-400 uppercase tracking-wider mb-4">
                   Rechenweg:
                 </h3>
                 <div className="space-y-3 text-theme-secondary text-sm md:text-base">
-                  {task.steps.map((step, idx) => (
+                  {task.explanation.map((step, idx) => (
                     <div key={idx} className="pb-3 last:pb-0 border-b last:border-0 border-theme-border">
                       <LatexTextRenderer text={step} />
                     </div>
@@ -287,4 +302,4 @@ export const DeterminantTask: React.FC<DeterminantTaskProps> = ({ user, onSolved
   );
 };
 
-export default DeterminantTask;
+export default GenericTaskRunner;

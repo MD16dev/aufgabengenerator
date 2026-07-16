@@ -1,6 +1,6 @@
 import { RefreshCw, Trophy, Zap } from 'lucide-react';
 import { ModuleSelector } from './ModuleSelector';
-import { DeterminantTask } from './DeterminantTask';
+import { GenericTaskRunner } from './GenericTaskRunner';
 import type { LeaderboardItem } from '../types';
 
 interface TasksPageProps {
@@ -28,8 +28,13 @@ export const TasksPage: React.FC<TasksPageProps> = ({
   return (
     <div className="w-full max-w-6xl mx-auto flex flex-col lg:flex-row gap-6 items-stretch animate-fadeIn" id="tasks-split-layout">
       <div className="flex-grow flex items-center justify-center">
-        {activeTaskId === 'lin_alg_det' ? (
-          <DeterminantTask user={user} onSolved={onSolved} onBackToSelector={() => setActiveTaskId(null)} />
+        {activeTaskId ? (
+          <GenericTaskRunner
+            taskType={activeTaskId}
+            user={user}
+            onSolved={onSolved}
+            onBackToSelector={() => setActiveTaskId(null)}
+          />
         ) : (
           <ModuleSelector
             activeModule={activeModuleId}

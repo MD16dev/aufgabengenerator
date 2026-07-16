@@ -1,12 +1,20 @@
 import { Request, Response, NextFunction } from 'express';
-import { generate2x2DeterminantTask } from '../services/math/determinant';
+import { getTaskGenerator } from '../services/math/registry';
 
 /**
- * Endpoint controller to generate a new 2x2 determinant task.
+ * Generates a task for the given type id from the registry.
+ * The controller stays untouched no matter how many task types are added.
  */
-export const getDeterminantTask = (req: Request, res: Response, next: NextFunction) => {
+export const getTask = (req: Request, res: Response, next: NextFunction) => {
   try {
-    const task = generate2x2DeterminantTask();
+    const taskType = req.params.type;
+    const generator = getTaskGenerator(taskType);
+
+    if (!generator) {
+      return res.status(404).json({ error: { message: `Unbekannter Aufgabentyp: ${taskType}` } });
+    }
+
+    const task = generator();
     res.json(task);
   } catch (error) {
     next(error);
