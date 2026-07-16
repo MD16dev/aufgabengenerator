@@ -260,7 +260,7 @@ export function generateEigenbasis(): TaskData {
   explanation.push(
     `Wir normieren ihn, sodass der erste Nicht-Null-Eintrag $1$ ist: $v \\mapsto \\begin{pmatrix} ${nullVecNorm.join(' \\\\ ')} \\end{pmatrix}$. Der Eigenraum wird von diesem Vektor aufgespannt.`
   );
-  explanation.push(`Eine Basis des Eigenraums ist damit: $${answer}$$`);
+  explanation.push(`Eine Basis des Eigenraums ist damit: $\\left\\{ \\begin{pmatrix} ${nullVecNorm.join(' \\\\ ')} \\end{pmatrix} \\right\\}$.`);
 
   return {
     type: 'calc_eigenbasis',
