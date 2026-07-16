@@ -72,10 +72,10 @@ export const OnboardingTour: React.FC<OnboardingTourProps> = ({ onClose, onNavig
       navigateTo: { tab: 'tasks', taskId: 'lin_alg_det' }
     },
     {
-      title: 'Live-Bestenliste auf der Aufgabenseite 🏅',
-      description: 'Rechts neben deiner Aufgabe siehst du die Rangliste – live aktualisiert, sobald jemand eine Aufgabe löst. Schau vorbei und klettere selbst nach oben!',
-      icon: <Trophy className="w-10 h-10 text-amber-500" />,
-      targetId: 'tasks-split-layout',
+      title: 'Rechenweg anzeigen 💡',
+      description: 'Kommst du bei einer Aufgabe nicht weiter? Über „Rechenweg anzeigen“ siehst du den kompletten Lösungsweg Schritt für Schritt. Achtung: Die Aufgabe wird dann gesperrt und nicht für die Bestenliste gewertet – löse eine neue, um Punkte zu sammeln!',
+      icon: <HelpCircle className="w-10 h-10 text-amber-500" />,
+      targetId: 'show-solution-btn',
       navigateTo: { tab: 'tasks', taskId: 'lin_alg_det' }
     },
     {
