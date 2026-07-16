@@ -1,6 +1,10 @@
 import { TaskData } from './types';
 import { generateDeterminant } from './determinant';
 import { generateGLnCardinality } from './glCardinality';
+import { generateParamDeterminantFiniteField } from './paramDeterminant';
+import { generatePolyMappingMatrix } from './polyMappingMatrix';
+import { generateEigenbasis } from './eigenbasis';
+import { generateLinearCodeParameters } from './linearCodeParameters';
 
 /**
  * Registry mapping a task type id (sent by the frontend) to its generator
@@ -10,6 +14,10 @@ import { generateGLnCardinality } from './glCardinality';
 export const taskGenerators: Record<string, () => TaskData> = {
   'lin_alg_det': generateDeterminant,
   'calc_gl_n_cardinality': generateGLnCardinality,
+  'calc_param_determinant_finite_field': generateParamDeterminantFiniteField,
+  'calc_poly_mapping_matrix': generatePolyMappingMatrix,
+  'calc_eigenbasis': generateEigenbasis,
+  'calc_linear_code_parameters': generateLinearCodeParameters,
   // 'lin_alg_det3x3': generateDeterminant3x3,
   // 'os_page_table': generatePageTable,
   // ...new task types go here

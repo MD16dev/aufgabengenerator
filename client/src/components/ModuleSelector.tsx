@@ -46,10 +46,34 @@ export const ModuleSelector: React.FC<ModuleSelectorProps> = ({ activeModule, on
           isActive: false
         },
         {
-          id: 'lin_alg_matmul',
-          name: 'Matrizenmultiplikation',
-          description: 'Multipliziere zwei kompatible ganzzahlige Matrizen.',
-          isActive: false
+          id: 'calc_gl_n_cardinality',
+          name: 'Kardinalität von GL_n(F_p)',
+          description: 'Berechne die Anzahl invertierbarer Matrizen über F_p mit der Produktformel.',
+          isActive: true
+        },
+        {
+          id: 'calc_param_determinant_finite_field',
+          name: 'Determinante mit Parameter (F_p)',
+          description: 'Determinante einer 3x3 Matrix mit Variable a über einem endlichen Körper.',
+          isActive: true
+        },
+        {
+          id: 'calc_poly_mapping_matrix',
+          name: 'Darstellungsmatrix (Polynomräume)',
+          description: 'Finde M_B^B(φ) einer linearen Abbildung auf Polynomräumen.',
+          isActive: true
+        },
+        {
+          id: 'calc_eigenbasis',
+          name: 'Eigenbasis berechnen',
+          description: 'Basis des Eigenraums zum größten Eigenwert einer 3x3 Matrix.',
+          isActive: true
+        },
+        {
+          id: 'calc_linear_code_parameters',
+          name: 'Parameter linearer Codes',
+          description: 'Bestimme [n,k,d] eines linearen Blockcodes über F_2.',
+          isActive: true
         }
       ]
     },
