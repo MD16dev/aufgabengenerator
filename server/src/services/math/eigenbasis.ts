@@ -42,6 +42,128 @@ function normalize(v: number[]): number[] {
   return v.map((x) => x / firstNonZero);
 }
 
+/** Exact rational number as numerator/denominator (kept reduced). */
+interface Frac {
+  n: number;
+  d: number;
+}
+
+function fSimplify(f: Frac): Frac {
+  if (f.n === 0) return { n: 0, d: 1 };
+  const g = Math.sign(f.d) * gcd(Math.abs(f.n), Math.abs(f.d));
+  return { n: f.n / g, d: f.d / g };
+}
+
+function gcd(a: number, b: number): number {
+  while (b) { [a, b] = [b, a % b]; }
+  return a;
+}
+
+function fAdd(a: Frac, b: Frac): Frac {
+  return fSimplify({ n: a.n * b.d + b.n * a.d, d: a.d * b.d });
+}
+
+function fMul(a: Frac, b: Frac): Frac {
+  return fSimplify({ n: a.n * b.n, d: a.d * b.d });
+}
+
+function fNeg(a: Frac): Frac {
+  return { n: -a.n, d: a.d };
+}
+
+function fFromInt(x: number): Frac {
+  return { n: x, d: 1 };
+}
+
+function fToLatex(f: Frac): string {
+  if (f.d === 1) return String(f.n);
+  return `${f.n}/${f.d}`;
+}
+
+/** Render a 3x3 matrix of fractions as a pmatrix. */
+function fracMatToLatex(M: Frac[][]): string {
+  const rows = M.map((row) => row.map(fToLatex).join(' & ')).join(' \\\\ ');
+  return `\\begin{pmatrix} ${rows} \\end{pmatrix}`;
+}
+
+/**
+ * Gaussian elimination over Q on a 3x3 matrix. Returns the row-echelon form
+ * and a list of human-readable step descriptions (LaTeX).
+ */
+function gaussEchelon(M: Frac[][]): { echelon: Frac[][]; steps: string[] } {
+  const A = M.map((r) => r.slice());
+  const steps: string[] = [];
+  let lead = 0;
+  const rows = 3;
+  const cols = 3;
+
+  for (let r = 0; r < rows && lead < cols; lead++) {
+    // Find pivot row
+    let pivot = -1;
+    for (let i = r; i < rows; i++) {
+      if (A[i][lead].n !== 0) { pivot = i; break; }
+    }
+    if (pivot === -1) continue;
+
+    if (pivot !== r) {
+      [A[r], A[pivot]] = [A[pivot], A[r]];
+      steps.push(`Tausche Zeile ${r + 1} und Zeile ${pivot + 1}: $${fracMatToLatex(A)}$`);
+    }
+
+    // Normalize pivot row so the pivot becomes 1
+    const pv = A[r][lead];
+    if (pv.n !== 0 && !(pv.n === 1 && pv.d === 1)) {
+      for (let c = 0; c < cols; c++) A[r][c] = fMul(A[r][c], { n: pv.d, d: pv.n });
+      steps.push(`Teile Zeile ${r + 1} durch ${fToLatex(pv)}: $${fracMatToLatex(A)}$`);
+    }
+
+    // Eliminate below
+    for (let i = r + 1; i < rows; i++) {
+      const factor = A[i][lead];
+      if (factor.n === 0) continue;
+      for (let c = 0; c < cols; c++) {
+        A[i][c] = fAdd(A[i][c], fMul(fNeg(factor), A[r][c]));
+      }
+      steps.push(`Zeile ${i + 1} \\leftarrow Zeile ${i + 1} - (${fToLatex(factor)})\\cdot \\text{Zeile } ${r + 1}: $${fracMatToLatex(A)}$`);
+    }
+    lead++;
+    r++;
+  }
+
+  return { echelon: A, steps };
+}
+
+/**
+ * Reads the nullspace vector (1-dimensional) off a 3x3 row-echelon form.
+ * Returns the vector with the free variable set so the first non-zero entry is 1.
+ */
+function nullspaceFromEchelon(E: Frac[][]): number[] {
+  // Determine pivot columns
+  const pivots: number[] = [];
+  for (let r = 0; r < 3; r++) {
+    const pc = E[r].findIndex((x) => x.n !== 0);
+    if (pc !== -1) pivots.push(pc);
+  }
+  const freeCol = [0, 1, 2].find((c) => !pivots.includes(c)) ?? 0;
+
+  // Set free variable = 1, back-substitute
+  const x = [0, 0, 0];
+  x[freeCol] = 1;
+  for (let r = 2; r >= 0; r--) {
+    const pc = E[r].findIndex((v) => v.n !== 0);
+    if (pc === -1 || pc === freeCol) continue;
+    // sum_{c>pc} E[r][c]*x[c] + E[r][pc]*x[pc] = 0  => x[pc] = -sum/E[r][pc]
+    let sum: Frac = { n: 0, d: 1 };
+    for (let c = pc + 1; c < 3; c++) sum = fAdd(sum, fMul(E[r][c], fFromInt(x[c])));
+    const xpc = fAdd(fNeg(sum), { n: 0, d: 1 });
+    x[pc] = xpc.n / xpc.d / (E[r][pc].n / E[r][pc].d);
+  }
+
+  // Normalize so first non-zero entry is 1
+  const firstNonZero = x.find((v) => v !== 0)!;
+  return x.map((v) => v / firstNonZero);
+}
+
 /**
  * Generates a task asking for a basis of the eigenspace belonging to the
  * largest eigenvalue of a 3x3 rational matrix A.
@@ -108,21 +230,37 @@ export function generateEigenbasis(): TaskData {
 
   const mathQuery = `A = \\begin{pmatrix} ${A.map((r) => r.join(' & ')).join(' \\\\ ')} \\end{pmatrix}`;
 
-  // Show the eigenvector v (the column of T belonging to the largest eigenvalue)
-  // and verify A v = lambda * v.
-  const vRaw = eigenspaceCols[0];
-  const vNorm = basis[0];
-  const Av = A.map((row) => row.reduce((s, x, j) => s + x * vRaw[j], 0));
-  const lambdaV = vRaw.map((x) => x * largest);
+  // Build (A - lambda_max * I) and solve the homogeneous LGS via Gauss.
+  const AminusLambda: Frac[][] = A.map((row, i) =>
+    row.map((val, j) => fFromInt(i === j ? val - largest : val))
+  );
+  const { echelon, steps } = gaussEchelon(AminusLambda);
+  const nullVec = nullspaceFromEchelon(echelon);
+  const nullVecNorm = (() => {
+    const f = nullVec.find((v) => v !== 0)!;
+    return nullVec.map((v) => v / f);
+  })();
 
-  const explanation = [
+  const explanation: string[] = [
     `Die Matrix $A$ hat die drei Eigenwerte $\\lambda_1=${eigenvalues[0]},\\; \\lambda_2=${eigenvalues[1]},\\; \\lambda_3=${eigenvalues[2]}$.`,
-    `Gesucht ist der Eigenraum zum größten Eigenwert $\\lambda_{\\max}=${largest}$.`,
-    `Ein zugehöriger Eigenvektor ist $v = \\begin{pmatrix} ${vRaw.join(' \\\\ ')} \\end{pmatrix}$. Wir prüfen $A\\,v = \\lambda_{\\max}\\,v$:`,
-    `$$A\\,v = \\begin{pmatrix} ${Av.join(' \\\\ ')} \\end{pmatrix} = ${largest}\\cdot\\begin{pmatrix} ${vRaw.join(' \\\\ ')} \\end{pmatrix} = \\begin{pmatrix} ${lambdaV.join(' \\\\ ')} \\end{pmatrix} = \\lambda_{\\max}\\,v$$`,
-    `Der Eigenraum wird von diesem Vektor aufgespannt. Wir normieren ihn, sodass der erste Nicht-Null-Eintrag $1$ ist: $v \\mapsto \\begin{pmatrix} ${vNorm.join(' \\\\ ')} \\end{pmatrix}$.`,
-    `Eine Basis des Eigenraums ist damit: $${answer}$$`
+    `Gesucht ist der Eigenraum zum größten Eigenwert $\\lambda_{\\max}=${largest}$. Dazu lösen wir das homogene lineare Gleichungssystem $(A - \\lambda_{\\max} I)\\,x = 0$.`,
+    `Wir stellen die Matrix auf: $$A - ${largest}\\,I = ${fracMatToLatex(AminusLambda)}$$`,
   ];
+
+  if (steps.length > 0) {
+    explanation.push(`Mit dem Gauß-Algorithmus bringen wir sie auf Zeilenstufenform:`);
+    explanation.push(...steps);
+  } else {
+    explanation.push(`Die Matrix ist bereits in Zeilenstufenform.`);
+  }
+
+  explanation.push(
+    `Aus der Zeilenstufenform lesen wir den Eigenvektor ab (freie Variable $=1$): $v = \\begin{pmatrix} ${nullVec.join(' \\\\ ')} \\end{pmatrix}$.`
+  );
+  explanation.push(
+    `Wir normieren ihn, sodass der erste Nicht-Null-Eintrag $1$ ist: $v \\mapsto \\begin{pmatrix} ${nullVecNorm.join(' \\\\ ')} \\end{pmatrix}$. Der Eigenraum wird von diesem Vektor aufgespannt.`
+  );
+  explanation.push(`Eine Basis des Eigenraums ist damit: $${answer}$$`);
 
   return {
     type: 'calc_eigenbasis',
