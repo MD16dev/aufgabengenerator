@@ -6,7 +6,7 @@ Diese Datei dient als Synchronisationspunkt zwischen Entwicklern und KI-Agenten.
 
 ## 1. Aktueller Gesamtstatus
 * **Letztes Update:** 16. Juli 2026
-* **Aktiver Branch:** `main` (alle Feature-Branches gemerged & aufgeräumt)
+* **Aktiver Branch:** `feature/onboarding-overhaul` (Onboarding-Tour überarbeitet, noch nicht gemerged)
 * **Datenbank-Status:** SQLite lokal eingerichtet, Schema migriert (`dev.db`), Prisma Client generiert.
 
 ---
@@ -15,6 +15,13 @@ Diese Datei dient als Synchronisationspunkt zwischen Entwicklern und KI-Agenten.
 *(Dieses Protokoll wird von der KI am Ende jeder Session aktualisiert)*
 
 * **Ausführender Agent / Entwickler:** GitHub Copilot (Tencent: Hy3)
+* **Was wurde erledigt (Session 16.07.2026 – Onboarding-Overhaul):**
+  - [x] **Onboarding-Tour komplett überarbeitet (`feature/onboarding-overhaul`):** Deckt jetzt alle Features ab, die seit der ursprünglichen Tour dazugekommen sind (Aufgaben lösen/Rechenweg, Live-Rangliste auf Aufgabenseite, globale Bestenliste, Pomodoro-Timer, Feedback-Button).
+  - [x] **Auto-Navigation pro Schritt:** Jeder Schritt hat ein `navigateTo`-Ziel; die Tour wechselt automatisch auf den richtigen Tab (und wählt ggf. den Aufgabentyp `lin_alg_det`), bevor das Zielelement hervorgehoben wird. Verdrahtet über neue `onNavigate`-Prop in `App.tsx`.
+  - [x] **Rest der Seite wird verdunkelt:** Statt nur einem Highlight-Kasten nutzt die Tour jetzt ein Spotlight mit "ausgestanztem" Loch (`.onboarding-spotlight` in `index.css` via riesigem `box-shadow`), sodass nur der Zielbereich sichtbar bleibt; pulsierender Ring zieht die Aufmerksamkeit auf sich. Alte `.spotlight-overlay-box`-Klasse entfernt.
+  - [x] **Fehlende Ziel-IDs ergänzt:** `feedback-btn` + `help-btn` in `NavHeader`, `home-pomodoro-panel` + `home-quicknav-panel` in `HomePage`, `pomodoro-widget` in `PomodoroWidget`.
+  - [x] **Tour-Schritte von 4 auf 9 erweitert** (Willkommen, Fächer/Aufgaben, Aufgabe lösen, Live-Rangliste, globale Bestenliste, Profil/Login, Pomodoro, Feedback/Hilfe, Theme-Toggle).
+  - [x] **Typecheck (`tsc -b`) & Lint (`oxlint`) der geänderten Dateien fehlerfrei.**
 * **Was wurde erledigt (Session 16.07.2026):**
   - [x] **Issue #4 behoben – Leaderboard-Flickern beim Filterwechsel:** Spinner-Block im Hauptbereich entfernt (verursachte Größenänderung des Kastens bei leerer vorheriger Liste), Ladezustand nur noch über absolut positionierte Top-Bar + Eck-Spinner.
   - [x] **Feste Panel-Höhe statt `min-h`:** `h-[28rem]` mit internem Scrollen, damit der Kasten beim Tab-Wechsel (z. B. Gesamt → Modul/DSAL ohne Einträge) nicht mehr schrumpft/wächst.
@@ -31,7 +38,7 @@ Diese Datei dient als Synchronisationspunkt zwischen Entwicklern und KI-Agenten.
   - [x] Pomodoro-Timer mit stufenlosen Slidern (Fokus: 5-60 min, Pause: 1-30 min) zur Laufzeitanpassung.
   - [x] Schwebendes Pomodoro-Widget (minimierbare Pille in der Ecke mit kreisförmigem Fortschrittsring, der im maximierten Zustand vollständig gefüllt wird, Glocken-Sound bei Ablauf).
   - [x] Split-Screen-Layout auf der Aufgaben-Seite (links: Aufgaben/Rechnen, rechts: Modul-/Aufgaben-Rangliste mit Live-Aktualisierung).
-  - [x] Flüssig gleitende und morphende Spotlight-Onboarding-Tour (über ein einziges CSS-transformiertes Masken-Overlay).
+  - [x] Flüssig gleitende Onboarding-Tour mit Spotlight (Zielbereich bleibt sichtbar, Rest wird per "ausgestanztem" Loch verdunkelt) und automatischer Navigation zum jeweiligen Tab/Aufgabentyp pro Schritt.
   - [x] Fehlerfreie Farbdarstellung im Dark- & Whitemode durch Bereinigung nicht-standardmäßiger Tailwind-Klassen (z. B. `slate-850` zu `slate-800`).
   - [x] Integration des `@custom-variant dark` in `index.css` zur Aktivierung der Tailwind v4 CSS-Klassen-Kopplung.
   - [x] GitHub-Verweis im Footer inklusive offiziellem GitHub-Logo, der das Repository in einem neuen Tab öffnet.

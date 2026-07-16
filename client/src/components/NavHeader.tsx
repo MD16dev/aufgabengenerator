@@ -81,6 +81,7 @@ export const NavHeader: React.FC<NavHeaderProps> = ({
             onClick={onOpenFeedback}
             className="p-2.5 bg-theme-card hover:bg-purple-500/10 border border-theme-border hover:border-purple-500/30 rounded-xl text-theme-muted hover:text-purple-600 transition-all cursor-pointer shadow-sm flex items-center justify-center"
             title="Bug melden / Feedback"
+            id="feedback-btn"
           >
             <MessageSquare className="w-5 h-5" />
           </button>
@@ -88,6 +89,7 @@ export const NavHeader: React.FC<NavHeaderProps> = ({
             onClick={onOpenOnboarding}
             className="p-2.5 bg-theme-card hover:bg-purple-500/10 border border-theme-border hover:border-purple-500/30 rounded-xl text-theme-muted hover:text-purple-600 transition-all cursor-pointer shadow-sm flex items-center justify-center"
             title="Tour starten"
+            id="help-btn"
           >
             <HelpCircle className="w-5 h-5" />
           </button>

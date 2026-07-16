@@ -17,7 +17,7 @@ export const PomodoroWidget: React.FC = () => {
   const labelColor = mode === 'work' ? 'text-purple-600' : 'text-emerald-500';
 
   return (
-    <div className="fixed bottom-6 right-6 z-40 pointer-events-none">
+    <div className="fixed bottom-6 right-6 z-40 pointer-events-none" id="pomodoro-widget">
       {!isWidgetExpanded ? (
         <button
           onClick={() => setIsWidgetExpanded(true)}
