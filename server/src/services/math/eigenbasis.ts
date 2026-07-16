@@ -124,7 +124,7 @@ function gaussEchelon(M: Frac[][]): { echelon: Frac[][]; steps: string[] } {
       for (let c = 0; c < cols; c++) {
         A[i][c] = fAdd(A[i][c], fMul(fNeg(factor), A[r][c]));
       }
-      steps.push('Zeile ' + (i + 1) + ' \\leftarrow Zeile ' + (i + 1) + ' - (' + fToLatex(factor) + ')\\cdot \\text{Zeile } ' + (r + 1) + ': $$' + fracMatToLatex(A) + '$$');
+      steps.push('$' + 'Zeile ' + (i + 1) + ' \\leftarrow Zeile ' + (i + 1) + ' - (' + fToLatex(factor) + ')\\cdot \\text{Zeile } ' + (r + 1) + '$: $$' + fracMatToLatex(A) + '$$');
     }
     lead++;
     r++;
