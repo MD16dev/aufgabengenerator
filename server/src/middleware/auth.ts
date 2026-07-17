@@ -5,6 +5,7 @@ export interface AuthenticatedRequest extends Request {
   user?: {
     userId: string;
     username: string;
+    isAdmin: boolean;
   };
 }
 
@@ -26,7 +27,8 @@ export const authMiddleware = (req: AuthenticatedRequest, res: Response, next: N
     
     req.user = {
       userId: decoded.userId,
-      username: decoded.username
+      username: decoded.username,
+      isAdmin: decoded.isAdmin === true
     };
     
     next();
@@ -49,7 +51,8 @@ export const optionalAuthMiddleware = (req: AuthenticatedRequest, res: Response,
       const decoded = verifyToken(token);
       req.user = {
         userId: decoded.userId,
-        username: decoded.username
+        username: decoded.username,
+        isAdmin: decoded.isAdmin === true
       };
     }
   } catch (error) {

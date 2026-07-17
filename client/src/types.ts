@@ -3,6 +3,7 @@ export interface UserProfile {
   username: string;
   displayName: string;
   profilePic?: string;
+  isAdmin?: boolean;
   createdAt: string;
   solvedCount: number;
 }

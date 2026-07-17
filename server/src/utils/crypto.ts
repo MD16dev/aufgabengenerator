@@ -31,8 +31,22 @@ export function verifyPassword(password: string, storedHash: string): boolean {
 /**
  * Generates a signed JWT token for the user.
  */
-export function generateToken(userId: string, username: string): string {
-  return jwt.sign({ userId, username }, JWT_SECRET, { expiresIn: TOKEN_EXPIRY });
+export function generateToken(userId: string, username: string, isAdmin: boolean): string {
+  return jwt.sign({ userId, username, isAdmin }, JWT_SECRET, { expiresIn: TOKEN_EXPIRY });
+}
+
+/**
+ * Determines whether a given username is configured as an administrator via
+ * environment variables. Supports a comma-separated ADMIN_USERNAMES list
+ * (e.g. "MD16,alice,bob") and falls back to the single ADMIN_USERNAME value,
+ * then to "MD16". This is only a bootstrap guarantee so the configured account
+ * can never be locked out; the persisted isAdmin flag in the database is the
+ * authoritative source for authorization.
+ */
+export function isAdminUsername(username: string): boolean {
+  const raw = process.env.ADMIN_USERNAMES || process.env.ADMIN_USERNAME || 'MD16';
+  const admins = raw.split(',').map((u) => u.trim()).filter(Boolean);
+  return admins.includes(username.trim());
 }
 
 /**
@@ -41,3 +55,4 @@ export function generateToken(userId: string, username: string): string {
 export function verifyToken(token: string): any {
   return jwt.verify(token, JWT_SECRET);
 }
+

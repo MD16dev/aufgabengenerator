@@ -32,8 +32,7 @@ export default function App() {
     sideLeaderboard, loadingSideLeaderboard, fetchLeaderboard, fetchSideLeaderboard,
   } = useLeaderboard();
 
-  const adminUsername = import.meta.env.VITE_ADMIN_USERNAME || 'MD16';
-  const isAdmin = user?.username === adminUsername;
+  const isAdmin = !!user?.isAdmin;
 
   // Local storage reading fallback for guest score
   const [guestScore, setGuestScore] = useState<number>(() => {

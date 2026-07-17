@@ -1,4 +1,4 @@
-import { describe, it, expect, afterAll } from 'vitest';
+import { describe, it, expect, afterAll, beforeAll } from 'vitest';
 import request from 'supertest';
 import app from '../../app';
 import { prisma } from '../../utils/db';
@@ -164,5 +164,88 @@ describe('Auth & Score API Endpoints', () => {
       .get('/api/tasks/leaderboard?taskId=lin_alg_det')
       .expect(200);
     expect(Array.isArray(taskRes.body)).toBe(true);
+  });
+
+  describe('Admin user management', () => {
+    let adminToken = '';
+    let adminUserId = '';
+    let targetUserId = '';
+
+    beforeAll(async () => {
+      const originalAdmin = process.env.ADMIN_USERNAMES;
+      process.env.ADMIN_USERNAMES = `mgmt_admin_${Date.now()}`;
+
+      const adminRes = await request(app)
+        .post('/api/auth/register')
+        .send({ username: process.env.ADMIN_USERNAMES, password: 'password123' })
+        .expect(201);
+      adminToken = adminRes.body.token;
+      adminUserId = adminRes.body.user.id;
+
+      const targetRes = await request(app)
+        .post('/api/auth/register')
+        .send({ username: `mgmt_target_${Date.now()}`, password: 'password123' })
+        .expect(201);
+      targetUserId = targetRes.body.user.id;
+
+      process.env.ADMIN_USERNAMES = originalAdmin || '';
+    });
+
+    afterAll(async () => {
+      await prisma.user.deleteMany({ where: { id: { in: [adminUserId, targetUserId] } } });
+    });
+
+    it('should reject user list for non-admin users', async () => {
+      await request(app)
+        .get('/api/auth/users')
+        .set('Authorization', `Bearer ${token}`)
+        .expect(403);
+    });
+
+    it('should list users for an admin', async () => {
+      const res = await request(app)
+        .get('/api/auth/users')
+        .set('Authorization', `Bearer ${adminToken}`)
+        .expect(200);
+
+      expect(Array.isArray(res.body)).toBe(true);
+      const target = res.body.find((u: any) => u.id === targetUserId);
+      expect(target).toBeDefined();
+      expect(target.isAdmin).toBe(false);
+    });
+
+    it('should promote a user to admin', async () => {
+      const res = await request(app)
+        .patch(`/api/auth/users/${targetUserId}/admin`)
+        .set('Authorization', `Bearer ${adminToken}`)
+        .send({ isAdmin: true })
+        .expect(200);
+
+      expect(res.body.success).toBe(true);
+      expect(res.body.user.isAdmin).toBe(true);
+
+      // The promoted user's token now carries admin rights
+      const loginRes = await request(app)
+        .post('/api/auth/login')
+        .send({ username: res.body.user.username, password: 'password123' })
+        .expect(200);
+      expect(loginRes.body.user.isAdmin).toBe(true);
+    });
+
+    it('should not allow an admin to change their own admin rights', async () => {
+      await request(app)
+        .patch(`/api/auth/users/${adminUserId}/admin`)
+        .set('Authorization', `Bearer ${adminToken}`)
+        .send({ isAdmin: false })
+        .expect(400);
+    });
+
+    it('should reject promoting a user with an invalid payload', async () => {
+      await request(app)
+        .patch(`/api/auth/users/${targetUserId}/admin`)
+        .set('Authorization', `Bearer ${adminToken}`)
+        .send({ isAdmin: 'yes' })
+        .expect(400);
+    });
   });
 });

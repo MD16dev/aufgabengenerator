@@ -12,6 +12,7 @@ model User {
   username     String       @unique
   passwordHash String
   displayName  String?
+  isAdmin      Boolean      @default(false)
   profilePic   String?      // Will store base64 data URI
   createdAt    DateTime     @default(now())
   solvedTasks  SolvedTask[]
