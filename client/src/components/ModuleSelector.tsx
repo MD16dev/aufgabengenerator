@@ -158,6 +158,54 @@ export const ModuleSelector: React.FC<ModuleSelectorProps> = ({ activeModule, on
           isActive: true
         },
         {
+          id: 'dsal_sort_bubble',
+          name: 'Bubblesort',
+          description: 'Gib das Array nach einer Swap-Operation beim Bubblesort an.',
+          isActive: true
+        },
+        {
+          id: 'dsal_sort_insertion',
+          name: 'Insertionsort',
+          description: 'Gib das Array nach einer Iteration der äußeren Schleife beim Insertionsort an.',
+          isActive: true
+        },
+        {
+          id: 'dsal_sort_selection',
+          name: 'Selectionsort',
+          description: 'Gib das Array nach einer Swap-Operation beim Selectionsort an.',
+          isActive: true
+        },
+        {
+          id: 'dsal_sort_quick',
+          name: 'Quicksort',
+          description: 'Gib das Array nach einer Partition-Operation beim Quicksort an.',
+          isActive: true
+        },
+        {
+          id: 'dsal_sort_merge',
+          name: 'Mergesort',
+          description: 'Gib das Array nach einer Merge-Operation beim Mergesort an.',
+          isActive: true
+        },
+        {
+          id: 'dsal_sort_heap',
+          name: 'Heapsort',
+          description: 'Gib das Array nach einer Swap-Operation beim Heapsort an.',
+          isActive: true
+        },
+        {
+          id: 'dsal_sort_counting',
+          name: 'Countingsort',
+          description: 'Gib das sortierte Ergebnisarray beim Countingsort (Werte 0…9) an.',
+          isActive: true
+        },
+        {
+          id: 'dsal_sort_bucket',
+          name: 'Bucketsort',
+          description: 'Gib das sortierte Ergebnisarray beim Bucketsort (10 Buckets, Werte 0…99) an.',
+          isActive: true
+        },
+        {
           id: 'algo_avl_rot',
           name: 'AVL-Baum Rotationen',
           description: 'Führe Links-/Rechts-Balancierungen auf AVL-Bäumen durch.',

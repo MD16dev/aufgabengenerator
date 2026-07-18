@@ -10,6 +10,16 @@ import { generateBSTInsertion } from '../dsal/bst';
 import { generateAVLInsertion } from '../dsal/avl';
 import { generateRedBlackInsertion } from '../dsal/redblack';
 import { generateBTreeInsertion } from '../dsal/btree';
+import {
+  generateBubbleSort,
+  generateInsertionSort,
+  generateSelectionSort,
+  generateQuickSort,
+  generateMergeSort,
+  generateHeapSort,
+  generateCountingSort,
+  generateBucketSort,
+} from '../dsal/sorting';
 
 /**
  * Registry mapping a task type id (sent by the frontend) to its generator
@@ -31,6 +41,15 @@ export const taskGenerators: Record<string, () => TaskData> = {
   'dsal_avl_insert': generateAVLInsertion,
   'dsal_rb_insert': generateRedBlackInsertion,
   'dsal_btree_insert': generateBTreeInsertion,
+  // DSAL — sorting (translated from exercisegenerator)
+  'dsal_sort_bubble': generateBubbleSort,
+  'dsal_sort_insertion': generateInsertionSort,
+  'dsal_sort_selection': generateSelectionSort,
+  'dsal_sort_quick': generateQuickSort,
+  'dsal_sort_merge': generateMergeSort,
+  'dsal_sort_heap': generateHeapSort,
+  'dsal_sort_counting': generateCountingSort,
+  'dsal_sort_bucket': generateBucketSort,
   // ...new task types go here
 };
 
