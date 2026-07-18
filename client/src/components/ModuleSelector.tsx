@@ -324,6 +324,7 @@ export const ModuleSelector: React.FC<ModuleSelectorProps> = ({ activeModule, on
   ];
 
   const activeModuleData = modules.find(m => m.id === activeModule) || modules[0];
+  const moduleHasActiveTasks = activeModuleData.tasks.some((t) => t.isActive);
 
   return (
     <div className="w-full max-w-5xl mx-auto px-4 py-6 animate-fadeIn" id="module-selector-dashboard">
@@ -389,7 +390,7 @@ export const ModuleSelector: React.FC<ModuleSelectorProps> = ({ activeModule, on
         <div className="relative">
           <div
             className={`grid grid-cols-1 md:grid-cols-2 gap-4 transition-all ${
-              activeModuleData.id !== 'lin_alg' ? 'blur-sm opacity-40 pointer-events-none select-none' : ''
+              moduleHasActiveTasks ? '' : 'blur-sm opacity-40 pointer-events-none select-none'
             }`}
           >
             {activeModuleData.tasks.map((task) => (
@@ -432,7 +433,7 @@ export const ModuleSelector: React.FC<ModuleSelectorProps> = ({ activeModule, on
             ))}
           </div>
 
-          {activeModuleData.id !== 'lin_alg' && (
+          {!moduleHasActiveTasks && (
             <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 pointer-events-none">
               <span className="text-3xl md:text-4xl font-extrabold font-display text-theme-primary/80 tracking-tight">
                 Work in Progress
