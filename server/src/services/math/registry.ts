@@ -6,6 +6,10 @@ import { generateParamDeterminantFiniteField } from './paramDeterminant';
 import { generatePolyMappingMatrix } from './polyMappingMatrix';
 import { generateEigenbasis } from './eigenbasis';
 import { generateLinearCodeParameters } from './linearCodeParameters';
+import { generateBSTInsertion } from '../dsal/bst';
+import { generateAVLInsertion } from '../dsal/avl';
+import { generateRedBlackInsertion } from '../dsal/redblack';
+import { generateBTreeInsertion } from '../dsal/btree';
 
 /**
  * Registry mapping a task type id (sent by the frontend) to its generator
@@ -22,6 +26,11 @@ export const taskGenerators: Record<string, () => TaskData> = {
   'calc_eigenbasis': generateEigenbasis,
   'calc_linear_code_parameters': generateLinearCodeParameters,
   // 'os_page_table': generatePageTable,
+  // DSAL — Algorithmen & Datenstrukturen (translated from exercisegenerator)
+  'dsal_bst_insert': generateBSTInsertion,
+  'dsal_avl_insert': generateAVLInsertion,
+  'dsal_rb_insert': generateRedBlackInsertion,
+  'dsal_btree_insert': generateBTreeInsertion,
   // ...new task types go here
 };
 

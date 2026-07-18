@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { MathRenderer, LatexTextRenderer } from './MathRenderer';
+import { TreeRenderer } from './TreeRenderer';
 import { CheckCircle2, XCircle, HelpCircle, ArrowRight, RefreshCw, ArrowLeft, Lock } from 'lucide-react';
 
 /** Unified task shape returned by the backend (matches server/src/services/math/types.ts). */
@@ -10,6 +11,9 @@ interface TaskData {
   explanation?: string[];
   prompt?: string;
   inputHint?: string;
+  renderMode?: 'text' | 'tree';
+  tree?: import('../types').TreeNodeJSON;
+  choices?: import('../types').ChoiceOption[];
 }
 
 interface GenericTaskRunnerProps {
@@ -44,6 +48,7 @@ export const GenericTaskRunner: React.FC<GenericTaskRunnerProps> = ({
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [userAnswer, setUserAnswer] = useState<string>('');
+  const [selectedChoice, setSelectedChoice] = useState<string | null>(null);
   const [status, setStatus] = useState<'idle' | 'correct' | 'incorrect'>('idle');
   const [showSolution, setShowSolution] = useState<boolean>(false);
   const [isLocked, setIsLocked] = useState<boolean>(false);
@@ -60,6 +65,7 @@ export const GenericTaskRunner: React.FC<GenericTaskRunnerProps> = ({
       setLoading(true);
       setError(null);
       setUserAnswer('');
+      setSelectedChoice(null);
       setStatus('idle');
       setShowSolution(false);
       setIsLocked(false); // Reset lock state for the new task
@@ -90,40 +96,53 @@ export const GenericTaskRunner: React.FC<GenericTaskRunnerProps> = ({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!task || userAnswer.trim() === '' || isLocked) return;
+    if (!task || isLocked) return;
 
-    const normalizedUser = normalizeInput(userAnswer);
-    const normalizedAnswer = normalizeInput(task.answer);
-
-    if (normalizedUser === normalizedAnswer) {
-      setStatus('correct');
-
-      const token = localStorage.getItem('auth_token');
-      if (user && token) {
-        try {
-          const response = await fetch('http://localhost:5001/api/tasks/solve', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              Authorization: `Bearer ${token}`,
-            },
-            body: JSON.stringify({ taskTypeId: task.type }),
-          });
-
-          if (response.ok) {
-            onSolved();
-          }
-        } catch (err) {
-          console.error('Fehler beim Speichern der gelösten Aufgabe:', err);
-        }
+    // Multiple-choice tasks compare the selected option id with `answer`.
+    const isChoiceTask = !!task.choices && task.choices.length > 0;
+    if (isChoiceTask) {
+      if (selectedChoice === null) return;
+      if (selectedChoice === task.answer) {
+        setStatus('correct');
       } else {
-        const newScore = localScore + 1;
-        setLocalScore(newScore);
-        localStorage.setItem('aufgabengenerator_score', newScore.toString());
-        onSolved();
+        setStatus('incorrect');
+        return;
       }
     } else {
-      setStatus('incorrect');
+      if (userAnswer.trim() === '') return;
+      const normalizedUser = normalizeInput(userAnswer);
+      const normalizedAnswer = normalizeInput(task.answer);
+      if (normalizedUser === normalizedAnswer) {
+        setStatus('correct');
+      } else {
+        setStatus('incorrect');
+        return;
+      }
+    }
+
+    const token = localStorage.getItem('auth_token');
+    if (user && token) {
+      try {
+        const response = await fetch('http://localhost:5001/api/tasks/solve', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({ taskTypeId: task.type }),
+        });
+
+        if (response.ok) {
+          onSolved();
+        }
+      } catch (err) {
+        console.error('Fehler beim Speichern der gelösten Aufgabe:', err);
+      }
+    } else {
+      const newScore = localScore + 1;
+      setLocalScore(newScore);
+      localStorage.setItem('aufgabengenerator_score', newScore.toString());
+      onSolved();
     }
   };
 
@@ -181,34 +200,88 @@ export const GenericTaskRunner: React.FC<GenericTaskRunnerProps> = ({
               <MathRenderer math={task.mathQuery} block />
             </div>
 
+            {task.renderMode === 'tree' && task.tree ? (
+              <div className="my-6 p-4 bg-theme-card border border-theme-border rounded-2xl overflow-x-auto" id="task-tree-question">
+                <TreeRenderer tree={task.tree} />
+              </div>
+            ) : null}
+
+            {task.choices && task.choices.length > 0 ? (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 my-6" id="task-choices">
+                {task.choices.map((choice) => {
+                  const isSelected = selectedChoice === choice.id;
+                  const isCorrectChoice = choice.id === task.answer;
+                  const showCorrect = status === 'correct' && isCorrectChoice;
+                  const showWrong = status === 'incorrect' && isSelected;
+                  return (
+                    <button
+                      key={choice.id}
+                      type="button"
+                      disabled={status === 'correct' || isLocked}
+                      onClick={() => setSelectedChoice(choice.id)}
+                      className={`p-3 bg-theme-card border rounded-2xl overflow-x-auto transition-all cursor-pointer ${
+                        showCorrect
+                          ? 'border-emerald-500 ring-2 ring-emerald-500/40'
+                          : showWrong
+                          ? 'border-rose-500 ring-2 ring-rose-500/40'
+                          : isSelected
+                          ? 'border-purple-500 ring-2 ring-purple-500/30'
+                          : 'border-theme-border hover:border-purple-400'
+                      }`}
+                    >
+                      {choice.tree ? (
+                        <TreeRenderer tree={choice.tree} />
+                      ) : (
+                        <div className="text-center py-4"><MathRenderer math={choice.caption ?? ''} block /></div>
+                      )}
+                      {choice.caption && choice.tree ? (
+                        <div className="text-center text-xs text-theme-muted mt-1">{choice.caption}</div>
+                      ) : null}
+                    </button>
+                  );
+                })}
+              </div>
+            ) : null}
+
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="flex flex-col sm:flex-row gap-3">
-                <div className="relative flex-grow">
-                  <input
-                    ref={inputRef}
-                    type="text"
-                    disabled={status === 'correct' || isLocked}
-                    value={userAnswer}
-                    onChange={(e) => setUserAnswer(e.target.value)}
-                    placeholder={isLocked ? 'Gesperrt (Lösung wurde angezeigt)' : 'Ergebnis eingeben'}
-                    className="w-full px-4 py-3.5 bg-theme-input border border-theme-border rounded-xl text-theme-primary placeholder-theme-muted focus:outline-none focus:border-purple-500 focus:ring-1 focus:ring-purple-500 transition-all font-semibold text-lg disabled:opacity-60 disabled:cursor-not-allowed"
-                    id="task-answer-input"
-                  />
-                  {status === 'correct' && (
-                    <CheckCircle2 className="absolute right-4 top-1/2 -translate-y-1/2 w-6 h-6 text-emerald-400 animate-bounce" />
-                  )}
-                  {status === 'incorrect' && (
-                    <XCircle className="absolute right-4 top-1/2 -translate-y-1/2 w-6 h-6 text-rose-400" />
-                  )}
-                  {isLocked && status !== 'correct' && (
-                    <Lock className="absolute right-4 top-1/2 -translate-y-1/2 w-5 h-5 text-amber-500" />
-                  )}
-                </div>
+                {task.choices && task.choices.length > 0 ? (
+                  <button
+                    type="submit"
+                    disabled={selectedChoice === null || status === 'correct' || isLocked}
+                    className="w-full px-6 py-3.5 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 disabled:from-purple-800 disabled:to-indigo-800 disabled:opacity-40 disabled:cursor-not-allowed text-white font-semibold rounded-xl transition-all shadow-lg hover:shadow-purple-500/25 flex items-center justify-center gap-2 cursor-pointer"
+                    id="submit-answer-btn"
+                  >
+                    {status === 'correct' ? 'Nächste Aufgabe' : 'Baum auswählen'}
+                  </button>
+                ) : (
+                  <div className="relative flex-grow">
+                    <input
+                      ref={inputRef}
+                      type="text"
+                      disabled={status === 'correct' || isLocked}
+                      value={userAnswer}
+                      onChange={(e) => setUserAnswer(e.target.value)}
+                      placeholder={isLocked ? 'Gesperrt (Lösung wurde angezeigt)' : 'Ergebnis eingeben'}
+                      className="w-full px-4 py-3.5 bg-theme-input border border-theme-border rounded-xl text-theme-primary placeholder-theme-muted focus:outline-none focus:border-purple-500 focus:ring-1 focus:ring-purple-500 transition-all font-semibold text-lg disabled:opacity-60 disabled:cursor-not-allowed"
+                      id="task-answer-input"
+                    />
+                    {status === 'correct' && (
+                      <CheckCircle2 className="absolute right-4 top-1/2 -translate-y-1/2 w-6 h-6 text-emerald-400 animate-bounce" />
+                    )}
+                    {status === 'incorrect' && (
+                      <XCircle className="absolute right-4 top-1/2 -translate-y-1/2 w-6 h-6 text-rose-400" />
+                    )}
+                    {isLocked && status !== 'correct' && (
+                      <Lock className="absolute right-4 top-1/2 -translate-y-1/2 w-5 h-5 text-amber-500" />
+                    )}
+                  </div>
+                )}
 
                 {status !== 'correct' && !isLocked ? (
                   <button
                     type="submit"
-                    disabled={userAnswer.trim() === ''}
+                    disabled={task.choices && task.choices.length > 0 ? selectedChoice === null : userAnswer.trim() === ''}
                     className="w-full sm:w-auto px-6 py-3.5 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 disabled:from-purple-800 disabled:to-indigo-800 disabled:opacity-40 disabled:cursor-not-allowed text-white font-semibold rounded-xl transition-all shadow-lg hover:shadow-purple-500/25 flex items-center justify-center gap-2 cursor-pointer"
                     id="submit-answer-btn"
                   >

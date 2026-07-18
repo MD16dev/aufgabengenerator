@@ -134,6 +134,30 @@ export const ModuleSelector: React.FC<ModuleSelectorProps> = ({ activeModule, on
       description: 'Bäume, Sortieralgorithmen, Graphentheorie und Komplexitätsanalyse.',
       tasks: [
         {
+          id: 'dsal_bst_insert',
+          name: 'BST: Wert einfügen',
+          description: 'Füge einen Wert in einen Binär-Suchbaum ein (gleiche Werte → rechts).',
+          isActive: true
+        },
+        {
+          id: 'dsal_avl_insert',
+          name: 'AVL-Baum: Wert einfügen',
+          description: 'Füge einen Wert in einen AVL-Baum ein und balanciere per Rotation.',
+          isActive: true
+        },
+        {
+          id: 'dsal_rb_insert',
+          name: 'Rot-Schwarz-Baum: Wert einfügen',
+          description: 'Füge einen Wert in einen Rot-Schwarz-Baum ein (Recoloring/Rotationen).',
+          isActive: true
+        },
+        {
+          id: 'dsal_btree_insert',
+          name: 'B-Baum: Wert einfügen',
+          description: 'Füge einen Wert in einen B-Baum ein (Splits bei Überlauf).',
+          isActive: true
+        },
+        {
           id: 'algo_avl_rot',
           name: 'AVL-Baum Rotationen',
           description: 'Führe Links-/Rechts-Balancierungen auf AVL-Bäumen durch.',

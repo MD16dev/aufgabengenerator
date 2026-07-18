@@ -17,6 +17,12 @@ export const solveTask = async (req: AuthenticatedRequest, res: Response, next: 
     }
 
     // Auto-create/upsert the TaskType in the DB to ensure constraints match
+    const isLinAlg = (taskTypeId === 'lin_alg_det' || taskTypeId === 'lin_alg_det3x3' || taskTypeId === 'lin_alg_matmul'
+      || taskTypeId === 'calc_gl_n_cardinality' || taskTypeId === 'calc_param_determinant_finite_field'
+      || taskTypeId === 'calc_poly_mapping_matrix' || taskTypeId === 'calc_eigenbasis'
+      || taskTypeId === 'calc_linear_code_parameters');
+    const isDSAL = taskTypeId.startsWith('dsal_');
+
     const taskType = await prisma.taskType.upsert({
       where: { id: taskTypeId },
       update: {},
@@ -38,12 +44,19 @@ export const solveTask = async (req: AuthenticatedRequest, res: Response, next: 
           ? 'Eigenbasis berechnen'
           : taskTypeId === 'calc_linear_code_parameters'
           ? 'Parameter linearer Codes'
+          : taskTypeId === 'dsal_bst_insert'
+          ? 'BST: Wert einfügen'
+          : taskTypeId === 'dsal_avl_insert'
+          ? 'AVL-Baum: Wert einfügen'
+          : taskTypeId === 'dsal_rb_insert'
+          ? 'Rot-Schwarz-Baum: Wert einfügen'
+          : taskTypeId === 'dsal_btree_insert'
+          ? 'B-Baum: Wert einfügen'
           : 'Aufgabe',
-        module: (taskTypeId === 'lin_alg_det' || taskTypeId === 'lin_alg_det3x3' || taskTypeId === 'lin_alg_matmul'
-          || taskTypeId === 'calc_gl_n_cardinality' || taskTypeId === 'calc_param_determinant_finite_field'
-          || taskTypeId === 'calc_poly_mapping_matrix' || taskTypeId === 'calc_eigenbasis'
-          || taskTypeId === 'calc_linear_code_parameters') 
-          ? 'Lineare Algebra' 
+        module: isLinAlg
+          ? 'Lineare Algebra'
+          : isDSAL
+          ? 'Algorithmen & Datenstrukturen'
           : 'Allgemein'
       }
     });
