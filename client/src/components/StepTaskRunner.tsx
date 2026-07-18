@@ -89,6 +89,15 @@ export const StepTaskRunner: React.FC<StepTaskRunnerProps> = ({
               <div className="text-center py-2"><MathRenderer math={task.mathQuery} block /></div>
             )}
           </div>
+          {steps.length > 0 && (
+            <ol className="mt-3 list-decimal list-inside space-y-1 text-sm text-theme-primary">
+              {steps.map((step, i) => (
+                <li key={i}>
+                  <LatexTextRenderer text={step.instruction} />
+                </li>
+              ))}
+            </ol>
+          )}
         </div>
 
         {revealed ? (
