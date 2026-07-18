@@ -43,9 +43,10 @@ export interface ChoiceOption {
 
 export interface TaskStep {
   instruction: string;
-  kind: 'tree' | 'array' | 'text' | 'graph';
+  kind: 'tree' | 'array' | 'text' | 'matrix' | 'graph';
   tree?: TreeNodeJSON;
   array?: number[];
+  matrix?: number[][];
   answer?: string;
   annotation?: string;
 }

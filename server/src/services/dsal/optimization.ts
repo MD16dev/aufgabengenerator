@@ -13,17 +13,9 @@ function getRandomInt(min: number, max: number): number {
   return Math.floor(Math.random() * (max - min + 1)) + min;
 }
 
-export function generateKnapsack(): TaskData {
-  const n = getRandomInt(3, 6);
-  const weights: number[] = [];
-  const values: number[] = [];
-  for (let i = 0; i < n; i++) {
-    weights.push(getRandomInt(1, 11));
-    values.push(getRandomInt(1, 11));
-  }
-  const capacity = getRandomInt(3, 8);
-
-  // DP table (n+1) x (capacity+1)
+/** Build the (n+1) x (capacity+1) knapsack DP table. */
+function knapsackDP(weights: number[], values: number[], capacity: number): number[][] {
+  const n = weights.length;
   const dp: number[][] = Array.from({ length: n + 1 }, () => new Array(capacity + 1).fill(0));
   for (let item = 0; item < n; item++) {
     for (let w = 1; w <= capacity; w++) {
@@ -32,13 +24,16 @@ export function generateKnapsack(): TaskData {
       } else {
         dp[item + 1][w] = Math.max(
           dp[item][w],
-          dp[item][w - weights[item]] + values[item]
+          dp[item][w - weights[item]] + values[item],
         );
       }
     }
   }
+  return dp;
+}
 
-  // Traceback: which items are taken (1-indexed)
+/** Trace back the DP table to find which items (1-indexed) are taken. */
+function knapsackTraceback(dp: number[][], weights: number[], n: number, capacity: number): number[] {
   const taken: number[] = [];
   let i = n;
   let j = capacity;
@@ -51,17 +46,69 @@ export function generateKnapsack(): TaskData {
     i--;
   }
   taken.sort((a, b) => a - b);
+  return taken;
+}
 
+export function generateKnapsack(): TaskData {
+  // Generate parameters that make the task non-trivial: the capacity must be
+  // small enough that not everything fits, but at least two items fit on their
+  // own, and there must be a genuine trade-off (an item that fits but is left
+  // out in favour of a better combination). Otherwise the optimum is obvious.
+  let n = 0;
+  let weights: number[] = [];
+  let values: number[] = [];
+  let capacity = 0;
+  let attempts = 0;
+  do {
+    n = getRandomInt(3, 6);
+    capacity = getRandomInt(3, 8);
+    weights = [];
+    values = [];
+    for (let i = 0; i < n; i++) {
+      // Every item must fit on its own: weight is at most the capacity.
+      weights.push(getRandomInt(1, capacity));
+      values.push(getRandomInt(1, 11));
+    }
+    attempts++;
+    const fitCount = weights.filter((w) => w <= capacity).length;
+    const totalWeight = weights.reduce((a, b) => a + b, 0);
+    // Need: not all fit, at least 2 fit individually, and a real trade-off
+    // exists (some fitting item is excluded because a better combo wins).
+    if (fitCount >= 2 && totalWeight > capacity) {
+      const dp = knapsackDP(weights, values, capacity);
+      const taken = knapsackTraceback(dp, weights, n, capacity);
+      const excludedFitting = weights.some(
+        (w, i) => w <= capacity && !taken.includes(i + 1),
+      );
+      if (excludedFitting) break;
+    }
+  } while (attempts < 200);
+
+  // DP table (n+1) x (capacity+1)
+  const dp: number[][] = knapsackDP(weights, values, capacity);
+  const taken: number[] = knapsackTraceback(dp, weights, n, capacity);
   const maxValue = dp[n][capacity];
+  const taskAnswer = `Wert: ${maxValue}, Gegenstände: {${taken.join(', ')}}`;
+  // KaTeX-rendered version of the answer for the solution display.
+  const taskAnswerLatex = `\\text{Eingabe (Musterlösung): } \\text{Wert: } ${maxValue},\\ \\text{Gegenstände: } \\{${taken.join(', ')}\\}`;
+
+  // Render the filled DP table as a KaTeX array for the solution display.
+  const header = `i \\backslash w & ${Array.from({ length: capacity + 1 }, (_, w) => w).join(' & ')}`;
+  const rows = dp.map((row, i) => `${i} & ${row.join(' & ')}`).join(' \\\\ ');
+  const tableLatex = `\\begin{array}{c|${'c'.repeat(capacity + 1)}} ${header} \\\\ \\hline ${rows} \\end{array}`;
+
   return {
     type: 'dsal_opt_knapsack',
     mathQuery: `\\text{Rucksack Kapazität } ${capacity}.\\ w = [${weights.join(', ')}],\\ v = [${values.join(', ')}].`,
-    answer: `Wert: ${maxValue}, Gegenstände: {${taken.join(', ')}}`,
-    prompt: `Bestimmen Sie mit dynamischer Programmierung den maximalen Gesamtwert und die mitzunehmenden Gegenstände (1-indiziert) für einen Rucksack der Kapazität ${capacity} mit Gewichten w=[${weights.join(', ')}] und Werten v=[${values.join(', ')}].`,
+    answer: taskAnswer,
+    prompt: `Bestimmen Sie mit dynamischer Programmierung den maximalen Gesamtwert und die mitzunehmenden Gegenstände (1-indiziert).`,
     inputHint: 'Format: "Wert: X, Gegenstände: {i, j, ...}".',
     explanation: [
       `Wir füllen eine DP-Tabelle $T_{i,w}$ zeilenweise von $i=0$ bis $n$ und $w=0$ bis $W$ auf. Für jeden Gegenstand $i$ und jedes Gewicht $w$ gilt die Rekursion $T_{i,w} = \\max\\bigl(T_{i-1,w},\\ T_{i-1,\\,w-w_i}+v_i\\bigr)$ (falls $w_i \\le w$; sonst übernimmt man einfach $T_{i-1,w}$).`,
+      `Die vollständig gefüllte Tabelle (Zeile $i$ = nach Betrachtung der ersten $i$ Gegenstände, Spalte $w$ = Kapazität):`,
+      `$$${tableLatex}$$`,
       `Der Eintrag $T_{n,W}$ liefert den maximalen Gesamtwert. Die konkret mitgenommenen Gegenstände erhält man durch Backtracking: man startet bei $(n,W)$ und nimmt Gegenstand $i$, sobald $T_{i,w} > T_{i-1,w}$ gilt, und verringert dann $w$ um $w_i$.`,
+      `$${taskAnswerLatex}$`,
     ],
   };
 }
@@ -75,13 +122,57 @@ function randomUpperCase(length: number): string {
 }
 
 export function generateLCS(): TaskData {
-  const len1 = getRandomInt(3, 10);
-  const len2 = getRandomInt(3, 10);
-  const word1 = randomUpperCase(len1);
-  const word2 = randomUpperCase(len2);
+  // Regenerate until the two words actually share at least one character, so
+  // the LCS (and thus the answer) is non-empty and the task is meaningful.
+  let word1 = '';
+  let word2 = '';
+  let result = '';
+  let attempts = 0;
+  do {
+    const len1 = getRandomInt(3, 10);
+    const len2 = getRandomInt(3, 10);
+    word1 = randomUpperCase(len1);
+    word2 = randomUpperCase(len2);
+    attempts++;
+    // Quick shared-character check before building the full DP table.
+    const shared = word1.split('').some((ch) => word2.includes(ch));
+    if (!shared) continue;
+
+    const rows = word1.length;
+    const cols = word2.length;
+    const dp: number[][] = Array.from({ length: rows + 1 }, () => new Array(cols + 1).fill(0));
+    for (let r = 1; r <= rows; r++) {
+      for (let c = 1; c <= cols; c++) {
+        const above = dp[r - 1][c];
+        const left = dp[r][c - 1];
+        const max = Math.max(left, above);
+        if (word1[r - 1] === word2[c - 1]) {
+          dp[r][c] = Math.max(max, dp[r - 1][c - 1] + 1);
+        } else {
+          dp[r][c] = max;
+        }
+      }
+    }
+    // Traceback
+    result = '';
+    let r = rows;
+    let c = cols;
+    while (r > 0 && c > 0) {
+      if (dp[r - 1][c] === dp[r][c]) {
+        r--;
+      } else if (dp[r][c - 1] === dp[r][c]) {
+        c--;
+      } else {
+        result = word1[r - 1] + result;
+        r--;
+        c--;
+      }
+    }
+  } while (result.length === 0 && attempts < 200);
 
   const rows = word1.length;
   const cols = word2.length;
+  // Rebuild the DP table for the final (valid) word pair for the solution view.
   const dp: number[][] = Array.from({ length: rows + 1 }, () => new Array(cols + 1).fill(0));
   for (let r = 1; r <= rows; r++) {
     for (let c = 1; c <= cols; c++) {
@@ -96,21 +187,14 @@ export function generateLCS(): TaskData {
     }
   }
 
-  // Traceback
-  let result = '';
-  let r = rows;
-  let c = cols;
-  while (r > 0 && c > 0) {
-    if (dp[r - 1][c] === dp[r][c]) {
-      r--;
-    } else if (dp[r][c - 1] === dp[r][c]) {
-      c--;
-    } else {
-      result = word1[r - 1] + result;
-      r--;
-      c--;
-    }
-  }
+  // Render the filled LCS DP table as a KaTeX array for the solution display.
+  const colLabels = word2.split('').map((ch, i) => `${ch}_{${i + 1}}`).join(' & ');
+  const header = `& \\emptyset & ${colLabels}`;
+  const tableRows = dp.map((row, r) => {
+    const label = r === 0 ? '\\emptyset' : `${word1[r - 1]}_{${r}}`;
+    return `${label} & ${row.join(' & ')}`;
+  }).join(' \\\\ ');
+  const tableLatex = `\\begin{array}{c|${'c'.repeat(cols + 1)}} ${header} \\\\ \\hline ${tableRows} \\end{array}`;
 
   return {
     type: 'dsal_opt_lcs',
@@ -120,7 +204,10 @@ export function generateLCS(): TaskData {
     inputHint: 'Geben Sie die Teilfolge als Zeichenkette an (eine Teilfolge muss nicht zusammenhängend sein).',
     explanation: [
       `Wir füllen eine DP-Tabelle $L_{i,j}$ für die Präfixe der beiden Wörter auf. Bei übereinstimmenden Zeichen gilt $L_{i,j} = L_{i-1,\\,j-1}+1$; sonst $L_{i,j} = \\max(L_{i-1,j},\\ L_{i,j-1})$.`,
+      `Die vollständig gefüllte Tabelle (Zeile $i$ = Präfix von $w_1$ der Länge $i$, Spalte $j$ = Präfix von $w_2$ der Länge $j$):`,
+      `$$${tableLatex}$$`,
       `Der Wert $L_{|w_1|,|w_2|}$ ist die Länge der LCS. Die Teilfolge selbst rekonstruiert man durch Backtracking von der Ecke: bei Übereinstimmung geht man schräg nach links-oben (Zeichen übernehmen), sonst in die Richtung des größeren Nachbarn. Achtung: eine Teilfolge (im Gegensatz zu einem Teilstring) muss nicht zusammenhängend sein.`,
+      `$\\text{LCS (Musterlösung): } \\text{${result}}$`,
     ],
   };
 }
@@ -313,6 +400,7 @@ export function generateSimplex(): TaskData {
     explanation: [
       `Wir stellen das LP als Tableau auf: die Nebenbedingungen mit Schlupfvariablen und die Zielfunktion als Zeile der reduzierten Kosten. Pro Iteration wenden wir Gauss-Jordan-Elimination an, um eine Basisvariable gegen eine Nichtbasisvariable auszutauschen.`,
       `Pivot-Regel: Die Eingangsvariable ist die Spalte mit den größten positiven reduzierten Kosten; die Ausgangsvariable bestimmt man per Minimum-Quotienten-Test (kleinstes $b_i/a_{ij}$ mit $a_{ij}>0$ in dieser Spalte). Ist keine positive reduzierte Kosten mehr vorhanden, ist $x^*$ optimal und $z$ ist der Zielfunktionswert.`,
+      `Optimale Belegung: $${assignStr}$, optimaler Zielfunktionswert: $z = ${result.z.toString()}$.`,
     ],
   };
 }

@@ -93,9 +93,42 @@ function buildRandomBTree(degree: number, size: number): BNode {
   return root;
 }
 
+/**
+ * A B-tree is only valid if every leaf sits at the same depth and every node's
+ * keys are ordered with the children correctly separated. Small random trees
+ * (few keys) often violate the "all leaves same level" invariant, which makes
+ * the rendered tree ambiguous/wrong. This helper verifies validity so we can
+ * regenerate until we get a proper tree.
+ */
+function isValidBTree(node: BNode, degree: number): boolean {
+  if (node.keys.length > maxKeys(degree)) return false;
+  // Check key ordering within the node.
+  for (let i = 1; i < node.keys.length; i++) {
+    if (node.keys[i] <= node.keys[i - 1]) return false;
+  }
+  if (node.children.length === 0) return true; // leaf
+  if (node.children.length !== node.keys.length + 1) return false;
+  // Recurse: every child must be a valid B-tree, and all leaves at same depth.
+  const depths = node.children.map((c) => leafDepth(c));
+  if (new Set(depths).size > 1) return false;
+  return node.children.every((c) => isValidBTree(c, degree));
+}
+
+function leafDepth(node: BNode): number {
+  if (node.children.length === 0) return 1;
+  return 1 + leafDepth(node.children[0]);
+}
+
 export function generateBTreeInsertion(): TaskData {
   const degree = 2;
-  const start = buildRandomBTree(degree, getRandomInt(4, 7));
+  // Regenerate until we get a valid B-tree (all leaves at the same depth). Small
+  // random trees frequently violate this, which made the rendered tree wrong.
+  let start: BNode;
+  let attempts = 0;
+  do {
+    start = buildRandomBTree(degree, getRandomInt(4, 7));
+    attempts++;
+  } while (!isValidBTree(start, degree) && attempts < 200);
   const startJSON = toJSON(start);
 
   const numOps = getRandomInt(1, 3);

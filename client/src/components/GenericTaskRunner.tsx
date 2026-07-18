@@ -51,6 +51,13 @@ export const GenericTaskRunner: React.FC<GenericTaskRunnerProps> = ({
 
   const inputRef = useRef<HTMLInputElement>(null);
 
+  // A task is auto-graded when the system can check the answer itself (free-text
+  // `answer` or multiple-choice `choices`). For those, the user already knows
+  // whether they were right, so the "Ich hatte es richtig" self-report buttons
+  // are pointless. They only make sense for tasks where the user must manually
+  // compare their answer against the model solution (tree/graph/matrix).
+  const isAutoGraded = !!task && ((!!task.answer && task.answer.length > 0) || (!!task.choices && task.choices.length > 0));
+
   const fetchTask = async () => {
     try {
       setLoading(true);
@@ -167,6 +174,9 @@ export const GenericTaskRunner: React.FC<GenericTaskRunnerProps> = ({
     } else {
       setRevealFeedbackMsg('Kein Problem — genau dafür ist die Lösung da. Versuch die nächste Aufgabe!');
     }
+    // Refresh the leaderboard now that the point (or neutral reveal) is recorded
+    // server-side, so the user actually appears / moves up.
+    onSolved();
   };
 
   return (
@@ -223,7 +233,7 @@ export const GenericTaskRunner: React.FC<GenericTaskRunnerProps> = ({
               </h2>
             )}
 
-            <div className="flex justify-center my-8 select-none scale-110 md:scale-125 transition-transform" id="task-math-expression">
+            <div className="flex justify-center my-8 select-none scale-110 md:scale-125 transition-transform min-w-0" id="task-math-expression">
               <MathRenderer math={task.mathQuery} block />
             </div>
 
@@ -358,7 +368,7 @@ export const GenericTaskRunner: React.FC<GenericTaskRunnerProps> = ({
               </div>
             )}
 
-            {isLocked && status !== 'correct' && showSolution && !revealFeedbackGiven && (
+            {isLocked && status !== 'correct' && showSolution && !revealFeedbackGiven && !isAutoGraded && (
               <div className="mt-4 p-4 bg-theme-card border border-theme-border rounded-2xl animate-fadeIn">
                 <p className="text-sm font-semibold text-theme-primary mb-3">
                   Hattest du die Lösung richtig, bevor du sie dir angesehen hast?
@@ -382,7 +392,7 @@ export const GenericTaskRunner: React.FC<GenericTaskRunnerProps> = ({
               </div>
             )}
 
-            {isLocked && status !== 'correct' && revealFeedbackGiven && (
+            {isLocked && status !== 'correct' && revealFeedbackGiven && !isAutoGraded && (
               <div className="mt-4 p-3.5 bg-purple-500/10 border border-purple-500/20 text-purple-700 dark:text-purple-300 rounded-xl text-sm font-bold flex items-start gap-2.5 animate-fadeIn">
                 <CheckCircle2 className="w-5 h-5 text-purple-600 dark:text-purple-400 shrink-0 mt-0.5" />
                 <div>{revealFeedbackMsg}</div>

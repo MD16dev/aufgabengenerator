@@ -228,7 +228,7 @@ export function generateRedBlackInsertion(): TaskData {
     taskList,
     steps,
     explanation: [
-      `Neuer Knoten wird rot eingefügt (\\leq \\to \\text{rechts}).`,
+      `Neuer Knoten wird rot eingefügt (Wert $\\ge$ Knotenwert $\\to$ rechts, sonst links).`,
       `Bei rot-rot-Konflikt: Ist der Onkel rot, wird umgefärbt; ist er schwarz, wird rotiert (LL-, LR-, RL- oder RR-Fall) und dann umgefärbt.`,
       `Die Wurzel ist am Ende immer schwarz.`,
     ],

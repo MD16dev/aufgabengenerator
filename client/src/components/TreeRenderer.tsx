@@ -176,20 +176,24 @@ function layoutBTree(
   node: TreeNodeJSON | null,
   depth: number,
   pos: Map<TreeNodeJSON, BPos>,
+  cursor: { x: number } = { x: 0 },
 ): number {
   if (!node) return 0;
   const children = node.children ?? [];
   if (children.length === 0) {
     const w = bNodeWidth(node);
-    pos.set(node, { x: 0, y: depth * BT_V_GAP, w });
+    pos.set(node, { x: cursor.x, y: depth * BT_V_GAP, w });
+    cursor.x += w + 16;
     return w + 16;
   }
+  const startX = cursor.x;
   let total = 0;
   for (const c of children) {
-    total += layoutBTree(c, depth + 1, pos);
+    total += layoutBTree(c, depth + 1, pos, cursor);
   }
   const w = bNodeWidth(node);
-  const x = total / 2 - w / 2;
+  // Center the parent above the span of its children.
+  const x = startX + total / 2 - w / 2;
   pos.set(node, { x, y: depth * BT_V_GAP, w });
   return Math.max(total, w + 16);
 }
@@ -233,9 +237,9 @@ const BTreeSVG: React.FC<{ tree: TreeNodeJSON; width: number; className?: string
       <g key={`bn-${x}-${y}`}>
         <rect x={x} y={y} width={p.w} height={BT_NODE_H} rx={4} fill="#1f2937" stroke="#111827" strokeWidth={1.5} />
         {keys.map((k, i) => {
-          const kx = x + i * BT_KEY_W + BT_KEY_W / 2;
+          const kx = x + 6 + i * BT_KEY_W + BT_KEY_W / 2;
           if (i > 0) {
-            edges.push(<line key={`div-${x}-${i}`} x1={x + i * BT_KEY_W} y1={y} x2={x + i * BT_KEY_W} y2={y + BT_NODE_H} stroke="#374151" strokeWidth={1} />);
+            edges.push(<line key={`div-${x}-${i}`} x1={x + 6 + i * BT_KEY_W} y1={y} x2={x + 6 + i * BT_KEY_W} y2={y + BT_NODE_H} stroke="#374151" strokeWidth={1} />);
           }
           return (
             <text key={`bk-${x}-${i}`} x={kx} y={y + BT_NODE_H / 2} textAnchor="middle" dominantBaseline="central" fontSize={13} fontWeight={700} fill="#ffffff">

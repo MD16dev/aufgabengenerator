@@ -65,16 +65,20 @@ export interface TaskData {
  *  - "tree":   user must reproduce the tree after this step (compared as a tree).
  *  - "array":  user must type the array after this step (e.g. sorting).
  *  - "text":   user must type a free-text answer (e.g. visit order, distance).
+ *  - "matrix": user must type a matrix (e.g. Floyd-Warshall distance matrix),
+ *              rendered as a KaTeX pmatrix.
  *  - "graph":  (reserved) user reproduces a graph state.
  */
 export interface TaskStep {
   /** Short instruction shown above the input, e.g. "80 einfügen". */
   instruction: string;
-  kind: 'tree' | 'array' | 'text' | 'graph';
+  kind: 'tree' | 'array' | 'text' | 'matrix' | 'graph';
   /** Expected tree for kind === "tree". */
   tree?: TreeNodeJSON;
   /** Expected array for kind === "array" (canonical [a, b, c]). */
   array?: number[];
+  /** Expected matrix for kind === "matrix" (rows of numbers; Infinity -> ∞). */
+  matrix?: number[][];
   /** Expected text answer for kind === "text" (normalized before compare). */
   answer?: string;
   /** Optional annotation shown in the solution, e.g. "rotiere 27 nach rechts". */

@@ -42,17 +42,18 @@ export const StepTaskRunner: React.FC<StepTaskRunnerProps> = ({
     if (revealed && !solved) {
       setSolved(true);
       const token = localStorage.getItem('auth_token');
-      if (user && token) {
-        // Defer the write until we know the self-report; the feedback handler
-        // does the actual scoring. If the user never clicks, the onSkip path
-        // records a neutral reveal. To avoid a double write, we only call
-        // onSolved() here (engagement/UI) and let handleFeedback/onSkip persist.
-        onSolved();
-      } else {
+      if (!user || !token) {
+        // Guest: count the engagement as a point immediately (no server write).
         const saved = parseInt(localStorage.getItem('aufgabengenerator_score') ?? '0', 10);
         localStorage.setItem('aufgabengenerator_score', String(saved + 1));
         onSolved();
       }
+      // For logged-in users we deliberately do NOT refresh here: the point is
+      // only awarded once they self-report via handleFeedback (or skip with a
+      // neutral reveal). Refreshing now would show a stale 0-point state and
+      // the user would never see themselves appear after clicking "Ich hatte
+      // es richtig". handleFeedback / the skip handler call onSolved() once the
+      // score is actually persisted.
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [revealed]);
@@ -79,6 +80,9 @@ export const StepTaskRunner: React.FC<StepTaskRunnerProps> = ({
         ? 'Super! Du bekommst einen Punkt für die Bestenliste. Beim nächsten Mal ohne Hilfe schaffst du es bestimmt auch ganz allein.'
         : 'Kein Problem — genau dafür ist die Lösung da. Versuch die nächste Aufgabe!'
     );
+    // Refresh the leaderboard now that the point (or neutral reveal) is recorded
+    // server-side, so the user actually appears / moves up.
+    onSolved();
   };
 
   return (
@@ -113,7 +117,7 @@ export const StepTaskRunner: React.FC<StepTaskRunnerProps> = ({
             ) : task.graph ? (
               <GraphRenderer graph={task.graph} />
             ) : (
-              <div className="text-center py-2"><MathRenderer math={task.mathQuery} block /></div>
+              <div className="text-center py-2 min-w-0"><MathRenderer math={task.mathQuery} block /></div>
             )}
           </div>
           {(() => {
@@ -171,6 +175,16 @@ export const StepTaskRunner: React.FC<StepTaskRunnerProps> = ({
                       {step.answer}
                     </span>
                   )}
+                  {step.kind === 'matrix' && step.matrix && (
+                    <div className="inline-block px-3 py-1.5 bg-emerald-500/10 border border-emerald-500/30 rounded-xl">
+                      <MathRenderer
+                        math={`\\begin{pmatrix} ${step.matrix
+                          .map((row) => row.map((x) => (x === Infinity ? '\\infty' : String(x))).join(' & '))
+                          .join(' \\\\ ')} \\end{pmatrix}`}
+                        block
+                      />
+                    </div>
+                  )}
                 </div>
               ))
             )}
@@ -189,6 +203,8 @@ export const StepTaskRunner: React.FC<StepTaskRunnerProps> = ({
                         body: JSON.stringify({ taskTypeId: task.type, outcome: 'revealed' }),
                       }).catch(() => {});
                     }
+                    // Refresh so a neutral reveal (0 points) is reflected too.
+                    onSolved();
                   }
                   onSkip();
                 }}

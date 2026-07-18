@@ -157,9 +157,9 @@ function formatProbeStep(
   const term =
     probeType === 'linear'
       ? `${initial} + ${i} = ${next}`
-      : `${initial} + c_1\cdot ${i} + c_2\cdot ${i}^2 = ${next}`;
-  const verdict = occupied ? 'belegt' : 'frei \rightarrow Wert dort';
-  return `i=${i}: ${term} \rightarrow ${verdict}`;
+      : `${initial} + c_1 \cdot ${i} + c_2 \cdot ${i}^2 = ${next}`;
+  const verdict = occupied ? 'belegt' : 'frei \\rightarrow Wert dort';
+  return `i=${i}: ${term} \\rightarrow ${verdict}`;
 }
 
 function buildExplanation(opts: {
@@ -168,11 +168,13 @@ function buildExplanation(opts: {
   table: Slot[];
   chaining: boolean;
 }): string[] {
-  const lines = [`Formel: ${opts.formula}`];
+  // Wrap the LaTeX bits in $...$ / $$...$$ so the frontend LatexTextRenderer
+  // actually renders them with KaTeX (otherwise they show as literal text).
+  const lines = [`Formel: $$${opts.formula}$$`];
   if (opts.chaining) {
-    lines.push('Verkettung: Werte mit gleichem h(k) werden im selben Slot aneinandergehängt.');
+    lines.push('Verkettung: Werte mit gleichem $h(k)$ werden im selben Slot aneinandergehängt.');
   } else if (opts.walkthrough.length > 0) {
-    lines.push(`Sondierung der ersten Kollision: ${opts.walkthrough.join('; ')}.`);
+    lines.push(`Sondierung der ersten Kollision: $$${opts.walkthrough.join('; ')}$$`);
   } else {
     lines.push('Keine Kollision: jeder Wert fand direkt einen freien Platz.');
   }
@@ -201,7 +203,11 @@ export function generateHashingDivisionOpen(): TaskData {
   const table = result.table;
   return {
     type: 'dsal_hash_div_open',
-    mathQuery: `m = ${capacity} \\text{ (Divisionsmethode, Verkettung)}. Werte: {${values.join(', ')}}.`,
+    mathQuery: [
+      `m = ${capacity}`,
+      `\\text{Divisionsmethode, Verkettung}`,
+      `\\text{Werte: }\\{${values.join(', ')}\\}`,
+    ].join(' \\\\ '),
     answer: tableToAnswer(table),
     prompt: `Fügen Sie die Werte nacheinander mit der Divisionsmethode (ohne Sondierung, also Verkettung) in eine Hash-Tabelle der Länge ${capacity} ein.`,
     inputHint: 'Format: "0: [a, b]; 1: [c]; 2: []; …".',
@@ -222,7 +228,11 @@ export function generateHashingDivisionLinear(): TaskData {
   const table = result.table;
   return {
     type: 'dsal_hash_div_linear',
-    mathQuery: `m = ${capacity} \\text{ (Divisionsmethode, lineare Sondierung)}. Werte: {${values.join(', ')}}.`,
+    mathQuery: [
+      `m = ${capacity}`,
+      `\\text{Divisionsmethode, lineare Sondierung}`,
+      `\\text{Werte: }\\{${values.join(', ')}\\}`,
+    ].join(' \\\\ '),
     answer: tableToAnswer(table),
     prompt: `Fügen Sie die Werte nacheinander mit der Divisionsmethode und linearer Sondierung in eine Hash-Tabelle der Länge ${capacity} ein.`,
     inputHint: 'Format: "0: [a]; 1: [b]; 2: []; …".',
@@ -254,7 +264,11 @@ export function generateHashingDivisionQuadratic(): TaskData {
   const table = result.table;
   return {
     type: 'dsal_hash_div_quadratic',
-    mathQuery: `m = ${capacity}, c_1 = ${c1}, c_2 = ${c2} \\text{ (Divisionsmethode, quadratische Sondierung)}. Werte: {${values.join(', ')}}.`,
+    mathQuery: [
+      `m = ${capacity},\\ c_1 = ${c1},\\ c_2 = ${c2}`,
+      `\\text{Divisionsmethode, quadratische Sondierung}`,
+      `\\text{Werte: }\\{${values.join(', ')}\\}`,
+    ].join(' \\\\ '),
     answer: tableToAnswer(table),
     prompt: `Fügen Sie die Werte nacheinander mit der Divisionsmethode und quadratischer Sondierung (c₁=${c1}, c₂=${c2}) in eine Hash-Tabelle der Länge ${capacity} ein.`,
     inputHint: 'Format: "0: [a]; 1: [b]; 2: []; …".',
@@ -277,7 +291,11 @@ export function generateHashingMultiplicationOpen(): TaskData {
   const table = result.table;
   return {
     type: 'dsal_hash_mul_open',
-    mathQuery: `m = ${capacity}, c = ${factor} \\text{ (Multiplikationsmethode, Verkettung)}. Werte: {${values.join(', ')}}.`,
+    mathQuery: [
+      `m = ${capacity},\\ c = ${factor}`,
+      `\\text{Multiplikationsmethode, Verkettung}`,
+      `\\text{Werte: }\\{${values.join(', ')}\\}`,
+    ].join(' \\\\ '),
     answer: tableToAnswer(table),
     prompt: `Fügen Sie die Werte nacheinander mit der Multiplikationsmethode (c=${factor}, ohne Sondierung) in eine Hash-Tabelle der Länge ${capacity} ein.`,
     inputHint: 'Format: "0: [a, b]; 1: [c]; 2: []; …".',
@@ -300,7 +318,11 @@ export function generateHashingMultiplicationLinear(): TaskData {
   const table = result.table;
   return {
     type: 'dsal_hash_mul_linear',
-    mathQuery: `m = ${capacity}, c = ${factor} \\text{ (Multiplikationsmethode, lineare Sondierung)}. Werte: {${values.join(', ')}}.`,
+    mathQuery: [
+      `m = ${capacity},\\ c = ${factor}`,
+      `\\text{Multiplikationsmethode, lineare Sondierung}`,
+      `\\text{Werte: }\\{${values.join(', ')}\\}`,
+    ].join(' \\\\ '),
     answer: tableToAnswer(table),
     prompt: `Fügen Sie die Werte nacheinander mit der Multiplikationsmethode (c=${factor}) und linearer Sondierung in eine Hash-Tabelle der Länge ${capacity} ein.`,
     inputHint: 'Format: "0: [a]; 1: [b]; 2: []; …".',
@@ -334,7 +356,11 @@ export function generateHashingMultiplicationQuadratic(): TaskData {
   const table = result.table;
   return {
     type: 'dsal_hash_mul_quadratic',
-    mathQuery: `m = ${capacity}, c = ${factor}, c_1 = ${c1}, c_2 = ${c2} \\text{ (Multiplikationsmethode, quadratische Sondierung)}. Werte: {${values.join(', ')}}.`,
+    mathQuery: [
+      `m = ${capacity},\\ c = ${factor},\\ c_1 = ${c1},\\ c_2 = ${c2}`,
+      `\\text{Multiplikationsmethode, quadratische Sondierung}`,
+      `\\text{Werte: }\\{${values.join(', ')}\\}`,
+    ].join(' \\\\ '),
     answer: tableToAnswer(table),
     prompt: `Fügen Sie die Werte nacheinander mit der Multiplikationsmethode (c=${factor}) und quadratischer Sondierung (c₁=${c1}, c₂=${c2}) in eine Hash-Tabelle der Länge ${capacity} ein.`,
     inputHint: 'Format: "0: [a]; 1: [b]; 2: []; …".',

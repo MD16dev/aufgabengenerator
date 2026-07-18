@@ -9,7 +9,7 @@ interface MathRendererProps {
 export const MathRenderer: React.FC<MathRendererProps> = ({ math, block = false }) => {
   if (block) {
     return (
-      <div className="overflow-x-auto py-2">
+      <div className="w-full min-w-0 overflow-x-auto py-2">
         <BlockMath math={math} />
       </div>
     );

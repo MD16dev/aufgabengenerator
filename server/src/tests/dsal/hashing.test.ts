@@ -49,7 +49,8 @@ describe('DSAL hashing generators', () => {
       const table = parseTable(task.answer);
       const all = [...table.values()].flat();
       // The values in the mathQuery must all be present (as a multiset).
-      const m = task.mathQuery.match(/Werte: \{([^}]*)\}/);
+      // Values are rendered as an escaped-brace set: \{a, b, c\}.
+      const m = task.mathQuery.match(/\\{([^}]*)\\}/);
       const inputVals = m![1].split(',').map((s) => parseInt(s.trim(), 10)).sort((a, b) => a - b);
       const resultVals = [...all].sort((a, b) => a - b);
       expect(resultVals).toEqual(inputVals);
@@ -62,7 +63,7 @@ describe('DSAL hashing generators', () => {
       const table = parseTable(task.answer);
       const all = [...table.values()].flat();
       for (const slot of table.values()) expect(slot.length).toBeLessThanOrEqual(1);
-      const m = task.mathQuery.match(/Werte: \{([^}]*)\}/);
+      const m = task.mathQuery.match(/\\{([^}]*)\\}/);
       const inputVals = m![1].split(',').map((s) => parseInt(s.trim(), 10)).sort((a, b) => a - b);
       const resultVals = [...all].sort((a, b) => a - b);
       expect(resultVals).toEqual(inputVals);

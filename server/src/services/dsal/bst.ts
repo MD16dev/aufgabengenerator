@@ -139,8 +139,8 @@ export function generateBSTInsertion(): TaskData {
     steps,
     explanation: [
       `Ausgangsbaum hat ${size(startTree)} Knoten.`,
-      `Einfügeregel: Ist der Wert $\\leq$ einem Knoten, geht er in dessen rechtes Kind; sonst links.`,
-      `Gleiche Werte werden im offiziellen BST rechts eingehängt.`,
+      `Einfügeregel: Ist der einzufügende Wert größer oder gleich dem Knotenwert (Wert $\\ge$ Knotenwert), gehen wir nach rechts; andernfalls (Wert $<$ Knotenwert) nach links.`,
+      `Gleiche Werte werden somit im Baum rechts eingehängt.`,
     ],
   };
 }

@@ -155,7 +155,7 @@ export function generateAVLInsertion(): TaskData {
     taskList,
     steps,
     explanation: [
-      `Einfügen wie im BST (\\leq \\to \\text{rechts}), dann Balancefaktor prüfen.`,
+      `Einfügen wie im BST (Wert $\\ge$ Knotenwert $\\to$ rechts, sonst links), dann Balancefaktor prüfen.`,
       `Der Balancefaktor ist $\\text{Höhe(links)} - \\text{Höhe(rechts)}$; erlaubt sind nur $-1, 0, +1$.`,
       `Bei Ungleichgewicht (\\pm 2) wird rotiert: einfach (außenlastig) oder doppelt (innenlastig).`,
     ],

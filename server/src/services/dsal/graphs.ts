@@ -46,24 +46,37 @@ function randomConnectedGraph(n: number, directed = false): Graph {
   const edges: Edge[] = [];
   const seen = new Set<string>();
   const key = (a: string, b: string) => (directed ? `${a}->${b}` : [a, b].sort().join('-'));
-  const addEdge = (a: string, b: string, w: number) => {
+
+  // Generate distinct weights pool to ensure unique MST / Dijkstra paths.
+  const weights = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15];
+  for (let i = weights.length - 1; i > 0; i--) {
+    const j = getRandomInt(0, i);
+    const temp = weights[i];
+    weights[i] = weights[j];
+    weights[j] = temp;
+  }
+  let wIdx = 0;
+
+  const addEdge = (a: string, b: string) => {
     if (a === b) return;
     const k = key(a, b);
     if (seen.has(k)) return;
     seen.add(k);
-    edges.push({ from: a, to: b, weight: w });
+    edges.push({ from: a, to: b, weight: weights[wIdx++] });
   };
   // Spanning tree to guarantee connectivity.
   for (let i = 1; i < n; i++) {
     const j = getRandomInt(0, i - 1);
-    addEdge(vertices[i], vertices[j], getRandomInt(1, 9));
+    addEdge(vertices[i], vertices[j]);
   }
-  // A few extra random edges.
-  const extra = getRandomInt(1, Math.max(1, n));
+  // Only a small number of extra edges so the graph stays sparse and readable.
+  // A dense graph (tree + many chords) produces a tangle of crossing lines that
+  // is hard to follow, so we cap extras at 1-2 regardless of n.
+  const extra = getRandomInt(1, 2);
   for (let e = 0; e < extra; e++) {
     const a = vertices[getRandomInt(0, n - 1)];
     const b = vertices[getRandomInt(0, n - 1)];
-    addEdge(a, b, getRandomInt(1, 9));
+    addEdge(a, b);
   }
   return { directed, vertices, edges };
 }
@@ -87,22 +100,24 @@ function graphToText(graph: Graph): string {
 }
 
 /** Convert the internal Graph to a GraphJSON with a deterministic, spread-out
- *  layout (normalized 0..1). A pure circle places adjacent letters next to each
- *  other, which makes the graph hard to read; instead we use a jittered grid so
- *  vertices are well separated and edges are easier to follow. */
+ *  layout (normalized 0..1). Vertices are placed on a circle ordered by their
+ *  index (a, b, c, … around the ring). This keeps adjacent letters near each
+ *  other and avoids the long crossing edges a grid layout produces, so the
+ *  graph stays readable even with a few chords. A tiny deterministic jitter
+ *  keeps it from looking like a rigid clock face. */
 function toGraphJSON(g: Graph): GraphJSON {
   const n = g.vertices.length;
-  const cols = Math.ceil(Math.sqrt(n));
-  const layout = g.vertices.map((v, i) => {
-    const col = i % cols;
-    const row = Math.floor(i / cols);
-    // Base grid position in [0.12, 0.88], plus a small deterministic jitter so
-    // it doesn't look like a rigid table.
-    const jitterX = ((i * 37) % 11) / 110; // 0..0.1
-    const jitterY = ((i * 53) % 11) / 110;
-    const x = 0.12 + (col / Math.max(1, cols - 1)) * 0.76 + jitterX;
-    const y = 0.12 + (row / Math.max(1, Math.ceil(n / cols) - 1)) * 0.76 + jitterY;
-    return { vertex: v, x: Math.min(0.95, x), y: Math.min(0.95, y) };
+  // Order vertices by their letter so the ring follows a, b, c, … This makes
+  // the spanning tree (which links each new vertex to an earlier one) hug the
+  // circle instead of shooting across the centre.
+  const ordered = [...g.vertices].sort();
+  const layout = ordered.map((v, i) => {
+    const angle = (2 * Math.PI * i) / n - Math.PI / 2;
+    const jitter = ((i * 17) % 7) / 140; // 0..0.05, deterministic
+    const radius = 0.36 + jitter;
+    const x = 0.5 + radius * Math.cos(angle);
+    const y = 0.5 + radius * Math.sin(angle);
+    return { vertex: v, x: Math.min(0.94, Math.max(0.06, x)), y: Math.min(0.94, Math.max(0.06, y)) };
   });
   return {
     directed: g.directed,
@@ -356,7 +371,7 @@ export function generateBFS(): TaskData {
       kind: 'text' as const,
       answer: v,
     })),
-    explanation: [`BFS nutzt eine Warteschlange: zuerst der Startknoten, dann alle unbesuchten Nachbarn (hier alphabetisch), dann deren Nachbarn. Besuchsreihenfolge: ${order.join(', ')}.`],
+    explanation: [`BFS nutzt eine Warteschlange: zuerst der Startknoten, dann alle unbesuchten Nachbarn (hier alphabetisch), dann deren Nachbarn. Besuchsreihenfolge: $${order.join(', ')}$.`],
   };
 }
 
@@ -376,24 +391,45 @@ export function generateDFS(): TaskData {
       kind: 'text' as const,
       answer: v,
     })),
-    explanation: [`DFS geht so tief wie möglich und backtrackt erst danach. Besuchsreihenfolge: ${order.join(', ')}.`],
+    explanation: [`DFS geht so tief wie möglich und backtrackt erst danach. Besuchsreihenfolge: $${order.join(', ')}$.`],
   };
 }
 
 export function generateTopoSort(): TaskData {
-  // Build a DAG: edges only from lower-index to higher-index vertices.
+  // Build a DAG with a Hamiltonian path to guarantee a UNIQUE topological sorting
+  // and shuffle vertex letters so alphabetical order is NOT a valid topological sort.
   const n = getRandomInt(5, 7);
-  const vertices = Array.from({ length: n }, (_, i) => letter(i));
-  const edges: Edge[] = [];
-  for (let i = 0; i < n - 1; i++) {
-    const extra = getRandomInt(1, 2);
-    for (let e = 0; e < extra; e++) {
-      const j = getRandomInt(i + 1, n - 1);
-      if (j > i) edges.push({ from: vertices[i], to: vertices[j], weight: 1 });
-    }
+  const rawLetters = Array.from({ length: n }, (_, i) => letter(i));
+  
+  // Shuffle letters to determine the unique topological sorting order
+  const orderedVertices = [...rawLetters];
+  for (let i = orderedVertices.length - 1; i > 0; i--) {
+    const j = getRandomInt(0, i);
+    const temp = orderedVertices[i];
+    orderedVertices[i] = orderedVertices[j];
+    orderedVertices[j] = temp;
   }
+
+  const edges: Edge[] = [];
+  // 1) Add Hamiltonian path edges to guarantee connectivity and a unique topological sort.
+  for (let i = 0; i < n - 1; i++) {
+    edges.push({ from: orderedVertices[i], to: orderedVertices[i + 1], weight: 1 });
+  }
+
+  // 2) Add 1-2 extra forward edges to make it look like a general DAG.
+  const extra = getRandomInt(1, 2);
+  for (let e = 0; e < extra; e++) {
+    // Pick i and j such that i < j - 1 to avoid duplicating Hamiltonian path edges
+    const i = getRandomInt(0, n - 3);
+    const j = getRandomInt(i + 2, n - 1);
+    edges.push({ from: orderedVertices[i], to: orderedVertices[j], weight: 1 });
+  }
+
+  // Vertices are passed in alphabetical order to maintain deterministic circle placement
+  const vertices = [...rawLetters];
   const g: Graph = { directed: true, vertices, edges };
   const order = topoSort(g);
+
   return {
     type: 'dsal_graph_topo',
     mathQuery: graphToText(g),
@@ -404,7 +440,10 @@ export function generateTopoSort(): TaskData {
     steps: order
       ? order.map((v) => ({ instruction: 'Nächster Knoten der topologischen Sortierung', kind: 'text' as const, answer: v }))
       : [{ instruction: 'Topologische Sortierung', kind: 'text' as const, answer: 'keine (Zyklus)' }],
-    explanation: [order ? `Eine topologische Sortierung entspricht der umgekehrten Abschlussreihenfolge einer Tiefensuche (DFS). Topologische Ordnung: ${order.join(', ')}.` : 'Der Graph enthält einen Zyklus, daher existiert keine topologische Sortierung.'],
+    explanation: [
+      `Eine topologische Sortierung entspricht der umgekehrten Abschlussreihenfolge einer Tiefensuche (DFS).`,
+      `Da dieser Graph einen gerichteten Pfad enthält, der alle Knoten abdeckt (Hamiltonpfad), ist die topologische Sortierung eindeutig: $${(order || []).join(', ')}$.`
+    ],
   };
 }
 
@@ -425,10 +464,10 @@ export function generateDijkstra(): TaskData {
     mathQuery: graphToText(g),
     answer: '',
     graph: toGraphJSON(g),
-    prompt: `Führen Sie Dijkstra ab Startknoten ${start} aus. Wie groß ist die kürzeste Distanz zum Knoten ${target}? (Der kürzeste Weg führt nicht direkt über eine Kante, sondern über Zwischenknoten.)`,
+    prompt: `Führen Sie Dijkstra ab Startknoten ${start} aus. Wie groß ist die kürzeste Distanz zum Knoten ${target}?`,
     inputHint: 'Gib die Distanz als ganze Zahl ein.',
     steps: [{ instruction: `Kürzeste Distanz von ${start} nach ${target}`, kind: 'text' as const, answer: String(d), annotation: `Distanzen: ${distStr}` }],
-    explanation: [`Dijkstra ist gierig: eine Prioritätswarteschlange wählt stets den unbesuchten Knoten mit kleinster Distanz, danach werden Nachbarn via Relaxation aktualisiert. Kürzeste Distanz von ${start} nach ${target}: ${d}.`],
+    explanation: [`Dijkstra ist gierig: eine Prioritätswarteschlange wählt stets den unbesuchten Knoten mit kleinster Distanz, danach werden Nachbarn via Relaxation aktualisiert. Kürzeste Distanz von $${start}$ nach $${target}$: $${d}$.`],
   };
 }
 
@@ -451,7 +490,7 @@ export function generateBellmanFord(): TaskData {
     prompt: `Führen Sie Bellman-Ford ab Startknoten ${start} aus. Wie groß ist die kürzeste Distanz zum Knoten ${target}? (Der kürzeste Weg führt nicht direkt über eine Kante, sondern über Zwischenknoten.)`,
     inputHint: 'Gib die Distanz als ganze Zahl ein.',
     steps: [{ instruction: `Kürzeste Distanz von ${start} nach ${target}`, kind: 'text' as const, answer: String(d), annotation: `Distanzen: ${distStr}` }],
-    explanation: [`Bellman-Ford entspannt alle Kanten ${g.vertices.length - 1} Mal (hier mit positiven Gewichten) und kann im Gegensatz zu Dijkstra auch negative Kantengewichte verarbeiten. Kürzeste Distanz von ${start} nach ${target}: ${d}.`],
+    explanation: [`Bellman-Ford entspannt alle Kanten $${g.vertices.length - 1}$ Mal (hier mit positiven Gewichten) und kann im Gegensatz zu Dijkstra auch negative Kantengewichte verarbeiten. Kürzeste Distanz von $${start}$ nach $${target}$: $${d}$.`],
   };
 }
 
@@ -471,7 +510,7 @@ export function generatePrim(): TaskData {
       kind: 'text' as const,
       answer: `${e.from}${e.to}(${e.weight})`,
     })),
-    explanation: [`Prim wächst den Baum schrittweise: per Cut-Property wird stets die leichteste Kante gewählt, die einen neuen Knoten mit dem Baum verbindet. Minimaler Spannbaum (${mst.length} Kanten): ${edgeSetStr(mst)}.`],
+    explanation: [`Prim wächst den Baum schrittweise: per Cut-Property wird stets die leichteste Kante gewählt, die einen neuen Knoten mit dem Baum verbindet. Minimaler Spannbaum ($${mst.length}$ Kanten): $\\{ ${edgeSetStr(mst)} \\}$.`],
   };
 }
 
@@ -490,7 +529,7 @@ export function generateKruskal(): TaskData {
       kind: 'text' as const,
       answer: `${e.from}${e.to}(${e.weight})`,
     })),
-    explanation: [`Kruskal sortiert alle Kanten nach Gewicht und fügt sie hinzu, sofern sie keinen Zyklus bilden (geprüft via Union-Find). Minimaler Spannbaum (${mst.length} Kanten): ${edgeSetStr(mst)}.`],
+    explanation: [`Kruskal sortiert alle Kanten nach Gewicht und fügt sie hinzu, sofern sie keinen Zyklus bilden (geprüft via Union-Find). Minimaler Spannbaum ($${mst.length}$ Kanten): $\\{ ${edgeSetStr(mst)} \\}$.`],
   };
 }
 
@@ -509,15 +548,25 @@ export function generateUnionFind(): TaskData {
   }
   const query = getRandomInt(0, n - 1);
   const rep = uf.find(query);
-  const ops = unions.map(([a, b]) => `Union(${a},${b})`).join(', ');
+  const opLines = unions.map(([a, b]) => `\\text{Union}(${a},${b})`);
+  // Wrap the prose in \text{} so KaTeX renders it as readable text instead of
+  // interpreting every character as a separate math symbol. Put each operation
+  // on its own line (via display-mode \\ breaks) for better readability.
+  const mathQuery = [
+    `\\text{Union-Find mit Elementen }\\{0, \\dots, ${n - 1}\\}\\text{. Operationen:}`,
+    ...opLines,
+    `\\text{Was ist find(${query})?}`,
+  ].join(' \\\\ ');
   return {
     type: 'dsal_graph_unionfind',
-    mathQuery: `Union-Find mit Elementen {0, …, ${n - 1}}. Operationen: ${ops}. Was ist find(${query})?`,
+    mathQuery,
     answer: '',
     prompt: `Nach Ausführung der Union-Operationen: Was ist der Repräsentant (find) des Elements ${query}?`,
     inputHint: 'Gib die Repräsentanten-Zahl ein.',
     steps: [{ instruction: `Repräsentant (find) von Element ${query}`, kind: 'text' as const, answer: String(rep) }],
-    explanation: [`Union-Find vereint mit den Operationen ${ops} jeweils die Mengen der beiden Elemente; find(${query}) liefert den Repräsentanten der Komponente, in der ${query} liegt: ${rep}.`],
+    explanation: [
+      `Union-Find vereint mit den Operationen $${unions.map(([a, b]) => `\\mathrm{Union}(${a}, ${b})`).join(', ')}$ jeweils die Mengen der beiden Elemente; $\\mathrm{find}(${query})$ liefert den Repräsentanten der Komponente, in der $${query}$ liegt: $${rep}$.`,
+    ],
   };
 }
 
@@ -525,6 +574,7 @@ export function generateKosaraju(): TaskData {
   const g = randomConnectedGraph(getRandomInt(5, 7), true);
   const assignment = kosaraju(g);
   const parts = g.vertices.map((v) => `${v}→${assignment.get(v)}`).join(', ');
+  const partsLatex = g.vertices.map((v) => `${v} \\to ${assignment.get(v)}`).join(', ');
   return {
     type: 'dsal_graph_kosaraju',
     mathQuery: graphToText(g),
@@ -533,22 +583,26 @@ export function generateKosaraju(): TaskData {
     prompt: 'Wenden Sie Kosaraju-Sharir an. Geben Sie die Zuordnung Knoten→Repräsentant der starken Zusammenhangskomponenten an.',
     inputHint: 'Format: a→a, b→a, c→c, …',
     steps: [{ instruction: 'Zuordnung Knoten→Repräsentant (starke Zusammenhangskomponenten)', kind: 'text' as const, answer: parts }],
-    explanation: [`Kosaraju läuft in zwei Durchläufen: zuerst DFS zur Ermittlung der Abschlussreihenfolge, dann DFS auf dem transponierten Graphen. Der Repräsentant ist der zuerst besuchte Knoten der jeweiligen starken Komponente. Zuordnung: ${parts}.`],
+    explanation: [`Kosaraju läuft in zwei Durchläufen: zuerst DFS zur Ermittlung der Abschlussreihenfolge, dann DFS auf dem transponierten Graphen. Der Repräsentant ist der zuerst besuchte Knoten der jeweiligen starken Komponente. Zuordnung: $${partsLatex}$.`],
   };
 }
 
 export function generateFloydWarshall(): TaskData {
   const g = randomConnectedGraph(getRandomInt(4, 6));
   const d = floydWarshall(g);
-  const matrix = d.map((row) => row.map((x) => (x === Infinity ? '∞' : String(x))).join(' ')).join(' | ');
+  // Store the matrix numerically for KaTeX pmatrix rendering, and a plain-text
+  // fallback (rows joined by " | ") for the input hint / comparison.
+  const matrix = d.map((row) => row.map((x) => (x === Infinity ? Infinity : x)));
+  const matrixText = d.map((row) => row.map((x) => (x === Infinity ? '∞' : String(x))).join(' ')).join(' | ');
+  const matrixLatex = `\\begin{pmatrix} ${d.map((row) => row.map((x) => (x === Infinity ? '\\infty' : String(x))).join(' & ')).join(' \\\\ ')} \\end{pmatrix}`;
   return {
     type: 'dsal_graph_floydwarshall',
     mathQuery: graphToText(g),
     answer: '',
     graph: toGraphJSON(g),
-    prompt: 'Führen Sie Floyd-Warshall aus. Geben Sie die finale Distanzmatrix (Zeilen durch " | " getrennt) an.',
+    prompt: 'Führen Sie Floyd-Warshall aus. Geben Sie die finale Distanzmatrix an.',
     inputHint: 'Format: "0 3 ∞ 2 | 3 0 1 5 | …". Unerreichbar = ∞.',
-    steps: [{ instruction: 'Finale Distanzmatrix (Zeilen durch " | " getrennt, ∞ für unerreichbar)', kind: 'text' as const, answer: matrix }],
-    explanation: [`Floyd-Warshall ist dynamisch: $d_{ij}^{(k)}$ ist der kürzeste Weg von $i$ nach $j$ nur über Zwischenknoten $1,\\dots,k$. Finale Distanzmatrix: ${matrix}.`],
+    steps: [{ instruction: 'Finale Distanzmatrix (∞ für unerreichbar)', kind: 'matrix' as const, matrix, answer: matrixText }],
+    explanation: [`Floyd-Warshall ist dynamisch: $d_{ij}^{(k)}$ ist der kürzeste Weg von $i$ nach $j$ nur über Zwischenknoten $1,\\dots,k$. Finale Distanzmatrix: ${matrixLatex}.`],
   };
 }
