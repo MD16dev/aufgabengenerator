@@ -318,18 +318,6 @@ export const ModuleSelector: React.FC<ModuleSelectorProps> = ({ activeModule, on
           name: 'Simplex-Algorithmus',
           description: 'Löse ein lineares Programm (Maximierung) mit dem Simplex-Algorithmus.',
           isActive: true
-        },
-        {
-          id: 'algo_avl_rot',
-          name: 'AVL-Baum Rotationen',
-          description: 'Führe Links-/Rechts-Balancierungen auf AVL-Bäumen durch.',
-          isActive: false
-        },
-        {
-          id: 'algo_dijkstra',
-          name: 'Dijkstra-Wegfindung',
-          description: 'Finde den kürzesten Pfad in einem gewichteten Graphen.',
-          isActive: false
         }
       ]
     }
