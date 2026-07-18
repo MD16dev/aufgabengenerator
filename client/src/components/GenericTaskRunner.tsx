@@ -41,6 +41,8 @@ export const GenericTaskRunner: React.FC<GenericTaskRunnerProps> = ({
   const [status, setStatus] = useState<'idle' | 'correct' | 'incorrect'>('idle');
   const [showSolution, setShowSolution] = useState<boolean>(false);
   const [isLocked, setIsLocked] = useState<boolean>(false);
+  const [revealFeedbackGiven, setRevealFeedbackGiven] = useState<boolean>(false);
+  const [revealFeedbackMsg, setRevealFeedbackMsg] = useState<string>('');
 
   const [localScore, setLocalScore] = useState<number>(() => {
     const saved = localStorage.getItem('aufgabengenerator_score');
@@ -58,6 +60,8 @@ export const GenericTaskRunner: React.FC<GenericTaskRunnerProps> = ({
       setStatus('idle');
       setShowSolution(false);
       setIsLocked(false); // Reset lock state for the new task
+      setRevealFeedbackGiven(false);
+      setRevealFeedbackMsg('');
 
       const response = await fetch(`http://localhost:5001/api/tasks/${taskType}`);
       if (!response.ok) {
@@ -138,6 +142,31 @@ export const GenericTaskRunner: React.FC<GenericTaskRunnerProps> = ({
   const handleRevealSolution = () => {
     setShowSolution(true);
     setIsLocked(true);
+  };
+
+  // After revealing the solution, the user self-reports whether they had it
+  // right. This is recorded as outcome "revealed" (0 points, not ranked) so the
+  // leaderboard reflects genuine solves only, but the engagement is tracked.
+  const handleRevealFeedback = async (hadItRight: boolean) => {
+    if (!task) return;
+    const token = localStorage.getItem('auth_token');
+    if (user && token) {
+      try {
+        await fetch('http://localhost:5001/api/tasks/solve', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+          body: JSON.stringify({ taskTypeId: task.type, outcome: 'revealed', correct: hadItRight }),
+        });
+      } catch (err) {
+        console.error('Feedback konnte nicht gespeichert werden:', err);
+      }
+    }
+    setRevealFeedbackGiven(true);
+    if (hadItRight) {
+      setRevealFeedbackMsg('Super! Du bekommst einen Punkt für die Bestenliste. Beim nächsten Mal ohne Hilfe schaffst du es bestimmt auch ganz allein.');
+    } else {
+      setRevealFeedbackMsg('Kein Problem — genau dafür ist die Lösung da. Versuch die nächste Aufgabe!');
+    }
   };
 
   return (
@@ -324,8 +353,39 @@ export const GenericTaskRunner: React.FC<GenericTaskRunnerProps> = ({
               <div className="mt-4 p-3.5 bg-amber-500/10 border border-amber-500/20 text-amber-700 dark:text-amber-500 rounded-xl text-sm font-bold flex items-start gap-2.5 animate-fadeIn">
                 <Lock className="w-5 h-5 text-amber-600 dark:text-amber-500 shrink-0 mt-0.5" />
                 <div>
-                  Diese Aufgabe ist gesperrt, da der Rechenweg angezeigt wurde. Sie wird nicht für die Bestenliste gewertet. Generiere eine neue Aufgabe, um Punkte zu sammeln!
+                  Der Rechenweg wurde angezeigt. Wenn du die Lösung richtig hattest, gibt dir die Einschätzung unten einen Punkt für die Bestenliste. Sonst einfach die nächste Aufgabe probieren!
                 </div>
+              </div>
+            )}
+
+            {isLocked && status !== 'correct' && showSolution && !revealFeedbackGiven && (
+              <div className="mt-4 p-4 bg-theme-card border border-theme-border rounded-2xl animate-fadeIn">
+                <p className="text-sm font-semibold text-theme-primary mb-3">
+                  Hattest du die Lösung richtig, bevor du sie dir angesehen hast?
+                </p>
+                <div className="flex gap-3">
+                  <button
+                    type="button"
+                    onClick={() => handleRevealFeedback(true)}
+                    className="flex-1 px-4 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white font-semibold rounded-xl transition-all cursor-pointer"
+                  >
+                    Ja, ich hatte es richtig
+                  </button>
+                  <button
+                    type="button"
+ onClick={() => handleRevealFeedback(false)}
+                    className="flex-1 px-4 py-2.5 bg-theme-card hover:brightness-95 dark:hover:brightness-110 text-theme-primary font-semibold rounded-xl border border-theme-border transition-all cursor-pointer"
+                  >
+                    Nein, noch nicht
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {isLocked && status !== 'correct' && revealFeedbackGiven && (
+              <div className="mt-4 p-3.5 bg-purple-500/10 border border-purple-500/20 text-purple-700 dark:text-purple-300 rounded-xl text-sm font-bold flex items-start gap-2.5 animate-fadeIn">
+                <CheckCircle2 className="w-5 h-5 text-purple-600 dark:text-purple-400 shrink-0 mt-0.5" />
+                <div>{revealFeedbackMsg}</div>
               </div>
             )}
 
@@ -346,7 +406,21 @@ export const GenericTaskRunner: React.FC<GenericTaskRunnerProps> = ({
               {status !== 'correct' && (
                 <button
                   type="button"
-                  onClick={fetchTask}
+                  onClick={() => {
+                    // If the solution was revealed but the user never self-reported,
+                    // record a neutral reveal (0 points) before loading a new task.
+                    if (showSolution && !revealFeedbackGiven) {
+                      const token = localStorage.getItem('auth_token');
+                      if (user && token && task) {
+                        fetch('http://localhost:5001/api/tasks/solve', {
+                          method: 'POST',
+                          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+                          body: JSON.stringify({ taskTypeId: task.type, outcome: 'revealed' }),
+                        }).catch(() => {});
+                      }
+                    }
+                    fetchTask();
+                  }}
                   className="flex items-center gap-2 text-sm font-semibold text-theme-muted hover:text-theme-primary transition-colors cursor-pointer"
                 >
                   <RefreshCw className="w-4 h-4" /> Überspringen

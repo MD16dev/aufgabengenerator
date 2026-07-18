@@ -118,7 +118,7 @@ export function generate3x3DeterminantTask(): DeterminantTask {
 
   const steps = [
     `Gegeben ist die Matrix $M = ${latex}$. Gesucht ist die Determinante $\\det(M)$.`,
-    `Zur Berechnung einer $3 \\times 3$ Matrix verwenden wir die **Regel von Sarrus**. Dazu schreiben wir die ersten zwei Spalten der Matrix rechts daneben auf:
+    `Zur Berechnung einer $3 \\times 3$ Matrix verwenden wir die \\text{Regel von Sarrus}. Dazu schreiben wir die ersten zwei Spalten der Matrix rechts daneben auf:
      $$\\begin{matrix}
      ${a} & ${b} & ${c} & | & ${a} & ${b} \\\\
      ${d} & ${e} & ${f} & | & ${d} & ${e} \\\\

@@ -18,6 +18,17 @@ interface HashConfig {
   capacity: number;
   hash: (value: number) => number;
   probing?: (iteration: number) => number; // offset for closed hashing
+  probeType?: 'linear' | 'quadratic';
+  c1?: number;
+  c2?: number;
+}
+
+interface HashResult {
+  table: Slot[];
+  /** Probe walkthrough (German, LaTeX) for the first collision, for didactics. */
+  walkthrough: string[];
+  /** True iff every value was placed without silently overwriting another. */
+  success: boolean;
 }
 
 function getRandomInt(min: number, max: number): number {
@@ -55,19 +66,48 @@ function quadraticProbing(c1: number, c2: number): (i: number) => number {
   return (i: number) => Math.floor(c1 * i + c2 * i * i);
 }
 
-/** Run the official hashing algorithm and return the final table. */
-function hashValues(values: number[], cfg: HashConfig): Slot[] {
+/**
+ * Run the official hashing algorithm and return the final table plus a
+ * didactic probe walkthrough for the first collision.
+ *
+ * Robustness: after building the table we verify that EVERY inserted value is
+ * actually present. Quadratic probing with arbitrary c1,c2 and a non-prime m
+ * does not necessarily visit all slots, so the probe loop can fail to find an
+ * empty slot and would otherwise silently overwrite an existing entry. Callers
+ * regenerate (with fresh random parameters) until `success` is true. For the
+ * quadratic variants we additionally restrict m to a prime with load factor <
+ * 0.5, which guarantees quadratic probing always finds a free slot — so the
+ * regenerate loop is only a safety net.
+ */
+function hashValues(values: number[], cfg: HashConfig): HashResult {
   const table: Slot[] = Array.from({ length: cfg.capacity }, () => []);
+  const walkthrough: string[] = [];
+  let recordedFirstCollision = false;
+
   if (cfg.probing) {
-    // Closed hashing: each slot holds at most one value.
+    const probeType = cfg.probeType ?? 'linear';
+    const c1 = cfg.c1 ?? 0;
+    const c2 = cfg.c2 ?? 0;
     for (const value of values) {
       const initial = cfg.hash(value);
       let pos = initial;
       let iteration = 0;
+      const steps: string[] = [];
+      const collided = table[pos].length > 0;
       while (table[pos].length > 0) {
         iteration++;
-        pos = (initial + cfg.probing(iteration)) % cfg.capacity;
-        if (iteration > cfg.capacity) break; // safety
+        const offset = cfg.probing(iteration);
+        const next = (initial + offset) % cfg.capacity;
+        const occupied = table[next].length > 0;
+        if (!recordedFirstCollision) {
+          steps.push(formatProbeStep(initial, iteration, probeType, c1, c2, next, occupied));
+        }
+        pos = next;
+        if (iteration > cfg.capacity) break; // safety: no free slot found
+      }
+      if (!recordedFirstCollision && collided) {
+        walkthrough.push(...steps);
+        recordedFirstCollision = true;
       }
       table[pos] = [value];
     }
@@ -78,11 +118,66 @@ function hashValues(values: number[], cfg: HashConfig): Slot[] {
       table[pos].push(value);
     }
   }
-  return table;
+
+  const flat = table.flat();
+  const success = values.every((v) => flat.includes(v));
+  return { table, walkthrough, success };
 }
 
 function tableToAnswer(table: Slot[]): string {
   return table.map((slot, i) => `${i}: [${slot.join(', ')}]`).join('; ');
+}
+
+function isPrime(n: number): boolean {
+  if (n < 2) return false;
+  for (let d = 2; d * d <= n; d++) if (n % d === 0) return false;
+  return true;
+}
+
+/** Prime capacity with load factor < 0.5 — guarantees quadratic probing succeeds. */
+function pickPrimeCapacity(numValues: number): number {
+  const minLen = numValues * 2; // load factor <= 0.5 (strictly < 0.5: primes are odd > 2)
+  const candidates = CAPACITIES.filter((c) => c >= minLen && isPrime(c));
+  if (candidates.length === 0) {
+    const primes = CAPACITIES.filter(isPrime);
+    return primes[primes.length - 1];
+  }
+  return candidates[getRandomInt(0, candidates.length - 1)];
+}
+
+function formatProbeStep(
+  initial: number,
+  i: number,
+  probeType: 'linear' | 'quadratic',
+  c1: number,
+  c2: number,
+  next: number,
+  occupied: boolean,
+): string {
+  const term =
+    probeType === 'linear'
+      ? `${initial} + ${i} = ${next}`
+      : `${initial} + c_1\cdot ${i} + c_2\cdot ${i}^2 = ${next}`;
+  const verdict = occupied ? 'belegt' : 'frei \rightarrow Wert dort';
+  return `i=${i}: ${term} \rightarrow ${verdict}`;
+}
+
+function buildExplanation(opts: {
+  formula: string;
+  walkthrough: string[];
+  table: Slot[];
+  chaining: boolean;
+}): string[] {
+  const lines = [`Formel: ${opts.formula}`];
+  if (opts.chaining) {
+    lines.push('Verkettung: Werte mit gleichem h(k) werden im selben Slot aneinandergehängt.');
+  } else if (opts.walkthrough.length > 0) {
+    lines.push(`Sondierung der ersten Kollision: ${opts.walkthrough.join('; ')}.`);
+  } else {
+    lines.push('Keine Kollision: jeder Wert fand direkt einen freien Platz.');
+  }
+  lines.push(`Finale Belegung: ${tableToAnswer(opts.table)}.`);
+  return lines;
 }
 
 function randomValues(count: number, lo: number, hi: number): number[] {
@@ -94,98 +189,155 @@ function randomValues(count: number, lo: number, hi: number): number[] {
 /* ------------------------------- Generators ------------------------------- */
 
 export function generateHashingDivisionOpen(): TaskData {
-  const numValues = getRandomInt(5, 9);
-  const capacity = pickCapacity(numValues);
-  const values = randomValues(numValues, 1, 99);
-  const table = hashValues(values, { capacity, hash: divisionHash(capacity) });
+  let result: HashResult;
+  let capacity: number;
+  let values: number[];
+  do {
+    const numValues = getRandomInt(5, 9);
+    capacity = pickCapacity(numValues);
+    values = randomValues(numValues, 1, 99);
+    result = hashValues(values, { capacity, hash: divisionHash(capacity) });
+  } while (!result.success);
+  const table = result.table;
   return {
     type: 'dsal_hash_div_open',
     mathQuery: `m = ${capacity} \\text{ (Divisionsmethode, Verkettung)}. Werte: {${values.join(', ')}}.`,
     answer: tableToAnswer(table),
     prompt: `Fügen Sie die Werte nacheinander mit der Divisionsmethode (ohne Sondierung, also Verkettung) in eine Hash-Tabelle der Länge ${capacity} ein.`,
     inputHint: 'Format: "0: [a, b]; 1: [c]; 2: []; …".',
-    explanation: [`Finale Belegung: ${tableToAnswer(table)}.`],
+    explanation: buildExplanation({ formula: 'h(k) = k \\bmod m', walkthrough: result.walkthrough, table, chaining: true }),
   };
 }
 
 export function generateHashingDivisionLinear(): TaskData {
-  const numValues = getRandomInt(5, 9);
-  const capacity = pickCapacity(numValues);
-  const values = randomValues(numValues, 1, 99);
-  const table = hashValues(values, { capacity, hash: divisionHash(capacity), probing: linearProbing() });
+  let result: HashResult;
+  let capacity: number;
+  let values: number[];
+  do {
+    const numValues = getRandomInt(5, 9);
+    capacity = pickCapacity(numValues);
+    values = randomValues(numValues, 1, 99);
+    result = hashValues(values, { capacity, hash: divisionHash(capacity), probing: linearProbing(), probeType: 'linear' });
+  } while (!result.success);
+  const table = result.table;
   return {
     type: 'dsal_hash_div_linear',
     mathQuery: `m = ${capacity} \\text{ (Divisionsmethode, lineare Sondierung)}. Werte: {${values.join(', ')}}.`,
     answer: tableToAnswer(table),
     prompt: `Fügen Sie die Werte nacheinander mit der Divisionsmethode und linearer Sondierung in eine Hash-Tabelle der Länge ${capacity} ein.`,
     inputHint: 'Format: "0: [a]; 1: [b]; 2: []; …".',
-    explanation: [`Finale Belegung: ${tableToAnswer(table)}.`],
+    explanation: buildExplanation({ formula: 'h(k) = k \\bmod m,\\ h(k) + i', walkthrough: result.walkthrough, table, chaining: false }),
   };
 }
 
 export function generateHashingDivisionQuadratic(): TaskData {
-  const numValues = getRandomInt(5, 9);
-  const capacity = pickCapacity(numValues);
-  const c1 = getRandomInt(0, 10);
-  const c2 = getRandomInt(1, 10);
-  const values = randomValues(numValues, 1, 99);
-  const table = hashValues(values, { capacity, hash: divisionHash(capacity), probing: quadraticProbing(c1, c2) });
+  let result: HashResult;
+  let capacity: number;
+  let c1: number;
+  let c2: number;
+  let values: number[];
+  do {
+    const numValues = getRandomInt(5, 9);
+    capacity = pickPrimeCapacity(numValues);
+    c1 = getRandomInt(0, 10);
+    c2 = getRandomInt(1, 10);
+    values = randomValues(numValues, 1, 99);
+    result = hashValues(values, {
+      capacity,
+      hash: divisionHash(capacity),
+      probing: quadraticProbing(c1, c2),
+      probeType: 'quadratic',
+      c1,
+      c2,
+    });
+  } while (!result.success);
+  const table = result.table;
   return {
     type: 'dsal_hash_div_quadratic',
     mathQuery: `m = ${capacity}, c_1 = ${c1}, c_2 = ${c2} \\text{ (Divisionsmethode, quadratische Sondierung)}. Werte: {${values.join(', ')}}.`,
     answer: tableToAnswer(table),
     prompt: `Fügen Sie die Werte nacheinander mit der Divisionsmethode und quadratischer Sondierung (c₁=${c1}, c₂=${c2}) in eine Hash-Tabelle der Länge ${capacity} ein.`,
     inputHint: 'Format: "0: [a]; 1: [b]; 2: []; …".',
-    explanation: [`Finale Belegung: ${tableToAnswer(table)}.`],
+    explanation: buildExplanation({ formula: 'h(k) = k \\bmod m,\\ h(k) + c_1 i + c_2 i^2', walkthrough: result.walkthrough, table, chaining: false }),
   };
 }
 
 export function generateHashingMultiplicationOpen(): TaskData {
-  const numValues = getRandomInt(5, 9);
-  const capacity = pickCapacity(numValues);
-  const factor = (getRandomInt(1, 99) + 1) / 100; // c in (0,1)
-  const values = randomValues(numValues, 1, 99);
-  const table = hashValues(values, { capacity, hash: multiplicationHash(capacity, factor) });
+  let result: HashResult;
+  let capacity: number;
+  let factor: number;
+  let values: number[];
+  do {
+    const numValues = getRandomInt(5, 9);
+    capacity = pickCapacity(numValues);
+    factor = (getRandomInt(0, 98) + 1) / 100; // c in (0,1), strictly < 1
+    values = randomValues(numValues, 1, 99);
+    result = hashValues(values, { capacity, hash: multiplicationHash(capacity, factor) });
+  } while (!result.success);
+  const table = result.table;
   return {
     type: 'dsal_hash_mul_open',
     mathQuery: `m = ${capacity}, c = ${factor} \\text{ (Multiplikationsmethode, Verkettung)}. Werte: {${values.join(', ')}}.`,
     answer: tableToAnswer(table),
     prompt: `Fügen Sie die Werte nacheinander mit der Multiplikationsmethode (c=${factor}, ohne Sondierung) in eine Hash-Tabelle der Länge ${capacity} ein.`,
     inputHint: 'Format: "0: [a, b]; 1: [c]; 2: []; …".',
-    explanation: [`Finale Belegung: ${tableToAnswer(table)}.`],
+    explanation: buildExplanation({ formula: 'h(k) = \\lfloor m \\cdot \\operatorname{frac}(c \\cdot k) \\rfloor', walkthrough: result.walkthrough, table, chaining: true }),
   };
 }
 
 export function generateHashingMultiplicationLinear(): TaskData {
-  const numValues = getRandomInt(5, 9);
-  const capacity = pickCapacity(numValues);
-  const factor = (getRandomInt(1, 99) + 1) / 100;
-  const values = randomValues(numValues, 1, 99);
-  const table = hashValues(values, { capacity, hash: multiplicationHash(capacity, factor), probing: linearProbing() });
+  let result: HashResult;
+  let capacity: number;
+  let factor: number;
+  let values: number[];
+  do {
+    const numValues = getRandomInt(5, 9);
+    capacity = pickCapacity(numValues);
+    factor = (getRandomInt(0, 98) + 1) / 100;
+    values = randomValues(numValues, 1, 99);
+    result = hashValues(values, { capacity, hash: multiplicationHash(capacity, factor), probing: linearProbing(), probeType: 'linear' });
+  } while (!result.success);
+  const table = result.table;
   return {
     type: 'dsal_hash_mul_linear',
     mathQuery: `m = ${capacity}, c = ${factor} \\text{ (Multiplikationsmethode, lineare Sondierung)}. Werte: {${values.join(', ')}}.`,
     answer: tableToAnswer(table),
     prompt: `Fügen Sie die Werte nacheinander mit der Multiplikationsmethode (c=${factor}) und linearer Sondierung in eine Hash-Tabelle der Länge ${capacity} ein.`,
     inputHint: 'Format: "0: [a]; 1: [b]; 2: []; …".',
-    explanation: [`Finale Belegung: ${tableToAnswer(table)}.`],
+    explanation: buildExplanation({ formula: 'h(k) = \\lfloor m \\cdot \\operatorname{frac}(c \\cdot k) \\rfloor,\\ h(k) + i', walkthrough: result.walkthrough, table, chaining: false }),
   };
 }
 
 export function generateHashingMultiplicationQuadratic(): TaskData {
-  const numValues = getRandomInt(5, 9);
-  const capacity = pickCapacity(numValues);
-  const factor = (getRandomInt(1, 99) + 1) / 100;
-  const c1 = getRandomInt(0, 10);
-  const c2 = getRandomInt(1, 10);
-  const values = randomValues(numValues, 1, 99);
-  const table = hashValues(values, { capacity, hash: multiplicationHash(capacity, factor), probing: quadraticProbing(c1, c2) });
+  let result: HashResult;
+  let capacity: number;
+  let factor: number;
+  let c1: number;
+  let c2: number;
+  let values: number[];
+  do {
+    const numValues = getRandomInt(5, 9);
+    capacity = pickPrimeCapacity(numValues);
+    factor = (getRandomInt(0, 98) + 1) / 100;
+    c1 = getRandomInt(0, 10);
+    c2 = getRandomInt(1, 10);
+    values = randomValues(numValues, 1, 99);
+    result = hashValues(values, {
+      capacity,
+      hash: multiplicationHash(capacity, factor),
+      probing: quadraticProbing(c1, c2),
+      probeType: 'quadratic',
+      c1,
+      c2,
+    });
+  } while (!result.success);
+  const table = result.table;
   return {
     type: 'dsal_hash_mul_quadratic',
     mathQuery: `m = ${capacity}, c = ${factor}, c_1 = ${c1}, c_2 = ${c2} \\text{ (Multiplikationsmethode, quadratische Sondierung)}. Werte: {${values.join(', ')}}.`,
     answer: tableToAnswer(table),
     prompt: `Fügen Sie die Werte nacheinander mit der Multiplikationsmethode (c=${factor}) und quadratischer Sondierung (c₁=${c1}, c₂=${c2}) in eine Hash-Tabelle der Länge ${capacity} ein.`,
     inputHint: 'Format: "0: [a]; 1: [b]; 2: []; …".',
-    explanation: [`Finale Belegung: ${tableToAnswer(table)}.`],
+    explanation: buildExplanation({ formula: 'h(k) = \\lfloor m \\cdot \\operatorname{frac}(c \\cdot k) \\rfloor,\\ h(k) + c_1 i + c_2 i^2', walkthrough: result.walkthrough, table, chaining: false }),
   };
 }

@@ -30,10 +30,11 @@ function insert(root: BNode, degree: number, value: number): { root: BNode; anno
   const res = insertNonFull(root, degree, value);
   // If the root overflowed, split it and create a new root above.
   if (res.root.keys.length > maxKeys(degree)) {
+    const before = res.root.keys.length;
     const split = splitNode(res.root, degree);
     return {
       root: { keys: [split.mid], children: [split.left, split.right] },
-      annotation: `Wurzel überläuft → Split: mittlerer Schlüssel ${split.mid} wandert nach oben.`,
+      annotation: `Wurzel überläuft (${before} > ${maxKeys(degree)} Schlüssel) → Split: mittlerer Schlüssel ${split.mid} wandert nach oben.`,
     };
   }
   return res;
@@ -54,10 +55,11 @@ function insertNonFull(node: BNode, degree: number, value: number): { root: BNod
   let keys = [...node.keys];
   let annotation = res.annotation;
   if (res.root.keys.length > maxKeys(degree)) {
+    const before = res.root.keys.length;
     const split = splitNode(res.root, degree);
     keys.splice(i, 0, split.mid);
     children.splice(i, 1, split.left, split.right);
-    annotation = `Knoten überläuft → Split: mittlerer Schlüssel ${split.mid} wandert nach oben.`;
+    annotation = `Knoten überläuft (${before} > ${maxKeys(degree)} Schlüssel) → Split: mittlerer Schlüssel ${split.mid} wandert nach oben.`;
   }
   return { root: { keys, children }, annotation };
 }

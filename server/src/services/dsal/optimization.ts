@@ -59,7 +59,10 @@ export function generateKnapsack(): TaskData {
     answer: `Wert: ${maxValue}, Gegenstände: {${taken.join(', ')}}`,
     prompt: `Bestimmen Sie mit dynamischer Programmierung den maximalen Gesamtwert und die mitzunehmenden Gegenstände (1-indiziert) für einen Rucksack der Kapazität ${capacity} mit Gewichten w=[${weights.join(', ')}] und Werten v=[${values.join(', ')}].`,
     inputHint: 'Format: "Wert: X, Gegenstände: {i, j, ...}".',
-    explanation: [`Maximaler Wert ${maxValue} mit Gegenständen {${taken.join(', ')}}.`],
+    explanation: [
+      `Wir füllen eine DP-Tabelle $T_{i,w}$ zeilenweise von $i=0$ bis $n$ und $w=0$ bis $W$ auf. Für jeden Gegenstand $i$ und jedes Gewicht $w$ gilt die Rekursion $T_{i,w} = \\max\\bigl(T_{i-1,w},\\ T_{i-1,\\,w-w_i}+v_i\\bigr)$ (falls $w_i \\le w$; sonst übernimmt man einfach $T_{i-1,w}$).`,
+      `Der Eintrag $T_{n,W}$ liefert den maximalen Gesamtwert. Die konkret mitgenommenen Gegenstände erhält man durch Backtracking: man startet bei $(n,W)$ und nimmt Gegenstand $i$, sobald $T_{i,w} > T_{i-1,w}$ gilt, und verringert dann $w$ um $w_i$.`,
+    ],
   };
 }
 
@@ -114,8 +117,11 @@ export function generateLCS(): TaskData {
     mathQuery: `w_1 = \\text{${word1}},\\ w_2 = \\text{${word2}}.`,
     answer: result,
     prompt: `Bestimmen Sie die längste gemeinsame Teilfolge (LCS) der Zeichenfolgen "${word1}" und "${word2}" mit dynamischer Programmierung.`,
-    inputHint: 'Geben Sie die Teilfolge als zusammenhängenden String an.',
-    explanation: [`LCS: "${result}" (Länge ${result.length}).`],
+    inputHint: 'Geben Sie die Teilfolge als Zeichenkette an (eine Teilfolge muss nicht zusammenhängend sein).',
+    explanation: [
+      `Wir füllen eine DP-Tabelle $L_{i,j}$ für die Präfixe der beiden Wörter auf. Bei übereinstimmenden Zeichen gilt $L_{i,j} = L_{i-1,\\,j-1}+1$; sonst $L_{i,j} = \\max(L_{i-1,j},\\ L_{i,j-1})$.`,
+      `Der Wert $L_{|w_1|,|w_2|}$ ist die Länge der LCS. Die Teilfolge selbst rekonstruiert man durch Backtracking von der Ecke: bei Übereinstimmung geht man schräg nach links-oben (Zeichen übernehmen), sonst in die Richtung des größeren Nachbarn. Achtung: eine Teilfolge (im Gegensatz zu einem Teilstring) muss nicht zusammenhängend sein.`,
+    ],
   };
 }
 
@@ -283,7 +289,7 @@ export function generateSimplex(): TaskData {
       answer: 'unbeschränkt',
       prompt: `Lösen Sie das lineare Programm (Simplex) und geben Sie die optimale Belegung und den Zielfunktionswert an, oder begründen Sie, warum es keine optimale Lösung gibt.`,
       inputHint: 'Bei Unbeschränktheit: "unbeschränkt".',
-      explanation: ['Das LP ist unbeschränkt.'],
+      explanation: ['Das LP ist unbeschränkt: im Simplex-Schritt existiert eine Spalte mit positiven reduzierten Kosten, aber kein positiver Eintrag in der rechten Seite – die Zielfunktion lässt sich beliebig vergrößern.'],
     };
   }
   if (result.status === 'unsolvable') {
@@ -293,7 +299,7 @@ export function generateSimplex(): TaskData {
       answer: 'unlösbar',
       prompt: `Lösen Sie das lineare Programm (Simplex) und geben Sie die optimale Belegung und den Zielfunktionswert an, oder begründen Sie, warum es keine optimale Lösung gibt.`,
       inputHint: 'Bei Unlösbarkeit: "unlösbar".',
-      explanation: ['Das LP ist unlösbar.'],
+      explanation: ['Das LP ist unlösbar (die Nebenbedingungen sind inkonsistent, es existiert keine zulässige Lösung).'],
     };
   }
 
@@ -304,6 +310,9 @@ export function generateSimplex(): TaskData {
     answer: `${result.x.map((val, idx) => `x${idx + 1}* = ${val.toString()}`).join(', ')}, z = ${result.z.toString()}`,
     prompt: `Lösen Sie das lineare Programm mit dem Simplex-Algorithmus: Maximiere ${targetStr} unter den Nebenbedingungen ${consStr} (und $x_i \\geq 0$). Geben Sie die optimale Belegung und den Zielfunktionswert an.`,
     inputHint: 'Format: "x1* = a, x2* = b, z = c" (Brüche als "p/q").',
-    explanation: [`Optimale Belegung: ${assignStr}, z = ${result.z.toString()}.`],
+    explanation: [
+      `Wir stellen das LP als Tableau auf: die Nebenbedingungen mit Schlupfvariablen und die Zielfunktion als Zeile der reduzierten Kosten. Pro Iteration wenden wir Gauss-Jordan-Elimination an, um eine Basisvariable gegen eine Nichtbasisvariable auszutauschen.`,
+      `Pivot-Regel: Die Eingangsvariable ist die Spalte mit den größten positiven reduzierten Kosten; die Ausgangsvariable bestimmt man per Minimum-Quotienten-Test (kleinstes $b_i/a_{ij}$ mit $a_{ij}>0$ in dieser Spalte). Ist keine positive reduzierte Kosten mehr vorhanden, ist $x^*$ optimal und $z$ ist der Zielfunktionswert.`,
+    ],
   };
 }

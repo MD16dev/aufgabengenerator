@@ -46,18 +46,33 @@ function insert(node: BSTNode | null, value: number): BSTNode {
   return node;
 }
 
-/** Insert returning a NEW tree (immutable) so we can keep the original for distractors. */
-function insertCopy(node: BSTNode | null, value: number): BSTNode | null {
+interface BSTInsertResult {
+  node: BSTNode | null;
+  parentValue: number | null;
+  direction: 'left' | 'right' | null;
+}
+
+/** Immutable insert that also reports where the new node was attached (parent + side). */
+function insertCopy(node: BSTNode | null, value: number): BSTInsertResult {
   if (node === null) {
-    return { value, left: null, right: null };
+    return { node: { value, left: null, right: null }, parentValue: null, direction: null };
   }
   const copy: BSTNode = { value: node.value, left: node.left, right: node.right };
   if (copy.value <= value) {
-    copy.right = insertCopy(copy.right, value);
+    const r = insertCopy(copy.right, value);
+    copy.right = r.node;
+    if (r.parentValue === null) {
+      return { node: copy, parentValue: node.value, direction: 'right' };
+    }
+    return { node: copy, parentValue: r.parentValue, direction: r.direction };
   } else {
-    copy.left = insertCopy(copy.left, value);
+    const r = insertCopy(copy.left, value);
+    copy.left = r.node;
+    if (r.parentValue === null) {
+      return { node: copy, parentValue: node.value, direction: 'left' };
+    }
+    return { node: copy, parentValue: r.parentValue, direction: r.direction };
   }
-  return copy;
 }
 
 function toJSON(node: BSTNode | null): TreeNodeJSON | null {
@@ -93,12 +108,21 @@ export function generateBSTInsertion(): TaskData {
       insertValue = getRandomInt(1, 99);
     } while (usedValues.has(insertValue));
     usedValues.add(insertValue);
-    current = insertCopy(current, insertValue);
+    const res = insertCopy(current, insertValue);
+    current = res.node!;
+    let annotation: string;
+    if (res.parentValue === null) {
+      annotation = `${insertValue} wird als neue Wurzel eingefügt.`;
+    } else if (res.direction === 'right') {
+      annotation = `${insertValue} wird als rechtes Kind von ${res.parentValue} eingefügt.`;
+    } else {
+      annotation = `${insertValue} wird als linkes Kind von ${res.parentValue} eingefügt.`;
+    }
     steps.push({
       instruction: `Füge den Wert ${insertValue} in den Baum ein.`,
       kind: 'tree',
       tree: toJSON(current)!,
-      annotation: `Einfügeregel: Wert $\\leq$ Knoten $\\rightarrow$ rechtes Kind, sonst links.`,
+      annotation,
     });
     taskList.push(`${i + 1}. ${insertValue} einfügen`);
   }

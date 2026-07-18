@@ -13,6 +13,7 @@ export interface LeaderboardItem {
   displayName: string;
   profilePic?: string;
   solvedCount: number;
+  revealedCount?: number;
   module: string;
   isUser: boolean;
 }

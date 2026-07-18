@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { MathRenderer, LatexTextRenderer } from './MathRenderer';
 import { TreeRenderer } from './TreeRenderer';
 import { GraphRenderer } from './GraphRenderer';
-import { HelpCircle, RefreshCw, ArrowLeft, ArrowRight } from 'lucide-react';
+import { HelpCircle, RefreshCw, ArrowLeft, ArrowRight, CheckCircle2 } from 'lucide-react';
 import type { TaskData } from '../types';
 
 interface StepTaskRunnerProps {
@@ -30,21 +30,24 @@ export const StepTaskRunner: React.FC<StepTaskRunnerProps> = ({
 }) => {
   const [revealed, setRevealed] = useState(false);
   const [solved, setSolved] = useState(false);
+  const [feedbackGiven, setFeedbackGiven] = useState(false);
+  const [feedbackMsg, setFeedbackMsg] = useState('');
   const steps = task.steps ?? [];
 
-  // Record the solve once the solution is revealed (engagement = solved).
+  // Record the solve once the solution is revealed. We do NOT write immediately:
+  // the user must self-report via the feedback buttons (which carry the `correct`
+  // flag so a "Ich hatte es richtig" counts as a point). If the user reveals but
+  // then leaves without answering, we record a neutral "revealed" (0 points) once.
   useEffect(() => {
     if (revealed && !solved) {
       setSolved(true);
       const token = localStorage.getItem('auth_token');
       if (user && token) {
-        fetch('http://localhost:5001/api/tasks/solve', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-          body: JSON.stringify({ taskTypeId: task.type }),
-        })
-          .then((r) => r.ok && onSolved())
-          .catch(() => {});
+        // Defer the write until we know the self-report; the feedback handler
+        // does the actual scoring. If the user never clicks, the onSkip path
+        // records a neutral reveal. To avoid a double write, we only call
+        // onSolved() here (engagement/UI) and let handleFeedback/onSkip persist.
+        onSolved();
       } else {
         const saved = parseInt(localStorage.getItem('aufgabengenerator_score') ?? '0', 10);
         localStorage.setItem('aufgabengenerator_score', String(saved + 1));
@@ -53,6 +56,30 @@ export const StepTaskRunner: React.FC<StepTaskRunnerProps> = ({
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [revealed]);
+
+  // After revealing the solution, the user self-reports whether they had it
+  // right. "Ich hatte es richtig" is sent with correct:true so it counts as a
+  // point; "Nein" is sent as a neutral reveal (0 points).
+  const handleFeedback = async (hadItRight: boolean) => {
+    const token = localStorage.getItem('auth_token');
+    if (user && token) {
+      try {
+        await fetch('http://localhost:5001/api/tasks/solve', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+          body: JSON.stringify({ taskTypeId: task.type, outcome: 'revealed', correct: hadItRight }),
+        });
+      } catch (err) {
+        console.error('Feedback konnte nicht gespeichert werden:', err);
+      }
+    }
+    setFeedbackGiven(true);
+    setFeedbackMsg(
+      hadItRight
+        ? 'Super! Du bekommst einen Punkt für die Bestenliste. Beim nächsten Mal ohne Hilfe schaffst du es bestimmt auch ganz allein.'
+        : 'Kein Problem — genau dafür ist die Lösung da. Versuch die nächste Aufgabe!'
+    );
+  };
 
   return (
     <div className="w-full max-w-2xl mx-auto px-4 py-8 animate-fadeIn" id="step-task-runner">
@@ -150,12 +177,54 @@ export const StepTaskRunner: React.FC<StepTaskRunnerProps> = ({
             <div className="mt-5 flex justify-end">
               <button
                 type="button"
-                onClick={onSkip}
+                onClick={() => {
+                  // If the solution was revealed but the user never self-reported,
+                  // record a neutral reveal (0 points) before moving on.
+                  if (revealed && !feedbackGiven) {
+                    const token = localStorage.getItem('auth_token');
+                    if (user && token) {
+                      fetch('http://localhost:5001/api/tasks/solve', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+                        body: JSON.stringify({ taskTypeId: task.type, outcome: 'revealed' }),
+                      }).catch(() => {});
+                    }
+                  }
+                  onSkip();
+                }}
                 className="flex items-center gap-1 text-sm font-semibold text-purple-600 dark:text-purple-400 hover:opacity-80 transition-opacity cursor-pointer"
               >
                 Nächste Aufgabe <ArrowRight className="w-4 h-4" />
               </button>
             </div>
+            {!feedbackGiven ? (
+              <div className="mt-4 p-4 bg-theme-card border border-theme-border rounded-2xl animate-fadeIn">
+                <p className="text-sm font-semibold text-theme-primary mb-3">
+                  Hattest du die Lösung richtig, bevor du sie dir angesehen hast?
+                </p>
+                <div className="flex gap-3">
+                  <button
+                    type="button"
+                    onClick={() => handleFeedback(true)}
+                    className="flex-1 px-4 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white font-semibold rounded-xl transition-all cursor-pointer"
+                  >
+                    Ja, ich hatte es richtig
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleFeedback(false)}
+                    className="flex-1 px-4 py-2.5 bg-theme-card hover:brightness-95 dark:hover:brightness-110 text-theme-primary font-semibold rounded-xl border border-theme-border transition-all cursor-pointer"
+                  >
+                    Nein, noch nicht
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div className="mt-4 p-3.5 bg-purple-500/10 border border-purple-500/20 text-purple-700 dark:text-purple-300 rounded-xl text-sm font-bold flex items-start gap-2.5 animate-fadeIn">
+                <CheckCircle2 className="w-5 h-5 text-purple-600 dark:text-purple-400 shrink-0 mt-0.5" />
+                <div>{feedbackMsg}</div>
+              </div>
+            )}
           </div>
         ) : (
           <div className="flex justify-between items-center mt-6 pt-4 border-t border-theme-border">

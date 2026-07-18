@@ -5,3 +5,6 @@ node_modules/
 
 # Lokale, nicht-versionierte Agent-Notizen (nur für diese Maschine)
 AGENT_LOCAL_NOTES.md
+
+# Review-Ergebnisse der Generatoren (nur lokal, nicht versionieren)
+GENERATOR_REVIEW.md

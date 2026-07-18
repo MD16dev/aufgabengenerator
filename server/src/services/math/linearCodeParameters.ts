@@ -54,6 +54,7 @@ export function generateLinearCodeParameters(): TaskData {
   let k: number;
   let d: number;
   let echelon: number[][];
+  let codewords: number[][] = [];
   let attempts = 0;
 
   do {
@@ -66,7 +67,7 @@ export function generateLinearCodeParameters(): TaskData {
     echelon = res.echelon;
 
     // Generate all 2^k - 1 non-zero linear combinations of the rows.
-    const codewords: number[][] = [];
+    codewords = [];
     for (let mask = 1; mask < (1 << k); mask++) {
       const cw = new Array(cols).fill(0);
       for (let r = 0; r < rows; r++) {
@@ -97,9 +98,11 @@ export function generateLinearCodeParameters(): TaskData {
     }
     exampleCombos.push({ label: usedRows.join('+'), cw });
   }
-  const minCodeword = exampleCombos.reduce((best, x) =>
-    weight(x.cw) < weight(best.cw) ? x : best
-  ).cw;
+  // The displayed example must be a genuine minimum-weight codeword.
+  // Reuse the full codeword list that was already used to compute d.
+  const minCodeword = codewords.reduce((best, cw) =>
+    weight(cw) < weight(best) ? cw : best
+  );
 
   const explanation = [
     `$n$ ist die Länge des Codes, also die Spaltenanzahl der Erzeugermatrix: $n = ${n}$.`,

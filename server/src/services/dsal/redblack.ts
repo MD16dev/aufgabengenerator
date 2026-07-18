@@ -83,9 +83,9 @@ function rotateRight(root: RBNode, x: RBNode): RBNode {
   return root;
 }
 
-/** CLRS fixup. Mutates the tree; returns the (new) root and an annotation. */
+/** CLRS fixup. Mutates the tree; returns the (new) root and an accumulated annotation. */
 function fixup(root: RBNode, z: RBNode): { root: RBNode; annotation: string } {
-  let annotation = 'Keine Rotation nötig (kein rot-rot-Konflikt).';
+  const annotations: string[] = [];
   let n: RBNode | null = z;
   while (n !== null && n.parent !== null && n.parent.color === 'red') {
     const parent: RBNode = n.parent;
@@ -96,15 +96,15 @@ function fixup(root: RBNode, z: RBNode): { root: RBNode; annotation: string } {
         parent.color = 'black';
         uncle.color = 'black';
         grand.color = 'red';
-        annotation = `Umfärbung: ${parent.value} und ${uncle.value} schwarz, ${grand.value} rot.`;
+        annotations.push(`Onkel rot → Umfärbung: ${parent.value} und ${uncle.value} schwarz, ${grand.value} rot.`);
         n = grand;
       } else {
         if (n === parent.right) {
           n = parent;
           root = rotateLeft(root, n);
-          annotation = `Linksrotation bei ${n.value}, dann Rechtsrotation bei ${grand.value}.`;
+          annotations.push(`LR-Fall: Linksrotation bei ${n.value}, dann Rechtsrotation bei ${grand.value}.`);
         } else {
-          annotation = `Rechtsrotation bei ${grand.value}.`;
+          annotations.push(`LL-Fall: Rechtsrotation bei ${grand.value}.`);
         }
         const p = n.parent!;
         const g = p.parent!;
@@ -118,15 +118,15 @@ function fixup(root: RBNode, z: RBNode): { root: RBNode; annotation: string } {
         parent.color = 'black';
         uncle.color = 'black';
         grand.color = 'red';
-        annotation = `Umfärbung: ${parent.value} und ${uncle.value} schwarz, ${grand.value} rot.`;
+        annotations.push(`Onkel rot → Umfärbung: ${parent.value} und ${uncle.value} schwarz, ${grand.value} rot.`);
         n = grand;
       } else {
         if (n === parent.left) {
           n = parent;
           root = rotateRight(root, n);
-          annotation = `Rechtsrotation bei ${n.value}, dann Linksrotation bei ${grand.value}.`;
+          annotations.push(`RL-Fall: Rechtsrotation bei ${n.value}, dann Linksrotation bei ${grand.value}.`);
         } else {
-          annotation = `Linksrotation bei ${grand.value}.`;
+          annotations.push(`RR-Fall: Linksrotation bei ${grand.value}.`);
         }
         const p = n.parent!;
         const g = p.parent!;
@@ -140,6 +140,9 @@ function fixup(root: RBNode, z: RBNode): { root: RBNode; annotation: string } {
   let r = root;
   while (r.parent) r = r.parent;
   r.color = 'black';
+  const annotation = annotations.length > 0
+    ? annotations.join(' ')
+    : 'Keine Rotation nötig (kein rot-rot-Konflikt).';
   return { root: r, annotation };
 }
 
@@ -226,7 +229,7 @@ export function generateRedBlackInsertion(): TaskData {
     steps,
     explanation: [
       `Neuer Knoten wird rot eingefügt (\\leq \\to \\text{rechts}).`,
-      `Bei rot-rot-Konflikt: Onkel rot → Umfärbung; sonst Rotation + Umfärbung.`,
+      `Bei rot-rot-Konflikt: Ist der Onkel rot, wird umgefärbt; ist er schwarz, wird rotiert (LL-, LR-, RL- oder RR-Fall) und dann umgefärbt.`,
       `Die Wurzel ist am Ende immer schwarz.`,
     ],
   };

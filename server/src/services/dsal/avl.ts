@@ -63,24 +63,24 @@ function insert(node: AVLNode | null, value: number): { node: AVLNode; rotation:
   if (balance > 1) {
     const left = newNode.left!;
     if (h(left.left) >= h(left.right)) {
-      rotation = `Rechtsrotation bei ${newNode.value}`;
+      rotation = `Balancefaktor bei ${newNode.value} = +${balance} (linkslastig) → Rechtsrotation.`;
       return { node: rotateRight(newNode), rotation };
     }
     newNode = { value: newNode.value, left: rotateLeft(left), right: newNode.right, height: 0 };
     update(newNode);
-    rotation = `Links-Rechts-Drehung bei ${newNode.value}`;
+    rotation = `Balancefaktor bei ${newNode.value} = +${balance} (linkslastig) → Links-Rechts-Drehung.`;
     return { node: rotateRight(newNode), rotation };
   }
   // Right heavy
   if (balance < -1) {
     const right = newNode.right!;
     if (h(right.right) >= h(right.left)) {
-      rotation = `Linksrotation bei ${newNode.value}`;
+      rotation = `Balancefaktor bei ${newNode.value} = ${balance} (rechtslastig) → Linksrotation.`;
       return { node: rotateLeft(newNode), rotation };
     }
     newNode = { value: newNode.value, left: newNode.left, right: rotateRight(right), height: 0 };
     update(newNode);
-    rotation = `Rechts-Links-Drehung bei ${newNode.value}`;
+    rotation = `Balancefaktor bei ${newNode.value} = ${balance} (rechtslastig) → Rechts-Links-Drehung.`;
     return { node: rotateLeft(newNode), rotation };
   }
   return { node: newNode, rotation };
@@ -156,7 +156,8 @@ export function generateAVLInsertion(): TaskData {
     steps,
     explanation: [
       `Einfügen wie im BST (\\leq \\to \\text{rechts}), dann Balancefaktor prüfen.`,
-      `Bei Ungleichgewicht wird rotiert (einfach oder doppelt).`,
+      `Der Balancefaktor ist $\\text{Höhe(links)} - \\text{Höhe(rechts)}$; erlaubt sind nur $-1, 0, +1$.`,
+      `Bei Ungleichgewicht (\\pm 2) wird rotiert: einfach (außenlastig) oder doppelt (innenlastig).`,
     ],
   };
 }

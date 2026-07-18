@@ -226,6 +226,10 @@ interface SortMeta {
   algoName: string;
   /** German noun for one operation, used in step instructions. */
   operation: string;
+  /** German one-to-three-sentence explanation of the algorithm's idea. */
+  idea: string;
+  /** Optional custom step instruction; defaults to the generic "N-tes <operation>" form. */
+  stepInstruction?: (i: number) => string;
 }
 
 /**
@@ -243,7 +247,9 @@ function buildStepwiseTask(meta: SortMeta, stepsFn: (a: number[]) => number[][])
   } while (states.length < 2);
 
   const steps: TaskData['steps'] = states.slice(1).map((state, i) => ({
-    instruction: `Array nach dem ${i + 1}-ten ${meta.operation} (${meta.algoName})`,
+    instruction: meta.stepInstruction
+      ? meta.stepInstruction(i)
+      : `Array nach dem ${i + 1}-ten ${meta.operation} (${meta.algoName})`,
     kind: 'array',
     array: state,
   }));
@@ -258,7 +264,7 @@ function buildStepwiseTask(meta: SortMeta, stepsFn: (a: number[]) => number[][])
     steps,
     explanation: [
       `Startarray: ${arrStr(initial)}.`,
-      `Angewandter Algorithmus: ${meta.algoName}.`,
+      meta.idea,
       `Das vollständig sortierte Endergebnis lautet: ${arrStr(states[states.length - 1])}.`,
     ],
   };
@@ -283,42 +289,42 @@ function countingSortSteps(initial: number[], lo: number, hi: number): { counts:
 
 export function generateBubbleSort(): TaskData {
   return buildStepwiseTask(
-    { type: 'dsal_sort_bubble', algoName: 'Bubblesort', operation: 'Swap' },
+    { type: 'dsal_sort_bubble', algoName: 'Bubblesort', operation: 'Swap', idea: 'Bubblesort vergleicht von links nach rechts je zwei benachbarte Elemente und tauscht, wenn das linke größer ist. Nach jedem Durchlauf steht das größte Element ganz rechts an seiner endgültigen Stelle.' },
     bubbleSortSteps,
   );
 }
 
 export function generateInsertionSort(): TaskData {
   return buildStepwiseTask(
-    { type: 'dsal_sort_insertion', algoName: 'Insertionsort', operation: 'Verschieben' },
+    { type: 'dsal_sort_insertion', algoName: 'Insertionsort', operation: 'Einfügen', idea: 'Insertionsort baut das Array von links schrittweise auf: das bisher sortierte Präfix wird um das nächste Element erweitert, das an die richtige Stelle eingeschoben wird.', stepInstruction: (i) => `Array nach dem Einfügen des ${i + 1}-ten Elements (Insertionsort)` },
     insertionSortSteps,
   );
 }
 
 export function generateSelectionSort(): TaskData {
   return buildStepwiseTask(
-    { type: 'dsal_sort_selection', algoName: 'Selectionsort', operation: 'Swap' },
+    { type: 'dsal_sort_selection', algoName: 'Selectionsort', operation: 'Swap', idea: 'Selectionsort wählt im unsortierten Rest-Array das kleinste Element und tauscht es an die erste unsortierte Position.' },
     selectionSortSteps,
   );
 }
 
 export function generateQuickSort(): TaskData {
   return buildStepwiseTask(
-    { type: 'dsal_sort_quick', algoName: 'Quicksort', operation: 'Partition' },
+    { type: 'dsal_sort_quick', algoName: 'Quicksort', operation: 'Partition', idea: 'Quicksort wählt ein Pivotelement (hier das letzte) und ordnet alle kleineren Elemente nach links, alle größeren/gleichen nach rechts. Das Pivot steht danach an seiner endgültigen Position; links und rechts werden rekursiv sortiert.' },
     quickSortSteps,
   );
 }
 
 export function generateMergeSort(): TaskData {
   return buildStepwiseTask(
-    { type: 'dsal_sort_merge', algoName: 'Mergesort', operation: 'Merge' },
+    { type: 'dsal_sort_merge', algoName: 'Mergesort', operation: 'Merge', idea: 'Mergesort teilt das Array rekursiv in Hälften bis zu Einzelelementen und fügt je zwei sortierte Hälften zu einem sortierten Array zusammen.' },
     mergeSortSteps,
   );
 }
 
 export function generateHeapSort(): TaskData {
   return buildStepwiseTask(
-    { type: 'dsal_sort_heap', algoName: 'Heapsort', operation: 'Swap' },
+    { type: 'dsal_sort_heap', algoName: 'Heapsort', operation: 'Swap', idea: 'Heapsort wandelt das Array zuerst in einen Max-Heap um (Größtes Element an der Wurzel). Dann wird die Wurzel ans Ende getauscht und der Heap repariert; so entsteht das Array von hinten sortiert.' },
     heapSortSteps,
   );
 }
@@ -340,8 +346,8 @@ export function generateCountingSort(): TaskData {
     ],
     explanation: [
       `Startarray: ${arrStr(initial)} (Werte im Bereich 0…9).`,
-      `Zähl-Array: ${arrStr(counts)}.`,
-      `Angewandter Algorithmus: Countingsort.`,
+      `Zähl-Array (Index = Wert, Eintrag = Häufigkeit): ${counts.map((c, idx) => `${idx}:${c}`).join(', ')}.`,
+      `Angewandter Algorithmus: Countingsort. Countingsort zählt, wie oft jeder Wert (hier 0…9) vorkommt, und baut daraus das sortierte Array auf — ohne Elemente zu vergleichen.`,
       `Das sortierte Ergebnisarray lautet: ${arrStr(sorted)}.`,
     ],
   };
@@ -375,8 +381,8 @@ export function generateBucketSort(): TaskData {
     taskList: ['Sortiere das Array mit Bucketsort (10 Buckets, Werte 0…99).'],
     steps,
     explanation: [
-      `Startarray: ${arrStr(initial)} (Werte im Bereich 0…99, 10 Buckets).`,
-      `Angewandter Algorithmus: Bucketsort.`,
+      `Startarray: ${arrStr(initial)} (Werte im Bereich 0…99, 10 Buckets je 10er-Bereiche).`,
+      `Angewandter Algorithmus: Bucketsort. Bucketsort verteilt die Werte auf Buckets (hier je 10er-Bereiche), sortiert jedes Bucket einzeln und hängt sie aneinander.`,
       `Das sortierte Ergebnisarray lautet: ${arrStr(result)}.`,
     ],
   };

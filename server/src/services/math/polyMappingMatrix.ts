@@ -151,7 +151,7 @@ export function generatePolyMappingMatrix(): TaskData {
     mathQuery,
     answer: formatMatrix(matrix),
     explanation,
-    prompt: `Gegeben sei die lineare Abbildung $\\varphi$ mit ${rule.description}. Bestimme die Darstellungsmatrix $M_B^B(\\varphi)$ bezüglich $B = \\{X^3, X^2, X, 1\\}$.`,
+    prompt: `Gegeben sei die lineare Abbildung $\\varphi$ mit ${rule.description}. Bestimme die Darstellungsmatrix $M_B^B(\\varphi)$ bezüglich $B = \\{X^3, X^2, X, 1\\}$. (Achtung: Der Koordinatenvektor ist absteigend nach Grad geordnet als $[c_3, c_2, c_1, c_0]$ – das konstante Glied steht also am Ende.)`,
     inputHint: 'Matrix zeilenweise, Einträge durch Komma, Zeilen durch Semikolon, z.B. [1,0,0,0;0,2,1,0;...]'
   };
 }
