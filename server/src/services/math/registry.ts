@@ -32,6 +32,14 @@ import {
   generateKosaraju,
   generateFloydWarshall,
 } from '../dsal/graphs';
+import {
+  generateHashingDivisionOpen,
+  generateHashingDivisionLinear,
+  generateHashingDivisionQuadratic,
+  generateHashingMultiplicationOpen,
+  generateHashingMultiplicationLinear,
+  generateHashingMultiplicationQuadratic,
+} from '../dsal/hashing';
 
 /**
  * Registry mapping a task type id (sent by the frontend) to its generator
@@ -73,6 +81,13 @@ export const taskGenerators: Record<string, () => TaskData> = {
   'dsal_graph_unionfind': generateUnionFind,
   'dsal_graph_kosaraju': generateKosaraju,
   'dsal_graph_floydwarshall': generateFloydWarshall,
+  // DSAL — hashing (translated from exercisegenerator)
+  'dsal_hash_div_open': generateHashingDivisionOpen,
+  'dsal_hash_div_linear': generateHashingDivisionLinear,
+  'dsal_hash_div_quadratic': generateHashingDivisionQuadratic,
+  'dsal_hash_mul_open': generateHashingMultiplicationOpen,
+  'dsal_hash_mul_linear': generateHashingMultiplicationLinear,
+  'dsal_hash_mul_quadratic': generateHashingMultiplicationQuadratic,
   // ...new task types go here
 };
 

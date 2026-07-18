@@ -266,6 +266,42 @@ export const ModuleSelector: React.FC<ModuleSelectorProps> = ({ activeModule, on
           isActive: true
         },
         {
+          id: 'dsal_hash_div_open',
+          name: 'Hashing: Division + Verkettung',
+          description: 'Belege eine Hash-Tabelle mit der Divisionsmethode und Verkettung.',
+          isActive: true
+        },
+        {
+          id: 'dsal_hash_div_linear',
+          name: 'Hashing: Division + lineare Sondierung',
+          description: 'Belege eine Hash-Tabelle mit der Divisionsmethode und linearer Sondierung.',
+          isActive: true
+        },
+        {
+          id: 'dsal_hash_div_quadratic',
+          name: 'Hashing: Division + quadratische Sondierung',
+          description: 'Belege eine Hash-Tabelle mit der Divisionsmethode und quadratischer Sondierung.',
+          isActive: true
+        },
+        {
+          id: 'dsal_hash_mul_open',
+          name: 'Hashing: Multiplikation + Verkettung',
+          description: 'Belege eine Hash-Tabelle mit der Multiplikationsmethode und Verkettung.',
+          isActive: true
+        },
+        {
+          id: 'dsal_hash_mul_linear',
+          name: 'Hashing: Multiplikation + lineare Sondierung',
+          description: 'Belege eine Hash-Tabelle mit der Multiplikationsmethode und linearer Sondierung.',
+          isActive: true
+        },
+        {
+          id: 'dsal_hash_mul_quadratic',
+          name: 'Hashing: Multiplikation + quadratische Sondierung',
+          description: 'Belege eine Hash-Tabelle mit der Multiplikationsmethode und quadratischer Sondierung.',
+          isActive: true
+        },
+        {
           id: 'algo_avl_rot',
           name: 'AVL-Baum Rotationen',
           description: 'Führe Links-/Rechts-Balancierungen auf AVL-Bäumen durch.',

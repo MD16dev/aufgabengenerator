@@ -88,6 +88,18 @@ export const solveTask = async (req: AuthenticatedRequest, res: Response, next: 
           ? 'Kosaraju-Sharir'
           : taskTypeId === 'dsal_graph_floydwarshall'
           ? 'Floyd-Warshall'
+          : taskTypeId === 'dsal_hash_div_open'
+          ? 'Hashing: Division + Verkettung'
+          : taskTypeId === 'dsal_hash_div_linear'
+          ? 'Hashing: Division + lineare Sondierung'
+          : taskTypeId === 'dsal_hash_div_quadratic'
+          ? 'Hashing: Division + quadratische Sondierung'
+          : taskTypeId === 'dsal_hash_mul_open'
+          ? 'Hashing: Multiplikation + Verkettung'
+          : taskTypeId === 'dsal_hash_mul_linear'
+          ? 'Hashing: Multiplikation + lineare Sondierung'
+          : taskTypeId === 'dsal_hash_mul_quadratic'
+          ? 'Hashing: Multiplikation + quadratische Sondierung'
           : 'Aufgabe',
         module: isLinAlg
           ? 'Lineare Algebra'
