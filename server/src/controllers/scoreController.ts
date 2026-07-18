@@ -100,6 +100,12 @@ export const solveTask = async (req: AuthenticatedRequest, res: Response, next: 
           ? 'Hashing: Multiplikation + lineare Sondierung'
           : taskTypeId === 'dsal_hash_mul_quadratic'
           ? 'Hashing: Multiplikation + quadratische Sondierung'
+          : taskTypeId === 'dsal_opt_knapsack'
+          ? 'Rucksackproblem (DP)'
+          : taskTypeId === 'dsal_opt_lcs'
+          ? 'Längste gemeinsame Teilfolge (DP)'
+          : taskTypeId === 'dsal_opt_simplex'
+          ? 'Simplex-Algorithmus'
           : 'Aufgabe',
         module: isLinAlg
           ? 'Lineare Algebra'

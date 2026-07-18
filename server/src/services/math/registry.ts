@@ -40,6 +40,11 @@ import {
   generateHashingMultiplicationLinear,
   generateHashingMultiplicationQuadratic,
 } from '../dsal/hashing';
+import {
+  generateKnapsack,
+  generateLCS,
+  generateSimplex,
+} from '../dsal/optimization';
 
 /**
  * Registry mapping a task type id (sent by the frontend) to its generator
@@ -88,6 +93,10 @@ export const taskGenerators: Record<string, () => TaskData> = {
   'dsal_hash_mul_open': generateHashingMultiplicationOpen,
   'dsal_hash_mul_linear': generateHashingMultiplicationLinear,
   'dsal_hash_mul_quadratic': generateHashingMultiplicationQuadratic,
+  // DSAL — optimization (dynamic programming + linear programming)
+  'dsal_opt_knapsack': generateKnapsack,
+  'dsal_opt_lcs': generateLCS,
+  'dsal_opt_simplex': generateSimplex,
   // ...new task types go here
 };
 

@@ -302,6 +302,24 @@ export const ModuleSelector: React.FC<ModuleSelectorProps> = ({ activeModule, on
           isActive: true
         },
         {
+          id: 'dsal_opt_knapsack',
+          name: 'Rucksackproblem (DP)',
+          description: 'Maximaler Gesamtwert und mitzunehmende Gegenstände per dynamischer Programmierung.',
+          isActive: true
+        },
+        {
+          id: 'dsal_opt_lcs',
+          name: 'Längste gemeinsame Teilfolge (DP)',
+          description: 'Bestimme die LCS zweier Zeichenfolgen mit dynamischer Programmierung.',
+          isActive: true
+        },
+        {
+          id: 'dsal_opt_simplex',
+          name: 'Simplex-Algorithmus',
+          description: 'Löse ein lineares Programm (Maximierung) mit dem Simplex-Algorithmus.',
+          isActive: true
+        },
+        {
           id: 'algo_avl_rot',
           name: 'AVL-Baum Rotationen',
           description: 'Führe Links-/Rechts-Balancierungen auf AVL-Bäumen durch.',
