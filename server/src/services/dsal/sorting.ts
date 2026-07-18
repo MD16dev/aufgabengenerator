@@ -200,19 +200,7 @@ function heapSortSteps(initial: number[]): number[][] {
 
 /* ------------------------------ Counting sort ----------------------------- */
 
-function countingSortResult(initial: number[], lo: number, hi: number): number[] {
-  const a = new Array(initial.length).fill(0);
-  const count = new Array(hi - lo + 1).fill(0);
-  for (const v of initial) count[v - lo]++;
-  let index = 0;
-  for (let i = 0; i < count.length; i++) {
-    while (count[i] > 0) {
-      a[index++] = i + lo;
-      count[i]--;
-    }
-  }
-  return a;
-}
+/* (counting sort logic lives in countingSortSteps below) */
 
 /* ------------------------------- Bucket sort ------------------------------ */
 
@@ -236,109 +224,99 @@ function bucketSortResult(initial: number[], lo: number, hi: number, buckets: nu
 interface SortMeta {
   type: string;
   algoName: string;
-  /** German name of one operation, used in the prompt. */
+  /** German noun for one operation, used in step instructions. */
   operation: string;
-  /** Whether to ask for an intermediate step (comparison sorts) or final result. */
-  intermediate: boolean;
 }
 
 /**
- * Build a comparison-sort task asking for the array after the k-th operation.
- * Regenerates the array until at least one operation occurs.
+ * Build a stepwise comparison-sort task: every intermediate state becomes a
+ * card the user must reproduce in order. Regenerates until at least one
+ * operation occurs (avoids already-sorted arrays).
  */
-function buildComparisonTask(
-  meta: SortMeta,
-  stepsFn: (a: number[]) => number[][],
-): TaskData {
-  let steps: number[][];
+function buildStepwiseTask(meta: SortMeta, stepsFn: (a: number[]) => number[][]): TaskData {
+  let states: number[][];
   let initial: number[];
-  // Ensure at least one operation happens (avoid already-sorted arrays).
   do {
     initial = randomArray(0, 30);
-    steps = stepsFn(initial);
-  } while (steps.length < 2);
+    states = stepsFn(initial);
+  } while (states.length < 2);
 
-  const k = getRandomInt(1, steps.length - 1);
-  const answerArr = steps[k];
+  const steps: TaskData['steps'] = states.slice(1).map((state, i) => ({
+    instruction: `Array nach dem ${i + 1}-ten ${meta.operation} (${meta.algoName})`,
+    kind: 'array',
+    array: state,
+  }));
 
   return {
     type: meta.type,
     mathQuery: `\\text{Array: } ${arrStr(initial)}`,
-    answer: arrStr(answerArr),
-    prompt: `Sortieren Sie das Array mit ${meta.algoName}. Geben Sie das Array nach der ${k}-ten ${meta.operation} an.`,
+    answer: '',
+    prompt: `Sortieren Sie das Array mit ${meta.algoName}. Geben Sie das Array nach jedem ${meta.operation} an.`,
     inputHint: 'Gib das Array in der Form [a, b, c, …] an.',
+    steps,
     explanation: [
       `Startarray: ${arrStr(initial)}.`,
       `Angewandter Algorithmus: ${meta.algoName}.`,
-      `Nach der ${k}-ten ${meta.operation} lautet das Array: ${arrStr(answerArr)}.`,
-      `Das Endergebnis (vollständig sortiert) wäre: ${arrStr(steps[steps.length - 1])}.`,
+      `Das vollständig sortierte Endergebnis lautet: ${arrStr(states[states.length - 1])}.`,
     ],
   };
 }
 
-/** Build a counting/bucket sort task asking for the final sorted result array. */
-function buildResultTask(
-  meta: SortMeta,
-  initial: number[],
-  lo: number,
-  hi: number,
-  resultFn: (a: number[], lo: number, hi: number) => number[],
-): TaskData {
-  const result = resultFn(initial, lo, hi);
-  return {
-    type: meta.type,
-    mathQuery: `\\text{Array: } ${arrStr(initial)}`,
-    answer: arrStr(result),
-    prompt: `Sortieren Sie das Array mit ${meta.algoName}. Geben Sie das sortierte Ergebnisarray an.`,
-    inputHint: 'Gib das Array in der Form [a, b, c, …] an.',
-    explanation: [
-      `Startarray: ${arrStr(initial)} (Werte im Bereich ${lo}…${hi}).`,
-      `Angewandter Algorithmus: ${meta.algoName}.`,
-      `Das sortierte Ergebnisarray lautet: ${arrStr(result)}.`,
-    ],
-  };
+/** Counting sort with intermediate states (counts array, then sorted result). */
+function countingSortSteps(initial: number[], lo: number, hi: number): { counts: number[]; sorted: number[] } {
+  const counts = new Array(hi - lo + 1).fill(0);
+  for (const v of initial) counts[v - lo]++;
+  const countsSnapshot = [...counts];
+  const sorted: number[] = [];
+  for (let i = 0; i < counts.length; i++) {
+    while (counts[i] > 0) {
+      sorted.push(i + lo);
+      counts[i]--;
+    }
+  }
+  return { counts: countsSnapshot, sorted };
 }
 
 /* ------------------------------- Exports ---------------------------------- */
 
 export function generateBubbleSort(): TaskData {
-  return buildComparisonTask(
-    { type: 'dsal_sort_bubble', algoName: 'Bubblesort', operation: 'Swap-Operation', intermediate: true },
+  return buildStepwiseTask(
+    { type: 'dsal_sort_bubble', algoName: 'Bubblesort', operation: 'Swap' },
     bubbleSortSteps,
   );
 }
 
 export function generateInsertionSort(): TaskData {
-  return buildComparisonTask(
-    { type: 'dsal_sort_insertion', algoName: 'Insertionsort', operation: 'Iteration der äußeren Schleife', intermediate: true },
+  return buildStepwiseTask(
+    { type: 'dsal_sort_insertion', algoName: 'Insertionsort', operation: 'Verschieben' },
     insertionSortSteps,
   );
 }
 
 export function generateSelectionSort(): TaskData {
-  return buildComparisonTask(
-    { type: 'dsal_sort_selection', algoName: 'Selectionsort', operation: 'Swap-Operation', intermediate: true },
+  return buildStepwiseTask(
+    { type: 'dsal_sort_selection', algoName: 'Selectionsort', operation: 'Swap' },
     selectionSortSteps,
   );
 }
 
 export function generateQuickSort(): TaskData {
-  return buildComparisonTask(
-    { type: 'dsal_sort_quick', algoName: 'Quicksort', operation: 'Partition-Operation', intermediate: true },
+  return buildStepwiseTask(
+    { type: 'dsal_sort_quick', algoName: 'Quicksort', operation: 'Partition' },
     quickSortSteps,
   );
 }
 
 export function generateMergeSort(): TaskData {
-  return buildComparisonTask(
-    { type: 'dsal_sort_merge', algoName: 'Mergesort', operation: 'Merge-Operation', intermediate: true },
+  return buildStepwiseTask(
+    { type: 'dsal_sort_merge', algoName: 'Mergesort', operation: 'Merge' },
     mergeSortSteps,
   );
 }
 
 export function generateHeapSort(): TaskData {
-  return buildComparisonTask(
-    { type: 'dsal_sort_heap', algoName: 'Heapsort', operation: 'Swap-Operation', intermediate: true },
+  return buildStepwiseTask(
+    { type: 'dsal_sort_heap', algoName: 'Heapsort', operation: 'Swap' },
     heapSortSteps,
   );
 }
@@ -346,25 +324,52 @@ export function generateHeapSort(): TaskData {
 export function generateCountingSort(): TaskData {
   // Official range is 0..9.
   const initial = randomArray(0, 9);
-  return buildResultTask(
-    { type: 'dsal_sort_counting', algoName: 'Countingsort', operation: '', intermediate: false },
-    initial,
-    0,
-    9,
-    countingSortResult,
-  );
+  const { counts, sorted } = countingSortSteps(initial, 0, 9);
+  return {
+    type: 'dsal_sort_counting',
+    mathQuery: `\\text{Array: } ${arrStr(initial)}`,
+    answer: '',
+    prompt: 'Sortieren Sie das Array mit Countingsort (Werte 0…9). Geben Sie zuerst das Zähl-Array und dann das sortierte Ergebnis an.',
+    inputHint: 'Gib das Array in der Form [a, b, c, …] an.',
+    steps: [
+      { instruction: 'Zähle, wie oft jeder Wert (0…9) vorkommt', kind: 'array', array: counts },
+      { instruction: 'Gib das sortierte Ergebnisarray an', kind: 'array', array: sorted },
+    ],
+    explanation: [
+      `Startarray: ${arrStr(initial)} (Werte im Bereich 0…9).`,
+      `Zähl-Array: ${arrStr(counts)}.`,
+      `Angewandter Algorithmus: Countingsort.`,
+      `Das sortierte Ergebnisarray lautet: ${arrStr(sorted)}.`,
+    ],
+  };
 }
 
 export function generateBucketSort(): TaskData {
   // Official: values 0..99, 10 buckets.
   const initial = randomArray(0, 99, 6, 9);
   const result = bucketSortResult(initial, 0, 99, 10);
+  // Build per-bucket contents for intermediate steps.
+  const buckets = 10;
+  const span = (99 - 0 + 1) / buckets;
+  const ranges: number[][] = Array.from({ length: buckets }, () => []);
+  for (const v of initial) {
+    const b = Math.min(Math.floor((v - 0) / span), buckets - 1);
+    ranges[b].push(v);
+  }
+  const steps: TaskData['steps'] = [];
+  ranges.forEach((bucket, i) => {
+    if (bucket.length > 0) {
+      steps.push({ instruction: `Inhalt von Bucket ${i} (Werte ${Math.floor(i * span)}…${Math.floor((i + 1) * span) - 1})`, kind: 'array', array: [...bucket].sort((x, y) => x - y) });
+    }
+  });
+  steps.push({ instruction: 'Gib das sortierte Ergebnisarray an', kind: 'array', array: result });
   return {
     type: 'dsal_sort_bucket',
     mathQuery: `\\text{Array: } ${arrStr(initial)}`,
-    answer: arrStr(result),
-    prompt: `Sortieren Sie das Array mit Bucketsort (10 Buckets, Werte 0…99). Geben Sie das sortierte Ergebnisarray an.`,
+    answer: '',
+    prompt: 'Sortieren Sie das Array mit Bucketsort (10 Buckets, Werte 0…99). Geben Sie die Bucket-Inhalte und dann das sortierte Ergebnis an.',
     inputHint: 'Gib das Array in der Form [a, b, c, …] an.',
+    steps,
     explanation: [
       `Startarray: ${arrStr(initial)} (Werte im Bereich 0…99, 10 Buckets).`,
       `Angewandter Algorithmus: Bucketsort.`,

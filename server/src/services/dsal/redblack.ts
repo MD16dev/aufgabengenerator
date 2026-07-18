@@ -1,11 +1,12 @@
-import { TaskData, TreeNodeJSON, ChoiceOption } from '../math/types';
-import { buildDistinctChoices, shuffle } from './choices';
+import { TaskData, TreeNodeJSON } from '../math/types';
 
 /**
  * Red-Black tree insertion, translated from the official exercisegenerator
  * (RedBlackTreeNode.balanceWithSteps / addCase1-3). We implement the standard
  * CLRS insertion fixup: new node is RED, then resolve red-red conflicts by
  * recoloring and rotating. The BST insertion rule is the same (<= goes right).
+ * Produces a stepwise flashcard: one result tree per insert operation, with a
+ * recolor/rotation annotation.
  */
 
 type Color = 'red' | 'black';
@@ -25,39 +26,52 @@ function getRandomInt(min: number, max: number): number {
   return Math.floor(Math.random() * (max - min + 1)) + min;
 }
 
-/** BST insert (node.value <= value -> right), new node red. Returns root (may need fixup). */
+/** Immutable BST insert (node.value <= value -> right), new node red. */
 function bstInsert(root: RBNode | null, value: number): RBNode {
   if (!root) return mk(value, 'black'); // first node becomes root (black)
-  let cur = root;
-  while (true) {
-    if (cur.value <= value) {
-      if (cur.right === null) { cur.right = mk(value); break; }
-      cur = cur.right;
-    } else {
-      if (cur.left === null) { cur.left = mk(value); break; }
-      cur = cur.left;
-    }
+  if (root.value <= value) {
+    return { value: root.value, color: root.color, left: root.left, right: bstInsert(root.right, value) };
   }
-  return root;
+  return { value: root.value, color: root.color, left: bstInsert(root.left, value), right: root.right };
 }
 
-/** Resolve red-red conflicts (CLRS fixup). Mutates the tree in place. */
-function fixup(root: RBNode, value: number): RBNode {
-  // Find the newly inserted node and its parent; do standard fixup.
-  let z: RBNode = root;
-  while (z && z.value !== value) {
-    z = value <= z.value ? (z.right as RBNode) : (z.left as RBNode);
+/** Immutable left rotation around node `value`. */
+function rotateLeft(root: RBNode, value: number): RBNode {
+  if (root.value === value) {
+    const r = root.right!;
+    return { value: r.value, color: r.color, left: { value: root.value, color: root.color, left: root.left, right: r.left }, right: r.right };
   }
-  // Iterative fixup using parent/grandparent pointers reconstructed via search.
-  // We re-walk from root each iteration (simple, correct for small trees).
-  let changed = true;
-  while (changed) {
-    changed = false;
+  if (root.value <= value) {
+    return { value: root.value, color: root.color, left: root.left, right: rotateLeft(root.right!, value) };
+  }
+  return { value: root.value, color: root.color, left: rotateLeft(root.left!, value), right: root.right };
+}
+
+/** Immutable right rotation around node `value`. */
+function rotateRight(root: RBNode, value: number): RBNode {
+  if (root.value === value) {
+    const l = root.left!;
+    return { value: l.value, color: l.color, left: l.left, right: { value: root.value, color: root.color, left: l.right, right: root.right } };
+  }
+  if (root.value <= value) {
+    return { value: root.value, color: root.color, left: root.left, right: rotateRight(root.right!, value) };
+  }
+  return { value: root.value, color: root.color, left: rotateRight(root.left!, value), right: root.right };
+}
+
+/** Immutable CLRS fixup. Returns the fixed tree and an annotation string. */
+function fixup(root: RBNode, value: number): { root: RBNode; annotation: string } {
+  let annotation = 'Keine Rotation nötig (kein rot-rot-Konflikt).';
+  // Walk to z, then fix up iteratively using path reconstruction.
+  let zVal = value;
+  let tree = root;
+  let guard = 0;
+  while (guard++ < 50) {
+    // reconstruct path to zVal
     const stack: RBNode[] = [];
-    let n: RBNode | null = root;
-    while (n) { stack.push(n); n = value <= n.value ? n.right : n.left; }
-    // stack path to z; find parent & grandparent
-    const idx = stack.findIndex((s) => s.value === value);
+    let n: RBNode | null = tree;
+    while (n) { stack.push(n); n = zVal <= n.value ? n.right : n.left; }
+    const idx = stack.findIndex((s) => s.value === zVal);
     if (idx < 1) break; // z is root
     const parent = stack[idx - 1];
     if (parent.color === 'black') break;
@@ -66,78 +80,51 @@ function fixup(root: RBNode, value: number): RBNode {
     const pIsLeft = grand.left === parent;
     const uncle = pIsLeft ? grand.right : grand.left;
     if (uncle && uncle.color === 'red') {
-      parent.color = 'black';
-      uncle.color = 'black';
-      grand.color = 'red';
-      changed = true;
-      // continue fixup from grandparent
-      value = grand.value;
-    } else {
-      // rotation case
-      let newSub: RBNode;
-      if (pIsLeft) {
-        if (parent.right === z) { rotateLeftInPlace(root, parent.value); z = parent; }
-        newSub = rotateRightInPlace(root, grand.value);
-      } else {
-        if (parent.left === z) { rotateRightInPlace(root, parent.value); z = parent; }
-        newSub = rotateLeftInPlace(root, grand.value);
-      }
       // recolor
-      newSub.color = 'black';
-      (newSub.left as RBNode).color = 'red';
-      (newSub.right as RBNode).color = 'red';
-      changed = true;
-      break;
+      tree = recolor(tree, parent.value, 'black');
+      tree = recolor(tree, uncle.value, 'black');
+      tree = recolor(tree, grand.value, 'red');
+      annotation = `Umfärbung: ${parent.value} und ${uncle.value} schwarz, ${grand.value} rot.`;
+      zVal = grand.value;
+      continue;
     }
+    // rotation case
+    if (pIsLeft) {
+      if (parent.right && parent.right.value === zVal) {
+        tree = rotateLeft(tree, parent.value);
+        annotation = `Linksrotation bei ${parent.value}, dann Rechtsrotation bei ${grand.value}.`;
+      } else {
+        annotation = `Rechtsrotation bei ${grand.value}.`;
+      }
+      tree = rotateRight(tree, grand.value);
+    } else {
+      if (parent.left && parent.left.value === zVal) {
+        tree = rotateRight(tree, parent.value);
+        annotation = `Rechtsrotation bei ${parent.value}, dann Linksrotation bei ${grand.value}.`;
+      } else {
+        annotation = `Linksrotation bei ${grand.value}.`;
+      }
+      tree = rotateLeft(tree, grand.value);
+    }
+    // recolor new subtree root black, children red
+    const newRootVal = pIsLeft ? grand.value : grand.value;
+    tree = recolor(tree, newRootVal, 'black');
+    break;
   }
   // root must be black
-  root.color = 'black';
-  return root;
+  tree = recolor(tree, tree.value, 'black');
+  return { root: tree, annotation };
 }
 
-/** Rotate left around node with given value; returns new subtree root. Mutates tree. */
-function rotateLeftInPlace(root: RBNode, value: number): RBNode {
-  let parentOfTarget: RBNode | null = null;
-  let target: RBNode = root;
-  let prev: RBNode | null = null;
-  while (target && target.value !== value) {
-    prev = target;
-    parentOfTarget = target;
-    target = value <= target.value ? (target.right as RBNode) : (target.left as RBNode);
-  }
-  if (!target || !target.right) return root;
-  const newRoot = target.right;
-  target.right = newRoot.left;
-  newRoot.left = target;
-  if (prev === null) return newRoot;
-  if (prev.left === target) prev.left = newRoot; else prev.right = newRoot;
-  return root;
-}
-
-function rotateRightInPlace(root: RBNode, value: number): RBNode {
-  let prev: RBNode | null = null;
-  let target: RBNode = root;
-  while (target && target.value !== value) {
-    prev = target;
-    target = value <= target.value ? (target.right as RBNode) : (target.left as RBNode);
-  }
-  if (!target || !target.left) return root;
-  const newRoot = target.left;
-  target.left = newRoot.right;
-  newRoot.right = target;
-  if (prev === null) return newRoot;
-  if (prev.left === target) prev.left = newRoot; else prev.right = newRoot;
-  return root;
+function recolor(root: RBNode, value: number, color: Color): RBNode {
+  if (root.value === value) return { value: root.value, color, left: root.left, right: root.right };
+  if (root.value <= value) return { value: root.value, color: root.color, left: root.left, right: recolor(root.right!, value, color) };
+  return { value: root.value, color: root.color, left: recolor(root.left!, value, color), right: root.right };
 }
 
 function toJSON(n: RBNode | null): TreeNodeJSON | null {
   if (!n) return null;
   return { value: n.value, color: n.color, left: toJSON(n.left), right: toJSON(n.right) };
-}
-
-function cloneJSON(n: TreeNodeJSON | null): TreeNodeJSON | null {
-  if (!n) return null;
-  return { value: n.value, color: n.color, left: cloneJSON(n.left ?? null), right: cloneJSON(n.right ?? null) };
 }
 
 function buildRandomRB(size: number): RBNode | null {
@@ -146,83 +133,53 @@ function buildRandomRB(size: number): RBNode | null {
   let root: RBNode | null = null;
   for (const v of values) {
     root = bstInsert(root, v);
-    root = fixup(root, v);
+    root = fixup(root, v).root;
   }
   return root;
-}
-
-/** Distractor: all-red (no recolor). */
-function allRed(start: TreeNodeJSON | null): TreeNodeJSON | null {
-  const t = cloneJSON(start);
-  const paint = (n: TreeNodeJSON | null): void => { if (!n) return; n.color = 'red'; paint(n.left ?? null); paint(n.right ?? null); };
-  if (t) paint(t);
-  return t;
-}
-
-/** Distractor: insert without fixup (plain BST placement, colors from start). */
-function plainInsert(start: TreeNodeJSON | null, value: number): TreeNodeJSON | null {
-  const t = cloneJSON(start);
-  const place = (n: TreeNodeJSON | null): TreeNodeJSON => {
-    if (!n) return { value, color: 'red', left: null, right: null };
-    if ((n.value as number) <= value) n.right = place(n.right ?? null);
-    else n.left = place(n.left ?? null);
-    return n;
-  };
-  return t ? place(t) : null;
-}
-
-/** Distractor: swap one leaf color. */
-function flipOneColor(start: TreeNodeJSON | null): TreeNodeJSON | null {
-  const t = cloneJSON(start);
-  const flip = (n: TreeNodeJSON | null): boolean => {
-    if (!n) return false;
-    if (n.left === null && n.right === null) { n.color = n.color === 'red' ? 'black' : 'red'; return true; }
-    return flip(n.left ?? null) || flip(n.right ?? null);
-  };
-  if (t && !flip(t)) t.color = t.color === 'red' ? 'black' : 'red';
-  return t;
-}
-
-/** Fallback distractor: clone correct tree and bump a leaf value. */
-function bumpLeaf(correct: TreeNodeJSON, index: number): TreeNodeJSON | null {
-  const t = cloneJSON(correct);
-  const bump = (n: TreeNodeJSON | null): void => {
-    if (!n) return;
-    if (n.left === null && n.right === null) { n.value = (n.value ?? 0) + 100 + index; return; }
-    if (n.left) bump(n.left); else if (n.right) bump(n.right);
-  };
-  if (t) bump(t);
-  return t;
 }
 
 export function generateRedBlackInsertion(): TaskData {
   const start = buildRandomRB(getRandomInt(3, 5));
   const startJSON = toJSON(start);
-  const insertValue = getRandomInt(1, 99);
-  let result = bstInsert(start, insertValue);
-  result = fixup(result, insertValue);
-  const resultJSON = toJSON(result)!;
 
-  const choices: ChoiceOption[] = buildDistinctChoices(
-    resultJSON,
-    [
-      () => allRed(startJSON),
-      () => plainInsert(startJSON, insertValue),
-      () => flipOneColor(resultJSON),
-    ],
-    (i) => bumpLeaf(resultJSON, i),
-  );
-  shuffle(choices);
+  const numOps = getRandomInt(1, 3);
+  const steps: TaskData['steps'] = [];
+  let current: RBNode | null = start;
+  const usedValues = new Set<number>();
+  const collect = (n: RBNode | null) => {
+    if (!n) return;
+    usedValues.add(n.value);
+    collect(n.left);
+    collect(n.right);
+  };
+  collect(start);
+
+  for (let i = 0; i < numOps; i++) {
+    let insertValue: number;
+    do {
+      insertValue = getRandomInt(1, 99);
+    } while (usedValues.has(insertValue));
+    usedValues.add(insertValue);
+    current = bstInsert(current, insertValue);
+    const r = fixup(current, insertValue);
+    current = r.root;
+    steps.push({
+      instruction: `Füge den Wert ${insertValue} in den Rot-Schwarz-Baum ein.`,
+      kind: 'tree',
+      tree: toJSON(current)!,
+      annotation: r.annotation,
+    });
+  }
 
   return {
     type: 'dsal_rb_insert',
-    mathQuery: `\\text{Füge den Wert } ${insertValue} \\text{ in den Rot-Schwarz-Baum ein.}`,
-    answer: choices.find((c) => c.tree === resultJSON)!.id,
+    mathQuery: `\\text{Führe die Einfüge-Operationen nacheinander aus und gib den Baum nach jeder Operation an.}`,
+    answer: '',
     renderMode: 'tree',
     tree: startJSON ?? undefined,
-    choices,
-    prompt: `Wohin gehört ${insertValue} und wie sieht der Rot-Schwarz-Baum nach Umfärbung/Rotation aus?`,
-    inputHint: 'Wähle den korrekten Rot-Schwarz-Baum (Wurzel ist schwarz).',
+    prompt: `Ausgangs-Rot-Schwarz-Baum (Wurzel ist schwarz).`,
+    inputHint: 'Zeige nach jeder Operation den korrekten Rot-Schwarz-Baum.',
+    steps,
     explanation: [
       `Neuer Knoten wird rot eingefügt (\\leq \\to \\text{rechts}).`,
       `Bei rot-rot-Konflikt: Onkel rot → Umfärbung; sonst Rotation + Umfärbung.`,

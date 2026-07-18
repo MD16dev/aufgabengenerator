@@ -1,4 +1,4 @@
-import { TaskData } from '../math/types';
+import { TaskData, GraphJSON } from '../math/types';
 
 /**
  * Graph algorithm exercise generators, translated from the official
@@ -83,6 +83,22 @@ function adjacency(graph: Graph): Map<string, { to: string; weight: number }[]> 
 function graphToText(graph: Graph): string {
   const lines = graph.edges.map((e) => `${e.from}->${e.to} (${e.weight})`);
   return `Knoten: {${graph.vertices.join(', ')}}. Kanten: ${lines.join(', ')}.`;
+}
+
+/** Convert the internal Graph to a GraphJSON with a circular layout (normalized 0..1). */
+function toGraphJSON(g: Graph): GraphJSON {
+  const n = g.vertices.length;
+  const layout = g.vertices.map((v, i) => ({
+    vertex: v,
+    x: 0.5 + 0.4 * Math.cos((2 * Math.PI * i) / n),
+    y: 0.5 + 0.4 * Math.sin((2 * Math.PI * i) / n),
+  }));
+  return {
+    directed: g.directed,
+    vertices: g.vertices,
+    edges: g.edges.map((e) => ({ from: e.from, to: e.to, weight: e.weight })),
+    layout,
+  };
 }
 
 /* ------------------------------- BFS / DFS ------------------------------- */
@@ -320,9 +336,15 @@ export function generateBFS(): TaskData {
   return {
     type: 'dsal_graph_bfs',
     mathQuery: graphToText(g),
-    answer: order.join(', '),
+    answer: '',
+    graph: toGraphJSON(g),
     prompt: `Führen Sie eine Breitensuche ab Startknoten ${start} aus. Geben Sie die Knoten in der Reihenfolge ihrer Entdeckung an (Kanten alphabetisch).`,
-    inputHint: 'Knoten durch Komma getrennt, z. B. a, b, c.',
+    inputHint: 'Knoten nacheinander eingeben, z. B. a, dann b, …',
+    steps: order.map((v) => ({
+      instruction: `Nächster besuchter Knoten (BFS ab ${start})`,
+      kind: 'text' as const,
+      answer: v,
+    })),
     explanation: [`Besuchsreihenfolge: ${order.join(', ')}.`],
   };
 }
@@ -334,9 +356,15 @@ export function generateDFS(): TaskData {
   return {
     type: 'dsal_graph_dfs',
     mathQuery: graphToText(g),
-    answer: order.join(', '),
+    answer: '',
+    graph: toGraphJSON(g),
     prompt: `Führen Sie eine Tiefensuche ab Startknoten ${start} aus. Geben Sie die Knoten in der Reihenfolge ihrer Entdeckung an (Kanten alphabetisch).`,
-    inputHint: 'Knoten durch Komma getrennt, z. B. a, b, c.',
+    inputHint: 'Knoten nacheinander eingeben, z. B. a, dann b, …',
+    steps: order.map((v) => ({
+      instruction: `Nächster besuchter Knoten (DFS ab ${start})`,
+      kind: 'text' as const,
+      answer: v,
+    })),
     explanation: [`Besuchsreihenfolge: ${order.join(', ')}.`],
   };
 }
@@ -358,9 +386,13 @@ export function generateTopoSort(): TaskData {
   return {
     type: 'dsal_graph_topo',
     mathQuery: graphToText(g),
-    answer: order ? order.join(', ') : 'keine (Zyklus)',
+    answer: '',
+    graph: toGraphJSON(g),
     prompt: 'Geben Sie eine topologische Sortierung des Graphen an (oder "keine (Zyklus)" falls keiner existiert).',
-    inputHint: 'Knoten durch Komma getrennt, z. B. a, b, c.',
+    inputHint: 'Knoten nacheinander eingeben.',
+    steps: order
+      ? order.map((v) => ({ instruction: 'Nächster Knoten der topologischen Sortierung', kind: 'text' as const, answer: v }))
+      : [{ instruction: 'Topologische Sortierung', kind: 'text' as const, answer: 'keine (Zyklus)' }],
     explanation: [order ? `Topologische Ordnung: ${order.join(', ')}.` : 'Der Graph enthält einen Zyklus, daher existiert keine topologische Sortierung.'],
   };
 }
@@ -372,12 +404,15 @@ export function generateDijkstra(): TaskData {
   const targets = g.vertices.filter((v) => v !== start);
   const target = targets[getRandomInt(0, targets.length - 1)];
   const d = dist.get(target)!;
+  const distStr = g.vertices.map((v) => `${v}=${dist.get(v)}`).join(', ');
   return {
     type: 'dsal_graph_dijkstra',
     mathQuery: graphToText(g),
-    answer: String(d),
+    answer: '',
+    graph: toGraphJSON(g),
     prompt: `Führen Sie Dijkstra ab Startknoten ${start} aus. Wie groß ist die kürzeste Distanz zum Knoten ${target}?`,
     inputHint: 'Gib die Distanz als ganze Zahl ein.',
+    steps: [{ instruction: `Kürzeste Distanz von ${start} nach ${target}`, kind: 'text' as const, answer: String(d), annotation: `Distanzen: ${distStr}` }],
     explanation: [`Kürzeste Distanz von ${start} nach ${target}: ${d}.`],
   };
 }
@@ -389,12 +424,15 @@ export function generateBellmanFord(): TaskData {
   const targets = g.vertices.filter((v) => v !== start);
   const target = targets[getRandomInt(0, targets.length - 1)];
   const d = dist.get(target)!;
+  const distStr = g.vertices.map((v) => `${v}=${dist.get(v)}`).join(', ');
   return {
     type: 'dsal_graph_bellmanford',
     mathQuery: graphToText(g),
-    answer: String(d),
+    answer: '',
+    graph: toGraphJSON(g),
     prompt: `Führen Sie Bellman-Ford ab Startknoten ${start} aus. Wie groß ist die kürzeste Distanz zum Knoten ${target}?`,
     inputHint: 'Gib die Distanz als ganze Zahl ein.',
+    steps: [{ instruction: `Kürzeste Distanz von ${start} nach ${target}`, kind: 'text' as const, answer: String(d), annotation: `Distanzen: ${distStr}` }],
     explanation: [`Kürzeste Distanz von ${start} nach ${target}: ${d}.`],
   };
 }
@@ -406,9 +444,15 @@ export function generatePrim(): TaskData {
   return {
     type: 'dsal_graph_prim',
     mathQuery: graphToText(g),
-    answer: edgeSetStr(mst),
-    prompt: `Führen Sie den Algorithmus von Prim ab Startknoten ${start} aus. Geben Sie die Kanten des minimalen Spannbaums an.`,
-    inputHint: 'Kanten durch Komma getrennt, z. B. ab(2), bc(3).',
+    answer: '',
+    graph: toGraphJSON(g),
+    prompt: `Führen Sie den Algorithmus von Prim ab Startknoten ${start} aus. Geben Sie die Kanten des minimalen Spannbaums nacheinander an.`,
+    inputHint: 'Kanten der Reihe nach eingeben, z. B. ab(2).',
+    steps: mst.map((e) => ({
+      instruction: 'Nächste Kante des minimalen Spannbaums',
+      kind: 'text' as const,
+      answer: `${e.from}${e.to}(${e.weight})`,
+    })),
     explanation: [`Minimaler Spannbaum (${mst.length} Kanten): ${edgeSetStr(mst)}.`],
   };
 }
@@ -419,9 +463,15 @@ export function generateKruskal(): TaskData {
   return {
     type: 'dsal_graph_kruskal',
     mathQuery: graphToText(g),
-    answer: edgeSetStr(mst),
-    prompt: 'Führen Sie den Algorithmus von Kruskal aus. Geben Sie die Kanten des minimalen Spannbaums an.',
-    inputHint: 'Kanten durch Komma getrennt, z. B. ab(2), bc(3).',
+    answer: '',
+    graph: toGraphJSON(g),
+    prompt: 'Führen Sie den Algorithmus von Kruskal aus. Geben Sie die Kanten des minimalen Spannbaums nacheinander an.',
+    inputHint: 'Kanten der Reihe nach eingeben, z. B. ab(2).',
+    steps: mst.map((e) => ({
+      instruction: 'Nächste Kante des minimalen Spannbaums',
+      kind: 'text' as const,
+      answer: `${e.from}${e.to}(${e.weight})`,
+    })),
     explanation: [`Minimaler Spannbaum (${mst.length} Kanten): ${edgeSetStr(mst)}.`],
   };
 }
@@ -443,9 +493,10 @@ export function generateUnionFind(): TaskData {
   return {
     type: 'dsal_graph_unionfind',
     mathQuery: `Union-Find mit Elementen {0, …, ${n - 1}}. ${ops}.`,
-    answer: String(rep),
+    answer: '',
     prompt: `Nach Ausführung der Union-Operationen: Was ist der Repräsentant (find) des Elements ${query}?`,
     inputHint: 'Gib die Repräsentanten-Zahl ein.',
+    steps: [{ instruction: `Repräsentant (find) von Element ${query}`, kind: 'text' as const, answer: String(rep) }],
     explanation: [`Repräsentant von ${query} nach den Union-Operationen: ${rep}.`],
   };
 }
@@ -457,9 +508,11 @@ export function generateKosaraju(): TaskData {
   return {
     type: 'dsal_graph_kosaraju',
     mathQuery: graphToText(g),
-    answer: parts,
+    answer: '',
+    graph: toGraphJSON(g),
     prompt: 'Wenden Sie Kosaraju-Sharir an. Geben Sie die Zuordnung Knoten→Repräsentant der starken Zusammenhangskomponenten an.',
     inputHint: 'Format: a→a, b→a, c→c, …',
+    steps: [{ instruction: 'Zuordnung Knoten→Repräsentant (starke Zusammenhangskomponenten)', kind: 'text' as const, answer: parts }],
     explanation: [`Zuordnung: ${parts}.`],
   };
 }
@@ -471,9 +524,11 @@ export function generateFloydWarshall(): TaskData {
   return {
     type: 'dsal_graph_floydwarshall',
     mathQuery: graphToText(g),
-    answer: matrix,
+    answer: '',
+    graph: toGraphJSON(g),
     prompt: 'Führen Sie Floyd-Warshall aus. Geben Sie die finale Distanzmatrix (Zeilen durch " | " getrennt) an.',
     inputHint: 'Format: "0 3 ∞ 2 | 3 0 1 5 | …". Unerreichbar = ∞.',
+    steps: [{ instruction: 'Finale Distanzmatrix (Zeilen durch " | " getrennt, ∞ für unerreichbar)', kind: 'text' as const, answer: matrix }],
     explanation: [`Finale Distanzmatrix: ${matrix}.`],
   };
 }

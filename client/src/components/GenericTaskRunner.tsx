@@ -1,20 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { MathRenderer, LatexTextRenderer } from './MathRenderer';
 import { TreeRenderer } from './TreeRenderer';
+import { StepTaskRunner } from './StepTaskRunner';
 import { CheckCircle2, XCircle, HelpCircle, ArrowRight, RefreshCw, ArrowLeft, Lock } from 'lucide-react';
-
-/** Unified task shape returned by the backend (matches server/src/services/math/types.ts). */
-interface TaskData {
-  type: string;
-  mathQuery: string;
-  answer: string;
-  explanation?: string[];
-  prompt?: string;
-  inputHint?: string;
-  renderMode?: 'text' | 'tree';
-  tree?: import('../types').TreeNodeJSON;
-  choices?: import('../types').ChoiceOption[];
-}
+import type { TaskData } from '../types';
 
 interface GenericTaskRunnerProps {
   taskType: string;
@@ -183,6 +172,15 @@ export const GenericTaskRunner: React.FC<GenericTaskRunnerProps> = ({
             </button>
           </div>
         ) : task ? (
+          task.steps && task.steps.length > 0 ? (
+            <StepTaskRunner
+              task={task}
+              user={user}
+              onSolved={onSolved}
+              onBackToSelector={onBackToSelector}
+              onSkip={fetchTask}
+            />
+          ) : (
           <div>
             <div className="flex justify-between items-center mb-6">
               <span className="text-xs font-bold uppercase tracking-wider px-3 py-1 bg-purple-500/10 text-purple-600 dark:text-purple-400 rounded-full border border-purple-500/25">
@@ -371,6 +369,7 @@ export const GenericTaskRunner: React.FC<GenericTaskRunnerProps> = ({
               </div>
             )}
           </div>
+          )
         ) : null}
       </div>
     </div>

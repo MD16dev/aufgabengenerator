@@ -1,10 +1,11 @@
-import { TaskData, TreeNodeJSON, ChoiceOption } from '../math/types';
-import { buildDistinctChoices, shuffle } from './choices';
+import { TaskData, TreeNodeJSON } from '../math/types';
 
 /**
  * AVL tree insertion, translated from the official exercisegenerator
  * (AVLTreeNode.balanceWithSteps / balanceLeftToRight / balanceRightToLeft).
  * Insertion uses the same BST rule as the official BST (<= goes right).
+ * Produces a stepwise flashcard: one result tree per insert operation, with a
+ * rotation annotation when rebalancing occurred.
  */
 
 interface AVLNode {
@@ -25,54 +26,69 @@ function update(n: AVLNode): void {
 function rotateRight(y: AVLNode): AVLNode {
   const x = y.left!;
   const t2 = x.right;
-  x.right = y;
-  y.left = t2;
-  update(y);
-  update(x);
-  return x;
+  const newY: AVLNode = { value: y.value, left: t2, right: y.right, height: 0 };
+  update(newY);
+  const newX: AVLNode = { value: x.value, left: x.left, right: newY, height: 0 };
+  update(newX);
+  return newX;
 }
 
 function rotateLeft(x: AVLNode): AVLNode {
   const y = x.right!;
   const t2 = y.left;
-  y.left = x;
-  x.right = t2;
-  update(x);
-  update(y);
-  return y;
+  const newX: AVLNode = { value: x.value, left: x.left, right: t2, height: 0 };
+  update(newX);
+  const newY: AVLNode = { value: y.value, left: newX, right: y.right, height: 0 };
+  update(newY);
+  return newY;
 }
 
-function insert(node: AVLNode | null, value: number): AVLNode {
-  if (!node) return { value, left: null, right: null, height: 1 };
-  if (node.value <= value) node.right = insert(node.right, value);
-  else node.left = insert(node.left, value);
-  update(node);
-  const balance = h(node.left) - h(node.right);
+/** Immutable insert. Returns the new tree and a rotation annotation (or null). */
+function insert(node: AVLNode | null, value: number): { node: AVLNode; rotation: string | null } {
+  if (!node) return { node: { value, left: null, right: null, height: 1 }, rotation: null };
+  let rotation: string | null = null;
+  let newNode: AVLNode;
+  if (node.value <= value) {
+    const r = insert(node.right, value);
+    newNode = { value: node.value, left: node.left, right: r.node, height: 0 };
+    if (r.rotation) rotation = r.rotation;
+  } else {
+    const r = insert(node.left, value);
+    newNode = { value: node.value, left: r.node, right: node.right, height: 0 };
+    if (r.rotation) rotation = r.rotation;
+  }
+  update(newNode);
+  const balance = h(newNode.left) - h(newNode.right);
   // Left heavy
   if (balance > 1) {
-    const left = node.left!;
-    if (h(left.left) >= h(left.right)) return rotateRight(node);
-    node.left = rotateLeft(left);
-    return rotateRight(node);
+    const left = newNode.left!;
+    if (h(left.left) >= h(left.right)) {
+      rotation = `Rechtsrotation bei ${newNode.value}`;
+      return { node: rotateRight(newNode), rotation };
+    }
+    newNode = { value: newNode.value, left: rotateLeft(left), right: newNode.right, height: 0 };
+    update(newNode);
+    rotation = `Links-Rechts-Drehung bei ${newNode.value}`;
+    return { node: rotateRight(newNode), rotation };
   }
   // Right heavy
   if (balance < -1) {
-    const right = node.right!;
-    if (h(right.right) >= h(right.left)) return rotateLeft(node);
-    node.right = rotateRight(right);
-    return rotateLeft(node);
+    const right = newNode.right!;
+    if (h(right.right) >= h(right.left)) {
+      rotation = `Linksrotation bei ${newNode.value}`;
+      return { node: rotateLeft(newNode), rotation };
+    }
+    newNode = { value: newNode.value, left: newNode.left, right: rotateRight(right), height: 0 };
+    update(newNode);
+    rotation = `Rechts-Links-Drehung bei ${newNode.value}`;
+    return { node: rotateLeft(newNode), rotation };
   }
-  return node;
+  return { node: newNode, rotation };
 }
 
 function toJSON(node: AVLNode | null): TreeNodeJSON | null {
   if (!node) return null;
   return { value: node.value, height: node.height, left: toJSON(node.left), right: toJSON(node.right) };
-}
-
-function cloneJSON(n: TreeNodeJSON | null): TreeNodeJSON | null {
-  if (!n) return null;
-  return { value: n.value, height: n.height, left: cloneJSON(n.left ?? null), right: cloneJSON(n.right ?? null) };
 }
 
 function getRandomInt(min: number, max: number): number {
@@ -83,73 +99,51 @@ function buildRandomAVL(size: number): AVLNode | null {
   const values = new Set<number>();
   while (values.size < size) values.add(getRandomInt(1, 99));
   let root: AVLNode | null = null;
-  for (const v of values) root = insert(root, v);
+  for (const v of values) root = insert(root, v).node;
   return root;
-}
-
-/** Distractor: insert without balancing (plain BST placement, keep heights from start). */
-function plainInsert(start: TreeNodeJSON | null, value: number): TreeNodeJSON | null {
-  const t = cloneJSON(start);
-  const place = (n: TreeNodeJSON | null): TreeNodeJSON => {
-    if (!n) return { value, height: 1, left: null, right: null };
-    if ((n.value as number) <= value) n.right = place(n.right ?? null);
-    else n.left = place(n.left ?? null);
-    return n;
-  };
-  return t ? place(t) : null;
-}
-
-/** Distractor: attach as leaf at wrong parent (no balance). */
-function duplicateLeaf(start: TreeNodeJSON | null, value: number): TreeNodeJSON | null {
-  const t = cloneJSON(start);
-  const attach = (n: TreeNodeJSON | null): boolean => {
-    if (!n) return false;
-    if (value > (n.value as number) && n.right === null) { n.right = { value, height: 1, left: null, right: null }; return true; }
-    if (value <= (n.value as number) && n.left === null) { n.left = { value, height: 1, left: null, right: null }; return true; }
-    return attach(n.left ?? null) || attach(n.right ?? null);
-  };
-  if (t && !attach(t)) t.right = { value, height: 1, left: null, right: null };
-  return t;
-}
-
-/** Fallback distractor: clone correct tree and bump a leaf value. */
-function bumpLeaf(correct: TreeNodeJSON, index: number): TreeNodeJSON | null {
-  const t = cloneJSON(correct);
-  const bump = (n: TreeNodeJSON | null): void => {
-    if (!n) return;
-    if (n.left === null && n.right === null) { n.value = (n.value ?? 0) + 100 + index; return; }
-    if (n.left) bump(n.left); else if (n.right) bump(n.right);
-  };
-  if (t) bump(t);
-  return t;
 }
 
 export function generateAVLInsertion(): TaskData {
   const start = buildRandomAVL(getRandomInt(3, 5));
   const startJSON = toJSON(start);
-  const insertValue = getRandomInt(1, 99);
-  const result = insert(start, insertValue);
-  const resultJSON = toJSON(result)!;
 
-  const choices: ChoiceOption[] = buildDistinctChoices(
-    resultJSON,
-    [
-      () => plainInsert(startJSON, insertValue),
-      () => duplicateLeaf(startJSON, insertValue),
-    ],
-    (i) => bumpLeaf(resultJSON, i),
-  );
-  shuffle(choices);
+  const numOps = getRandomInt(1, 3);
+  const steps: TaskData['steps'] = [];
+  let current: AVLNode | null = start;
+  const usedValues = new Set<number>();
+  const collect = (n: AVLNode | null) => {
+    if (!n) return;
+    usedValues.add(n.value);
+    collect(n.left);
+    collect(n.right);
+  };
+  collect(start);
+
+  for (let i = 0; i < numOps; i++) {
+    let insertValue: number;
+    do {
+      insertValue = getRandomInt(1, 99);
+    } while (usedValues.has(insertValue));
+    usedValues.add(insertValue);
+    const r = insert(current, insertValue);
+    current = r.node;
+    steps.push({
+      instruction: `Füge den Wert ${insertValue} in den AVL-Baum ein.`,
+      kind: 'tree',
+      tree: toJSON(current)!,
+      annotation: r.rotation ? r.rotation : 'Keine Rotation nötig (Baum bleibt balanciert).',
+    });
+  }
 
   return {
     type: 'dsal_avl_insert',
-    mathQuery: `\\text{Füge den Wert } ${insertValue} \\text{ in den AVL-Baum ein und balanciere.}`,
-    answer: choices.find((c) => c.tree === resultJSON)!.id,
+    mathQuery: `\\text{Führe die Einfüge-Operationen nacheinander aus und gib den Baum nach jeder Operation an.}`,
+    answer: '',
     renderMode: 'tree',
     tree: startJSON ?? undefined,
-    choices,
-    prompt: `Wohin gehört ${insertValue} und wie sieht der balancierte AVL-Baum danach aus?`,
-    inputHint: 'Wähle den korrekt balancierten Baum.',
+    prompt: `Ausgangs-AVL-Baum.`,
+    inputHint: 'Zeige nach jeder Operation den balancierten Baum.',
+    steps,
     explanation: [
       `Einfügen wie im BST (\\leq \\to \\text{rechts}), dann Balancefaktor prüfen.`,
       `Bei Ungleichgewicht wird rotiert (einfach oder doppelt).`,

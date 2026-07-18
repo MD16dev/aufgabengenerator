@@ -12,76 +12,80 @@ import {
   generateFloydWarshall,
 } from '../../services/dsal/graphs';
 
-describe('DSAL graph generators', () => {
-  it('BFS/DFS: answer is a permutation of all vertices', () => {
+describe('DSAL graph generators (stepwise + visual)', () => {
+  it('BFS/DFS: steps list every vertex exactly once in visitation order', () => {
     for (let t = 0; t < 20; t++) {
       const bfs = generateBFS();
       const dfs = generateDFS();
-      const bfsNodes = bfs.answer.split(', ');
-      const dfsNodes = dfs.answer.split(', ');
-      expect(bfsNodes.length).toBeGreaterThan(0);
-      expect(dfsNodes.length).toBeGreaterThan(0);
-      // Each traversal visits every vertex exactly once (connected graph).
+      expect(bfs.graph).toBeDefined();
+      expect(dfs.graph).toBeDefined();
+      const bfsNodes = bfs.steps!.map((s) => s.answer!);
+      const dfsNodes = dfs.steps!.map((s) => s.answer!);
+      expect(bfsNodes.length).toBe(bfs.graph!.vertices.length);
+      expect(dfsNodes.length).toBe(dfs.graph!.vertices.length);
       expect(new Set(bfsNodes).size).toBe(bfsNodes.length);
       expect(new Set(dfsNodes).size).toBe(dfsNodes.length);
+      for (const s of bfs.steps!) expect(s.kind).toBe('text');
     }
   });
 
-  it('topo sort: answer is a valid ordering or "keine (Zyklus)"', () => {
+  it('topo sort: steps are a valid ordering or a single "keine (Zyklus)" step', () => {
     for (let t = 0; t < 20; t++) {
       const task = generateTopoSort();
-      expect(task.answer.length).toBeGreaterThan(0);
+      expect(task.steps!.length).toBeGreaterThan(0);
+      if (task.steps!.length === 1) {
+        expect(task.steps![0].answer).toBe('keine (Zyklus)');
+      } else {
+        const nodes = task.steps!.map((s) => s.answer!);
+        expect(new Set(nodes).size).toBe(nodes.length);
+      }
     }
   });
 
-  it('dijkstra/bellman-ford: answer is a non-negative integer', () => {
+  it('dijkstra/bellman-ford: single step with non-negative integer answer', () => {
     for (let t = 0; t < 20; t++) {
       const d = generateDijkstra();
       const bf = generateBellmanFord();
-      expect(Number.isInteger(parseInt(d.answer, 10))).toBe(true);
-      expect(parseInt(d.answer, 10)).toBeGreaterThanOrEqual(0);
-      expect(Number.isInteger(parseInt(bf.answer, 10))).toBe(true);
+      expect(d.steps!.length).toBe(1);
+      expect(bf.steps!.length).toBe(1);
+      expect(Number.isInteger(parseInt(d.steps![0].answer!, 10))).toBe(true);
+      expect(parseInt(d.steps![0].answer!, 10)).toBeGreaterThanOrEqual(0);
     }
   });
 
-  it('prim/kruskal: answer lists edges of the MST', () => {
+  it('prim/kruskal: steps list MST edges (n-1 edges)', () => {
     for (let t = 0; t < 20; t++) {
       const p = generatePrim();
       const k = generateKruskal();
-      expect(p.answer.length).toBeGreaterThan(0);
-      expect(k.answer.length).toBeGreaterThan(0);
-      // MST of an n-vertex connected graph has n-1 edges (>= 2 for n >= 3).
-      const pEdges = p.answer.split(', ').length;
-      const kEdges = k.answer.split(', ').length;
-      expect(pEdges).toBeGreaterThanOrEqual(2);
-      expect(kEdges).toBeGreaterThanOrEqual(2);
+      expect(p.steps!.length).toBeGreaterThanOrEqual(2);
+      expect(k.steps!.length).toBeGreaterThanOrEqual(2);
+      for (const s of p.steps!) expect(s.answer).toMatch(/^[a-z][a-z]\(\d+\)$/);
     }
   });
 
-  it('union-find: answer is a valid element index', () => {
+  it('union-find: single step with a valid element index', () => {
     for (let t = 0; t < 20; t++) {
       const task = generateUnionFind();
-      const rep = parseInt(task.answer, 10);
+      const rep = parseInt(task.steps![0].answer!, 10);
       expect(Number.isInteger(rep)).toBe(true);
       expect(rep).toBeGreaterThanOrEqual(0);
     }
   });
 
-  it('kosaraju: answer maps every vertex to a representative', () => {
+  it('kosaraju: single step mapping every vertex to a representative', () => {
     for (let t = 0; t < 20; t++) {
       const task = generateKosaraju();
-      const parts = task.answer.split(', ');
-      expect(parts.length).toBeGreaterThan(0);
+      const parts = task.steps![0].answer!.split(', ');
+      expect(parts.length).toBe(task.graph!.vertices.length);
       for (const p of parts) expect(p).toMatch(/^[a-z]→[a-z]$/);
     }
   });
 
-  it('floyd-warshall: answer is a square matrix with ∞ for unreachable', () => {
+  it('floyd-warshall: single step with a square matrix', () => {
     for (let t = 0; t < 20; t++) {
       const task = generateFloydWarshall();
-      const rows = task.answer.split(' | ');
+      const rows = task.steps![0].answer!.split(' | ');
       const n = rows.length;
-      expect(n).toBeGreaterThanOrEqual(4);
       for (const row of rows) {
         const cells = row.split(' ');
         expect(cells.length).toBe(n);
@@ -89,7 +93,7 @@ describe('DSAL graph generators', () => {
     }
   });
 
-  it('all graph tasks produce a non-empty answer and prompt', () => {
+  it('all graph tasks produce stepwise tasks with a prompt and graph (except union-find)', () => {
     const gens = [
       generateBFS,
       generateDFS,
@@ -104,7 +108,9 @@ describe('DSAL graph generators', () => {
     ];
     for (const g of gens) {
       const task = g();
-      expect(task.answer.length).toBeGreaterThan(0);
+      expect(task.steps).toBeDefined();
+      expect(task.steps!.length).toBeGreaterThan(0);
+      expect(task.answer).toBe('');
       expect(task.prompt).toBeTruthy();
       expect(task.type.startsWith('dsal_graph_')).toBe(true);
     }

@@ -39,3 +39,37 @@ export interface ChoiceOption {
   tree?: TreeNodeJSON;
   caption?: string;
 }
+
+export interface TaskStep {
+  instruction: string;
+  kind: 'tree' | 'array' | 'text' | 'graph';
+  tree?: TreeNodeJSON;
+  array?: number[];
+  answer?: string;
+  annotation?: string;
+}
+
+export interface GraphJSON {
+  directed: boolean;
+  vertices: string[];
+  edges: { from: string; to: string; weight?: number }[];
+  layout?: { vertex: string; x: number; y: number }[];
+}
+
+/**
+ * Unified task data shape returned by the backend (mirrors
+ * server/src/services/math/types.ts). The frontend only needs these fields.
+ */
+export interface TaskData {
+  type: string;
+  mathQuery: string;
+  answer: string;
+  explanation?: string[];
+  prompt?: string;
+  inputHint?: string;
+  renderMode?: 'text' | 'tree';
+  tree?: TreeNodeJSON;
+  choices?: ChoiceOption[];
+  steps?: TaskStep[];
+  graph?: GraphJSON;
+}

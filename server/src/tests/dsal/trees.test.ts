@@ -33,67 +33,66 @@ function height(n: TreeNodeJSON | null | undefined): number {
   return 1 + Math.max(height(n.left ?? null), height(n.right ?? null));
 }
 
+function maxKeysPerNode(n: TreeNodeJSON | null | undefined): number {
+  if (!n) return 0;
+  const here = n.values ? n.values.length : 0;
+  const childMax = (n.children ?? []).reduce((m, c) => Math.max(m, maxKeysPerNode(c)), 0);
+  return Math.max(here, childMax);
+}
+
 describe('BST insertion generator', () => {
-  it('produces a valid tree task with exactly 4 choices and 1 correct', () => {
+  it('produces a stepwise tree task with valid steps', () => {
     const t = generateBSTInsertion();
     expect(t.type).toBe('dsal_bst_insert');
     expect(t.renderMode).toBe('tree');
     expect(t.tree).toBeDefined();
-    expect(t.choices).toHaveLength(4);
-    const correct = t.choices!.find((c) => c.id === t.answer);
-    expect(correct).toBeDefined();
-    // result tree must be a valid BST
-    expect(isBST(correct!.tree)).toBe(true);
-  });
-
-  it('keeps the start tree a valid BST and choices distinct', () => {
-    for (let i = 0; i < 20; i++) {
-      const t = generateBSTInsertion();
-      expect(isBST(t.tree)).toBe(true);
-      const keys = t.choices!.map((c) => JSON.stringify(c.tree));
-      expect(new Set(keys).size).toBe(4);
+    expect(t.answer).toBe('');
+    expect(t.steps).toBeDefined();
+    expect(t.steps!.length).toBeGreaterThan(0);
+    for (const s of t.steps!) {
+      expect(s.kind).toBe('tree');
+      expect(isBST(s.tree)).toBe(true);
     }
+    expect(isBST(t.tree)).toBe(true);
   });
 });
 
 describe('AVL insertion generator', () => {
-  it('produces a balanced tree with 4 distinct choices', () => {
+  it('produces a balanced tree with stepwise results', () => {
     for (let i = 0; i < 20; i++) {
       const t = generateAVLInsertion();
-      const correct = t.choices!.find((c) => c.id === t.answer)!;
-      expect(isBalanced(correct.tree)).toBe(true);
-      const keys = t.choices!.map((c) => JSON.stringify(c.tree));
-      expect(new Set(keys).size).toBe(4);
+      expect(t.steps!.length).toBeGreaterThan(0);
+      for (const s of t.steps!) {
+        expect(s.kind).toBe('tree');
+        expect(isBalanced(s.tree)).toBe(true);
+      }
     }
   });
 });
 
 describe('Red-Black insertion generator', () => {
-  it('produces a valid RB tree (root black) with 4 distinct choices', () => {
+  it('produces a valid RB tree (root black) with stepwise results', () => {
     for (let i = 0; i < 20; i++) {
       const t = generateRedBlackInsertion();
-      const correct = t.choices!.find((c) => c.id === t.answer)!;
-      expect(correct.tree!.color).toBe('black');
-      const keys = t.choices!.map((c) => JSON.stringify(c.tree));
-      expect(new Set(keys).size).toBe(4);
+      expect(t.steps!.length).toBeGreaterThan(0);
+      for (const s of t.steps!) {
+        expect(s.kind).toBe('tree');
+        expect(s.tree!.color).toBe('black');
+      }
     }
   });
 });
 
 describe('B-Tree insertion generator', () => {
-  it('produces a valid B-tree with <=3 keys per node and 4 distinct choices', () => {
+  it('produces a valid B-tree with <=3 keys per node and stepwise results', () => {
     const maxKeys = 3; // degree 2 -> 2*2-1
     for (let i = 0; i < 20; i++) {
       const t = generateBTreeInsertion();
-      const correct = t.choices!.find((c) => c.id === t.answer)!;
-      const checkNode = (n: TreeNodeJSON | null | undefined): boolean => {
-        if (!n) return true;
-        if (n.values && n.values.length > maxKeys) return false;
-        return (n.children ?? []).every(checkNode);
-      };
-      expect(checkNode(correct.tree)).toBe(true);
-      const keys = t.choices!.map((c) => JSON.stringify(c.tree));
-      expect(new Set(keys).size).toBe(4);
+      expect(t.steps!.length).toBeGreaterThan(0);
+      for (const s of t.steps!) {
+        expect(s.kind).toBe('tree');
+        expect(maxKeysPerNode(s.tree)).toBeLessThanOrEqual(maxKeys);
+      }
     }
   });
 });

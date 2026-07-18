@@ -38,93 +38,73 @@ function initialFromTask(task: { mathQuery: string }): number[] {
   return parseArr(m[0]);
 }
 
-describe('DSAL sorting generators', () => {
-  it('bubble sort: answer is a permutation of the input', () => {
-    for (let t = 0; t < 20; t++) {
-      const task = generateBubbleSort();
-      expect(task.type).toBe('dsal_sort_bubble');
-      const ans = parseArr(task.answer);
-      expect(ans.length).toBeGreaterThan(0);
-      expect(sameMultiset(ans, initialFromTask(task))).toBe(true);
+const comparisonGens = [
+  generateBubbleSort,
+  generateInsertionSort,
+  generateSelectionSort,
+  generateQuickSort,
+  generateMergeSort,
+  generateHeapSort,
+];
+
+describe('DSAL sorting generators (stepwise)', () => {
+  it('comparison sorts: every step is a permutation of the input and the last step is sorted', () => {
+    for (const g of comparisonGens) {
+      for (let t = 0; t < 20; t++) {
+        const task = g();
+        const initial = initialFromTask(task);
+        expect(task.steps).toBeDefined();
+        expect(task.steps!.length).toBeGreaterThan(0);
+        expect(task.answer).toBe('');
+        for (const s of task.steps!) {
+          expect(s.kind).toBe('array');
+          expect(sameMultiset(s.array!, initial)).toBe(true);
+        }
+        const last = task.steps![task.steps!.length - 1].array!;
+        expect(isSorted(last)).toBe(true);
+      }
     }
   });
 
-  it('insertion sort: answer is a permutation of the input', () => {
-    for (let t = 0; t < 20; t++) {
-      const task = generateInsertionSort();
-      expect(sameMultiset(parseArr(task.answer), initialFromTask(task))).toBe(true);
-    }
-  });
-
-  it('selection sort: answer is a permutation of the input', () => {
-    for (let t = 0; t < 20; t++) {
-      const task = generateSelectionSort();
-      expect(sameMultiset(parseArr(task.answer), initialFromTask(task))).toBe(true);
-    }
-  });
-
-  it('quick sort: answer is a permutation of the input', () => {
-    for (let t = 0; t < 20; t++) {
-      const task = generateQuickSort();
-      expect(sameMultiset(parseArr(task.answer), initialFromTask(task))).toBe(true);
-    }
-  });
-
-  it('merge sort: answer is a permutation of the input', () => {
-    for (let t = 0; t < 20; t++) {
-      const task = generateMergeSort();
-      expect(sameMultiset(parseArr(task.answer), initialFromTask(task))).toBe(true);
-    }
-  });
-
-  it('heap sort: answer is a permutation of the input', () => {
-    for (let t = 0; t < 20; t++) {
-      const task = generateHeapSort();
-      expect(sameMultiset(parseArr(task.answer), initialFromTask(task))).toBe(true);
-    }
-  });
-
-  it('counting sort: answer is the fully sorted array (values 0..9)', () => {
+  it('counting sort: first step is the counts array, last step is the sorted array (values 0..9)', () => {
     for (let t = 0; t < 20; t++) {
       const task = generateCountingSort();
-      const ans = parseArr(task.answer);
-      expect(isSorted(ans)).toBe(true);
-      expect(sameMultiset(ans, initialFromTask(task))).toBe(true);
-      for (const v of ans) {
+      const initial = initialFromTask(task);
+      expect(task.steps!.length).toBe(2);
+      const counts = task.steps![0].array!;
+      expect(counts.length).toBe(10);
+      expect(counts.reduce((a, b) => a + b, 0)).toBe(initial.length);
+      const sorted = task.steps![1].array!;
+      expect(isSorted(sorted)).toBe(true);
+      expect(sameMultiset(sorted, initial)).toBe(true);
+      for (const v of sorted) {
         expect(v).toBeGreaterThanOrEqual(0);
         expect(v).toBeLessThanOrEqual(9);
       }
     }
   });
 
-  it('bucket sort: answer is the fully sorted array (values 0..99)', () => {
+  it('bucket sort: last step is the sorted array (values 0..99)', () => {
     for (let t = 0; t < 20; t++) {
       const task = generateBucketSort();
-      const ans = parseArr(task.answer);
-      expect(isSorted(ans)).toBe(true);
-      expect(sameMultiset(ans, initialFromTask(task))).toBe(true);
-      for (const v of ans) {
+      const initial = initialFromTask(task);
+      expect(task.steps!.length).toBeGreaterThan(0);
+      const sorted = task.steps![task.steps!.length - 1].array!;
+      expect(isSorted(sorted)).toBe(true);
+      expect(sameMultiset(sorted, initial)).toBe(true);
+      for (const v of sorted) {
         expect(v).toBeGreaterThanOrEqual(0);
         expect(v).toBeLessThanOrEqual(99);
       }
     }
   });
 
-  it('all sorting tasks produce a bracketed array answer', () => {
-    const gens = [
-      generateBubbleSort,
-      generateInsertionSort,
-      generateSelectionSort,
-      generateQuickSort,
-      generateMergeSort,
-      generateHeapSort,
-      generateCountingSort,
-      generateBucketSort,
-    ];
+  it('all sorting tasks produce stepwise tasks with a prompt', () => {
+    const gens = [...comparisonGens, generateCountingSort, generateBucketSort];
     for (const g of gens) {
       const task = g();
-      expect(task.answer.startsWith('[')).toBe(true);
-      expect(task.answer.endsWith(']')).toBe(true);
+      expect(task.steps).toBeDefined();
+      expect(task.steps!.length).toBeGreaterThan(0);
       expect(task.prompt).toBeTruthy();
     }
   });

@@ -34,6 +34,58 @@ export interface TaskData {
    * instead of a free-text input and compares the chosen option id with `answer`.
    */
   choices?: ChoiceOption[];
+
+  /**
+   * Stepwise / flashcard mode. When present, the GenericTaskRunner switches to
+   * the StepTaskRunner: it shows the initial state and asks the user to produce
+   * each intermediate step in order. Each step is checked immediately; only when
+   * all steps are correct is the task solved. This mirrors the RWTH DSAL
+   * reference generator (e.g. "geben Sie die entstehenden Bäume nach jeder
+   * Operation an").
+   */
+  steps?: TaskStep[];
+  /**
+   * Optional visual graph (vertices + edges) shown for graph-algorithm tasks.
+   * Rendered by the SVG GraphRenderer on the frontend.
+   */
+  graph?: GraphJSON;
+}
+
+/**
+ * A single step in a stepwise task. The `kind` tells the frontend how to
+ * render the expected answer and what the user must enter:
+ *  - "tree":   user must reproduce the tree after this step (compared as a tree).
+ *  - "array":  user must type the array after this step (e.g. sorting).
+ *  - "text":   user must type a free-text answer (e.g. visit order, distance).
+ *  - "graph":  (reserved) user reproduces a graph state.
+ */
+export interface TaskStep {
+  /** Short instruction shown above the input, e.g. "80 einfügen". */
+  instruction: string;
+  kind: 'tree' | 'array' | 'text' | 'graph';
+  /** Expected tree for kind === "tree". */
+  tree?: TreeNodeJSON;
+  /** Expected array for kind === "array" (canonical [a, b, c]). */
+  array?: number[];
+  /** Expected text answer for kind === "text" (normalized before compare). */
+  answer?: string;
+  /** Optional annotation shown in the solution, e.g. "rotiere 27 nach rechts". */
+  annotation?: string;
+}
+
+/** A simple undirected/directed graph for JSON serialization + rendering. */
+export interface GraphJSON {
+  directed: boolean;
+  /** Vertex labels, e.g. ["a","b","c"]. */
+  vertices: string[];
+  /** Edges with optional weight. */
+  edges: { from: string; to: string; weight?: number }[];
+  /**
+   * Optional precomputed layout (normalized 0..1 coordinates) so the renderer
+   * does not have to run a force layout. If absent, the renderer falls back to
+   * a circular layout.
+   */
+  layout?: { vertex: string; x: number; y: number }[];
 }
 
 /**
