@@ -206,6 +206,66 @@ export const ModuleSelector: React.FC<ModuleSelectorProps> = ({ activeModule, on
           isActive: true
         },
         {
+          id: 'dsal_graph_bfs',
+          name: 'Breitensuche (BFS)',
+          description: 'Gib die Knoten in der Reihenfolge ihrer Entdeckung bei der Breitensuche an.',
+          isActive: true
+        },
+        {
+          id: 'dsal_graph_dfs',
+          name: 'Tiefensuche (DFS)',
+          description: 'Gib die Knoten in der Reihenfolge ihrer Entdeckung bei der Tiefensuche an.',
+          isActive: true
+        },
+        {
+          id: 'dsal_graph_topo',
+          name: 'Topologische Sortierung',
+          description: 'Gib eine topologische Sortierung eines gerichteten azyklischen Graphen an.',
+          isActive: true
+        },
+        {
+          id: 'dsal_graph_dijkstra',
+          name: 'Dijkstra',
+          description: 'Berechne die kürzeste Distanz zu einem Zielknoten mit Dijkstra.',
+          isActive: true
+        },
+        {
+          id: 'dsal_graph_bellmanford',
+          name: 'Bellman-Ford',
+          description: 'Berechne die kürzeste Distanz zu einem Zielknoten mit Bellman-Ford.',
+          isActive: true
+        },
+        {
+          id: 'dsal_graph_prim',
+          name: 'Prim (Minimalbaum)',
+          description: 'Gib die Kanten des minimalen Spannbaums nach Prim an.',
+          isActive: true
+        },
+        {
+          id: 'dsal_graph_kruskal',
+          name: 'Kruskal (Minimalbaum)',
+          description: 'Gib die Kanten des minimalen Spannbaums nach Kruskal an.',
+          isActive: true
+        },
+        {
+          id: 'dsal_graph_unionfind',
+          name: 'Union-Find',
+          description: 'Bestimme den Repräsentanten eines Elements nach Union-Operationen.',
+          isActive: true
+        },
+        {
+          id: 'dsal_graph_kosaraju',
+          name: 'Kosaraju-Sharir',
+          description: 'Bestimme die starken Zusammenhangskomponenten mit Kosaraju-Sharir.',
+          isActive: true
+        },
+        {
+          id: 'dsal_graph_floydwarshall',
+          name: 'Floyd-Warshall',
+          description: 'Gib die finale all-pairs Distanzmatrix nach Floyd-Warshall an.',
+          isActive: true
+        },
+        {
           id: 'algo_avl_rot',
           name: 'AVL-Baum Rotationen',
           description: 'Führe Links-/Rechts-Balancierungen auf AVL-Bäumen durch.',

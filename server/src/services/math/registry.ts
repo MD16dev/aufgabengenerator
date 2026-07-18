@@ -20,6 +20,18 @@ import {
   generateCountingSort,
   generateBucketSort,
 } from '../dsal/sorting';
+import {
+  generateBFS,
+  generateDFS,
+  generateTopoSort,
+  generateDijkstra,
+  generateBellmanFord,
+  generatePrim,
+  generateKruskal,
+  generateUnionFind,
+  generateKosaraju,
+  generateFloydWarshall,
+} from '../dsal/graphs';
 
 /**
  * Registry mapping a task type id (sent by the frontend) to its generator
@@ -50,6 +62,17 @@ export const taskGenerators: Record<string, () => TaskData> = {
   'dsal_sort_heap': generateHeapSort,
   'dsal_sort_counting': generateCountingSort,
   'dsal_sort_bucket': generateBucketSort,
+  // DSAL — graph algorithms (translated from exercisegenerator)
+  'dsal_graph_bfs': generateBFS,
+  'dsal_graph_dfs': generateDFS,
+  'dsal_graph_topo': generateTopoSort,
+  'dsal_graph_dijkstra': generateDijkstra,
+  'dsal_graph_bellmanford': generateBellmanFord,
+  'dsal_graph_prim': generatePrim,
+  'dsal_graph_kruskal': generateKruskal,
+  'dsal_graph_unionfind': generateUnionFind,
+  'dsal_graph_kosaraju': generateKosaraju,
+  'dsal_graph_floydwarshall': generateFloydWarshall,
   // ...new task types go here
 };
 
