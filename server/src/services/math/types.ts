@@ -45,6 +45,14 @@ export interface TaskData {
    */
   steps?: TaskStep[];
   /**
+   * Optional explicit task description shown to the user BEFORE the solution.
+   * For tree tasks this is the list of operations to perform (e.g. "1. 80
+   * einfügen, 2. 25 einfügen, …"); for sorting tasks it can be a single
+   * sentence like "Sortiere das Array mit Bubblesort". When absent, the
+   * StepTaskRunner falls back to deriving the list from `steps`.
+   */
+  taskList?: string[];
+  /**
    * Optional visual graph (vertices + edges) shown for graph-algorithm tasks.
    * Rendered by the SVG GraphRenderer on the frontend.
    */

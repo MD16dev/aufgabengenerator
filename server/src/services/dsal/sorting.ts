@@ -230,7 +230,8 @@ interface SortMeta {
 
 /**
  * Build a stepwise comparison-sort task: every intermediate state becomes a
- * card the user must reproduce in order. Regenerates until at least one
+ * solution step, but the upfront task description is a single sentence
+ * ("Sortiere mit X"), not a per-swap list. Regenerates until at least one
  * operation occurs (avoids already-sorted arrays).
  */
 function buildStepwiseTask(meta: SortMeta, stepsFn: (a: number[]) => number[][]): TaskData {
@@ -251,8 +252,9 @@ function buildStepwiseTask(meta: SortMeta, stepsFn: (a: number[]) => number[][])
     type: meta.type,
     mathQuery: `\\text{Array: } ${arrStr(initial)}`,
     answer: '',
-    prompt: `Sortieren Sie das Array mit ${meta.algoName}. Geben Sie das Array nach jedem ${meta.operation} an.`,
-    inputHint: 'Gib das Array in der Form [a, b, c, …] an.',
+    prompt: `Sortieren Sie das Array mit ${meta.algoName}.`,
+    inputHint: 'Die Lösung zeigt das Array nach jedem Schritt.',
+    taskList: [`Sortiere das Array mit ${meta.algoName}.`],
     steps,
     explanation: [
       `Startarray: ${arrStr(initial)}.`,
@@ -329,8 +331,9 @@ export function generateCountingSort(): TaskData {
     type: 'dsal_sort_counting',
     mathQuery: `\\text{Array: } ${arrStr(initial)}`,
     answer: '',
-    prompt: 'Sortieren Sie das Array mit Countingsort (Werte 0…9). Geben Sie zuerst das Zähl-Array und dann das sortierte Ergebnis an.',
-    inputHint: 'Gib das Array in der Form [a, b, c, …] an.',
+    prompt: 'Sortieren Sie das Array mit Countingsort (Werte 0…9).',
+    inputHint: 'Die Lösung zeigt das Zähl-Array und das sortierte Ergebnis.',
+    taskList: ['Sortiere das Array mit Countingsort (Werte 0…9).'],
     steps: [
       { instruction: 'Zähle, wie oft jeder Wert (0…9) vorkommt', kind: 'array', array: counts },
       { instruction: 'Gib das sortierte Ergebnisarray an', kind: 'array', array: sorted },
@@ -367,8 +370,9 @@ export function generateBucketSort(): TaskData {
     type: 'dsal_sort_bucket',
     mathQuery: `\\text{Array: } ${arrStr(initial)}`,
     answer: '',
-    prompt: 'Sortieren Sie das Array mit Bucketsort (10 Buckets, Werte 0…99). Geben Sie die Bucket-Inhalte und dann das sortierte Ergebnis an.',
-    inputHint: 'Gib das Array in der Form [a, b, c, …] an.',
+    prompt: 'Sortieren Sie das Array mit Bucketsort (10 Buckets, Werte 0…99).',
+    inputHint: 'Die Lösung zeigt die Bucket-Inhalte und das sortierte Ergebnis.',
+    taskList: ['Sortiere das Array mit Bucketsort (10 Buckets, Werte 0…99).'],
     steps,
     explanation: [
       `Startarray: ${arrStr(initial)} (Werte im Bereich 0…99, 10 Buckets).`,

@@ -109,6 +109,7 @@ export function generateAVLInsertion(): TaskData {
 
   const numOps = getRandomInt(1, 3);
   const steps: TaskData['steps'] = [];
+  const taskList: string[] = [];
   let current: AVLNode | null = start;
   const usedValues = new Set<number>();
   const collect = (n: AVLNode | null) => {
@@ -120,12 +121,19 @@ export function generateAVLInsertion(): TaskData {
   collect(start);
 
   for (let i = 0; i < numOps; i++) {
+    // Retry the insert value until it actually triggers a rebalance (rotation),
+    // so the task requires real work (a no-rotation insert is didactically dull).
     let insertValue: number;
+    let r: { node: AVLNode; rotation: string | null };
+    let tries = 0;
     do {
-      insertValue = getRandomInt(1, 99);
-    } while (usedValues.has(insertValue));
+      do {
+        insertValue = getRandomInt(1, 99);
+      } while (usedValues.has(insertValue));
+      r = insert(current, insertValue);
+      tries++;
+    } while (!r.rotation && tries < 40);
     usedValues.add(insertValue);
-    const r = insert(current, insertValue);
     current = r.node;
     steps.push({
       instruction: `Füge den Wert ${insertValue} in den AVL-Baum ein.`,
@@ -133,6 +141,7 @@ export function generateAVLInsertion(): TaskData {
       tree: toJSON(current)!,
       annotation: r.rotation ? r.rotation : 'Keine Rotation nötig (Baum bleibt balanciert).',
     });
+    taskList.push(`${i + 1}. ${insertValue} einfügen`);
   }
 
   return {
@@ -143,6 +152,7 @@ export function generateAVLInsertion(): TaskData {
     tree: startJSON ?? undefined,
     prompt: `Ausgangs-AVL-Baum.`,
     inputHint: 'Zeige nach jeder Operation den balancierten Baum.',
+    taskList,
     steps,
     explanation: [
       `Einfügen wie im BST (\\leq \\to \\text{rechts}), dann Balancefaktor prüfen.`,

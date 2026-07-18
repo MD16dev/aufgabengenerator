@@ -72,4 +72,6 @@ export interface TaskData {
   choices?: ChoiceOption[];
   steps?: TaskStep[];
   graph?: GraphJSON;
+  /** Optional explicit task description shown before the solution. */
+  taskList?: string[];
 }

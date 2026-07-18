@@ -98,6 +98,7 @@ export function generateBTreeInsertion(): TaskData {
 
   const numOps = getRandomInt(1, 3);
   const steps: TaskData['steps'] = [];
+  const taskList: string[] = [];
   let current: BNode = start;
   const usedValues = new Set<number>();
   const collect = (n: BNode) => {
@@ -107,12 +108,19 @@ export function generateBTreeInsertion(): TaskData {
   collect(start);
 
   for (let i = 0; i < numOps; i++) {
+    // Retry until the insert actually triggers a split, so the task requires
+    // real work (a no-split insert is didactically dull).
     let insertValue: number;
+    let r: { root: BNode; annotation: string };
+    let tries = 0;
     do {
-      insertValue = getRandomInt(1, 99);
-    } while (usedValues.has(insertValue));
+      do {
+        insertValue = getRandomInt(1, 99);
+      } while (usedValues.has(insertValue));
+      r = insert(current, degree, insertValue);
+      tries++;
+    } while (!r.annotation.includes('Split') && tries < 40);
     usedValues.add(insertValue);
-    const r = insert(current, degree, insertValue);
     current = r.root;
     steps.push({
       instruction: `Füge den Wert ${insertValue} in den B-Baum (Grad $t=${degree}$) ein.`,
@@ -120,6 +128,7 @@ export function generateBTreeInsertion(): TaskData {
       tree: toJSON(current),
       annotation: r.annotation,
     });
+    taskList.push(`${i + 1}. ${insertValue} einfügen`);
   }
 
   return {
@@ -130,6 +139,7 @@ export function generateBTreeInsertion(): TaskData {
     tree: startJSON,
     prompt: `Ausgangs-B-Baum (max. ${maxKeys(degree)} Schlüssel pro Knoten).`,
     inputHint: 'Zeige nach jeder Operation den korrekten B-Baum.',
+    taskList,
     steps,
     explanation: [
       `Schlüssel werden sortiert eingefügt; bei Überlauf (>${maxKeys(degree)} Schlüssel) wird der Knoten gespalten.`,

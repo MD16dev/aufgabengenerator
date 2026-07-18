@@ -84,6 +84,7 @@ export function generateBSTInsertion(): TaskData {
   // give the resulting tree after each".
   const numOps = getRandomInt(1, 3);
   const steps: TaskData['steps'] = [];
+  const taskList: string[] = [];
   let current = startTree;
   const usedValues = new Set<number>(collectValues(startTree));
   for (let i = 0; i < numOps; i++) {
@@ -99,6 +100,7 @@ export function generateBSTInsertion(): TaskData {
       tree: toJSON(current)!,
       annotation: `Einfügeregel: Wert $\\leq$ Knoten $\\rightarrow$ rechtes Kind, sonst links.`,
     });
+    taskList.push(`${i + 1}. ${insertValue} einfügen`);
   }
 
   return {
@@ -109,6 +111,7 @@ export function generateBSTInsertion(): TaskData {
     tree: startJSON ?? undefined,
     prompt: `Ausgangsbaum mit ${size(startTree)} Knoten.`,
     inputHint: 'Zeige nach jeder Operation den entstehenden Baum.',
+    taskList,
     steps,
     explanation: [
       `Ausgangsbaum hat ${size(startTree)} Knoten.`,
