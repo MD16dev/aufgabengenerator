@@ -5,3 +5,12 @@ node_modules/
 
 # Lokale, nicht-versionierte Agent-Notizen (nur für diese Maschine)
 AGENT_LOCAL_NOTES.md
+
+# Projektfremde / lokale Dateien
+BUS.txt
+BUS_Questions.txt
+DATABASE_URL
+Tutorial Sheet 2.pdf
+client/.env
+scripts/load_bus_questions.py
+scripts/parse_bus_anki.py
