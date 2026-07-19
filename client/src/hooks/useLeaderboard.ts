@@ -1,7 +1,6 @@
 import { useState, useCallback } from 'react';
 import type { LeaderboardItem, LeaderboardFilterType } from '../types';
-
-const API_BASE = 'http://localhost:5001';
+import { API_BASE } from '../config';
 
 /**
  * Shared module -> task mapping used by the leaderboard "Aufgabe" filter so the
@@ -19,6 +18,7 @@ export const LEADERBOARD_MODULE_TASKS: { module: string; tasks: { id: string; la
   {
     module: 'Betriebssysteme',
     tasks: [
+      { id: 'os_bus_anki', label: 'BUS Quizfragen' },
       { id: 'os_page_table', label: 'Adressübersetzung' },
       { id: 'os_scheduling', label: 'Scheduling (FIFO / RR)' },
     ],

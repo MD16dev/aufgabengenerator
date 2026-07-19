@@ -1,6 +1,8 @@
 import { RefreshCw, Trophy, Zap } from 'lucide-react';
 import { ModuleSelector } from './ModuleSelector';
 import { GenericTaskRunner } from './GenericTaskRunner';
+import { BusTaskRunner } from './BusTaskRunner';
+import { PageTableTaskRunner } from './PageTableTaskRunner';
 import type { LeaderboardItem } from '../types';
 
 interface TasksPageProps {
@@ -21,6 +23,19 @@ const MODULE_LABELS: Record<string, string> = {
   algo_struct: 'DSAL - Algorithmen & Datenstrukturen',
 };
 
+const TASK_LABELS: Record<string, string> = {
+  lin_alg_det: '2x2 Determinante',
+  lin_alg_det3x3: '3x3 Determinante (Sarrus)',
+  lin_alg_matmul: 'Matrizenmultiplikation',
+  calc_gl_n_cardinality: 'Kardinalität von GL_n(F_p)',
+  calc_param_determinant_finite_field: 'Determinante mit Parameter (F_p)',
+  calc_poly_mapping_matrix: 'Darstellungsmatrix (Polynomräume)',
+  calc_eigenbasis: 'Eigenbasis berechnen',
+  calc_linear_code_parameters: 'Parameter linearer Codes',
+  os_bus_anki: 'BUS Quizfragen',
+  os_page_table: 'Adressübersetzung',
+};
+
 export const TasksPage: React.FC<TasksPageProps> = ({
   activeTaskId, activeModuleId, setActiveModuleId, setActiveTaskId,
   user, sideLeaderboard, loadingSideLeaderboard, onSolved,
@@ -28,7 +43,21 @@ export const TasksPage: React.FC<TasksPageProps> = ({
   return (
     <div className="w-full max-w-6xl mx-auto flex flex-col lg:flex-row gap-6 items-stretch animate-fadeIn" id="tasks-split-layout">
       <div className="flex-grow flex items-center justify-center">
-        {activeTaskId ? (
+        {activeTaskId === 'os_bus_anki' ? (
+          <BusTaskRunner
+            taskType={activeTaskId}
+            user={user}
+            onSolved={onSolved}
+            onBackToSelector={() => setActiveTaskId(null)}
+          />
+        ) : activeTaskId === 'os_page_table' ? (
+          <PageTableTaskRunner
+            taskType={activeTaskId}
+            user={user}
+            onSolved={onSolved}
+            onBackToSelector={() => setActiveTaskId(null)}
+          />
+        ) : activeTaskId ? (
           <GenericTaskRunner
             taskType={activeTaskId}
             user={user}
@@ -54,7 +83,7 @@ export const TasksPage: React.FC<TasksPageProps> = ({
               </h3>
             </div>
             <span className="text-[10px] font-bold text-theme-muted block mb-4 uppercase tracking-wider border-b border-theme-border pb-2">
-              {activeTaskId ? 'Typ: 2x2 Determinante' : `Modul: ${MODULE_LABELS[activeModuleId] || 'LA - Lineare Algebra'}`}
+              {activeTaskId ? `Typ: ${TASK_LABELS[activeTaskId] || 'Aufgabe'}` : `Modul: ${MODULE_LABELS[activeModuleId] || 'LA - Lineare Algebra'}`}
             </span>
 
             {loadingSideLeaderboard ? (

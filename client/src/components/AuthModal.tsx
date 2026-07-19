@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { X, Lock, User, RefreshCw, KeyRound, BadgeCheck } from 'lucide-react';
+import { API_BASE } from '../config';
 
 interface AuthModalProps {
   isOpen: boolean;
@@ -26,7 +27,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onAuthSuc
 
     try {
       const endpoint = isLogin ? '/api/auth/login' : '/api/auth/register';
-      const response = await fetch(`http://localhost:5001${endpoint}`, {
+      const response = await fetch(`${API_BASE}${endpoint}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'

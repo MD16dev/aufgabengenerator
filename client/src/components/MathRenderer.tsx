@@ -39,7 +39,7 @@ export const LatexTextRenderer: React.FC<LatexTextRendererProps> = ({ text }) =>
         // This is a text segment, which may contain inline math ($)
         const inlines = blockContent.split('$');
         return (
-          <p key={blockIdx} className="inline-block w-full my-1">
+          <span key={blockIdx} className="inline-block w-full my-1">
             {inlines.map((inlineContent, inlineIdx) => {
               if (inlineIdx % 2 === 1) {
                 // This is an inline math segment
@@ -48,7 +48,7 @@ export const LatexTextRenderer: React.FC<LatexTextRendererProps> = ({ text }) =>
               // Regular text
               return <span key={inlineIdx}>{inlineContent}</span>;
             })}
-          </p>
+          </span>
         );
       })}
     </div>

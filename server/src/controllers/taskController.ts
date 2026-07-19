@@ -5,7 +5,7 @@ import { getTaskGenerator } from '../services/math/registry';
  * Generates a task for the given type id from the registry.
  * The controller stays untouched no matter how many task types are added.
  */
-export const getTask = (req: Request, res: Response, next: NextFunction) => {
+export const getTask = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const taskType = req.params.type;
     const generator = getTaskGenerator(taskType);
@@ -14,7 +14,7 @@ export const getTask = (req: Request, res: Response, next: NextFunction) => {
       return res.status(404).json({ error: { message: `Unbekannter Aufgabentyp: ${taskType}` } });
     }
 
-    const task = generator();
+    const task = await generator();
     res.json(task);
   } catch (error) {
     next(error);

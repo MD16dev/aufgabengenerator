@@ -92,10 +92,16 @@ export const ModuleSelector: React.FC<ModuleSelectorProps> = ({ activeModule, on
       description: 'Seitentabellen, Speicherverwaltung, Scheduling und CPU-Prozesse.',
       tasks: [
         {
+          id: 'os_bus_anki',
+          name: 'BUS Quizfragen',
+          description: 'Löse Multiple-Choice-Fragen zu Betriebssystemen und Systemsoftware.',
+          isActive: true
+        },
+        {
           id: 'os_page_table',
           name: 'Adressübersetzung',
           description: 'Übersetze virtuelle in physikalische Adressen mit Seitentabellen.',
-          isActive: false
+          isActive: true
         },
         {
           id: 'os_scheduling',
@@ -155,7 +161,7 @@ export const ModuleSelector: React.FC<ModuleSelectorProps> = ({ activeModule, on
     <div className="w-full max-w-5xl mx-auto px-4 py-6 animate-fadeIn" id="module-selector-dashboard">
       <div className="text-center mb-10">
         <h2 className="text-3xl md:text-4xl font-extrabold font-display text-theme-primary mb-3">
-          Wähle ein Studienfach aus
+          Wähle ein Modul aus
         </h2>
         <p className="text-theme-secondary text-sm md:text-base max-w-xl mx-auto font-medium">
           Wähle das Modul und den Aufgabetyp, den du heute üben möchtest. Jede Aufgabe wird bei Klick frisch generiert!
@@ -215,7 +221,7 @@ export const ModuleSelector: React.FC<ModuleSelectorProps> = ({ activeModule, on
         <div className="relative">
           <div
             className={`grid grid-cols-1 md:grid-cols-2 gap-4 transition-all ${
-              activeModuleData.id !== 'lin_alg' ? 'blur-sm opacity-40 pointer-events-none select-none' : ''
+              activeModuleData.id !== 'lin_alg' && activeModuleData.id !== 'os' ? 'blur-sm opacity-40 pointer-events-none select-none' : ''
             }`}
           >
             {activeModuleData.tasks.map((task) => (
@@ -231,9 +237,9 @@ export const ModuleSelector: React.FC<ModuleSelectorProps> = ({ activeModule, on
               >
                 <div>
                   <div className="flex items-center justify-between mb-2">
-                    <h4 className="font-bold text-theme-primary group-hover:text-purple-600 dark:group-hover:text-purple-400 transition-colors">
+                    <div className="font-bold text-theme-primary group-hover:text-purple-600 dark:group-hover:text-purple-400 transition-colors">
                       <LatexTextRenderer text={task.name} />
-                    </h4>
+                    </div>
                     {task.isActive ? (
                       <span className="text-xs font-bold px-2.5 py-0.5 bg-emerald-500/10 text-emerald-600 dark:text-emerald-455 rounded-full border border-emerald-500/20">
                         Aktiv
@@ -244,9 +250,9 @@ export const ModuleSelector: React.FC<ModuleSelectorProps> = ({ activeModule, on
                       </div>
                     )}
                   </div>
-                  <p className="text-theme-muted text-xs md:text-sm leading-relaxed mb-4 font-medium">
+                  <div className="text-theme-muted text-xs md:text-sm leading-relaxed mb-4 font-medium">
                     <LatexTextRenderer text={task.description} />
-                  </p>
+                  </div>
                 </div>
 
                 {task.isActive && (
@@ -258,7 +264,7 @@ export const ModuleSelector: React.FC<ModuleSelectorProps> = ({ activeModule, on
             ))}
           </div>
 
-          {activeModuleData.id !== 'lin_alg' && (
+          {activeModuleData.id !== 'lin_alg' && activeModuleData.id !== 'os' && (
             <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 pointer-events-none">
               <span className="text-3xl md:text-4xl font-extrabold font-display text-theme-primary/80 tracking-tight">
                 Work in Progress

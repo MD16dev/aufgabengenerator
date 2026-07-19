@@ -4,8 +4,7 @@ import {
   Github, AlertCircle, Inbox, Trash2
 } from 'lucide-react';
 import { GitHubIssueModal } from './GitHubIssueModal';
-
-const API_BASE = 'http://localhost:5001';
+import { API_BASE } from '../config';
 
 interface FeedbackItem {
   id: string;
