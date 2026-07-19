@@ -244,6 +244,7 @@ export const PageTableTaskRunner: React.FC<PageTableTaskRunnerProps> = ({
                     id="address-input"
                     ref={addressInputRef}
                     type="text"
+                    autoComplete="off"
                     disabled={status === 'correct' || isLocked}
                     value={userAddress}
                     onChange={(e) => setUserAddress(e.target.value)}
@@ -261,6 +262,7 @@ export const PageTableTaskRunner: React.FC<PageTableTaskRunnerProps> = ({
                   <input
                     id="read-perm-input"
                     type="text"
+                    autoComplete="off"
                     disabled={status === 'correct' || isLocked}
                     value={userReadPermission}
                     onChange={(e) => setUserReadPermission(e.target.value)}
@@ -278,6 +280,7 @@ export const PageTableTaskRunner: React.FC<PageTableTaskRunnerProps> = ({
                   <input
                     id="write-perm-input"
                     type="text"
+                    autoComplete="off"
                     disabled={status === 'correct' || isLocked}
                     value={userWritePermission}
                     onChange={(e) => setUserWritePermission(e.target.value)}

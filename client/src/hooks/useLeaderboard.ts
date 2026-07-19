@@ -47,7 +47,7 @@ export function useLeaderboard() {
   const [leaderboard, setLeaderboard] = useState<LeaderboardItem[]>([]);
   const [loadingLeaderboard, setLoadingLeaderboard] = useState<boolean>(false);
   const [leaderboardFilter, setLeaderboardFilter] = useState<LeaderboardFilterType>('global');
-  const [selectedModuleFilter, setSelectedModuleFilter] = useState<string>('Lineare Algebra');
+  const [selectedModuleFilter, setSelectedModuleFilter] = useState<string>('Gesamt');
   const [selectedTaskFilter, setSelectedTaskFilter] = useState<string>('lin_alg_det');
   const [selectedTaskModuleFilter, setSelectedTaskModuleFilter] = useState<string>('Lineare Algebra');
 

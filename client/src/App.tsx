@@ -53,7 +53,8 @@ export default function App() {
   useEffect(() => {
     if (activeTab === 'leaderboard') {
       if (leaderboardFilter === 'elo') {
-        fetchEloLeaderboard(selectedModuleFilter === 'Lineare Algebra' ? 'lin_alg'
+        fetchEloLeaderboard(selectedModuleFilter === 'Gesamt' ? undefined
+          : selectedModuleFilter === 'Lineare Algebra' ? 'lin_alg'
           : selectedModuleFilter === 'Betriebssysteme' ? 'os'
           : selectedModuleFilter === 'Formale Systeme' ? 'formal_sys'
           : selectedModuleFilter === 'Algorithmen & Datenstrukturen' ? 'algo_struct'

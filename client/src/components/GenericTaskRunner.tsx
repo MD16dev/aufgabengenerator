@@ -188,6 +188,7 @@ export const GenericTaskRunner: React.FC<GenericTaskRunnerProps> = ({
                   <input
                     ref={inputRef}
                     type="text"
+                    autoComplete="off"
                     disabled={status === 'correct' || isLocked}
                     value={userAnswer}
                     onChange={(e) => setUserAnswer(e.target.value)}
