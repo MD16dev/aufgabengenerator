@@ -158,6 +158,30 @@ export const ModuleSelector: React.FC<ModuleSelectorProps> = ({ activeModule, on
           isActive: true
         },
         {
+          id: 'dsal_bst_delete',
+          name: 'BST: Wert löschen',
+          description: 'Lösche einen Wert aus einem Binär-Suchbaum (Inorder-Nachfolger bei 2 Kindern).',
+          isActive: true
+        },
+        {
+          id: 'dsal_avl_delete',
+          name: 'AVL-Baum: Wert löschen',
+          description: 'Lösche einen Wert aus einem AVL-Baum und balanciere per Rotation.',
+          isActive: true
+        },
+        {
+          id: 'dsal_rb_delete',
+          name: 'Rot-Schwarz-Baum: Wert löschen',
+          description: 'Lösche einen Wert aus einem Rot-Schwarz-Baum (Schwarzhöhe wiederherstellen).',
+          isActive: true
+        },
+        {
+          id: 'dsal_btree_delete',
+          name: 'B-Baum: Wert löschen',
+          description: 'Lösche einen Wert aus einem B-Baum (Borrow/Merge bei Unterlauf).',
+          isActive: true
+        },
+        {
           id: 'dsal_sort_bubble',
           name: 'Bubblesort',
           description: 'Gib das Array nach einer Swap-Operation beim Bubblesort an.',

@@ -239,3 +239,245 @@ export function generateRedBlackInsertion(): TaskData {
     ],
   };
 }
+
+function transplant(root: RBNode, u: RBNode, v: RBNode | null): RBNode {
+  if (u.parent === null) {
+    root = v!;
+  } else if (u === u.parent.left) {
+    u.parent.left = v;
+  } else {
+    u.parent.right = v;
+  }
+  if (v !== null) {
+    v.parent = u.parent;
+  }
+  return root;
+}
+
+function getColor(n: RBNode | null): Color {
+  return n ? n.color : 'black';
+}
+
+function deleteFixup(root: RBNode, x: RBNode, annotations: string[]): RBNode {
+  let cur = x;
+  while (cur !== root && getColor(cur) === 'black') {
+    if (cur === cur.parent!.left) {
+      let w = cur.parent!.right;
+      if (getColor(w) === 'red') {
+        w!.color = 'black';
+        cur.parent!.color = 'red';
+        root = rotateLeft(root, cur.parent!);
+        w = cur.parent!.right;
+        annotations.push(`Geschwister ${w?.value} rot (Fall 1) → Umfärben: ${w?.value} schwarz, ${cur.parent!.value} rot. Linksrotation bei ${cur.parent!.value}.`);
+      }
+      if (getColor(w?.left) === 'black' && getColor(w?.right) === 'black') {
+        if (w) w.color = 'red';
+        annotations.push(`Beide Kinder von Geschwister ${w?.value} schwarz (Fall 2) → ${w?.value} rot färben. Problem wandert nach oben zu ${cur.parent!.value}.`);
+        cur = cur.parent!;
+      } else {
+        if (getColor(w?.right) === 'black') {
+          if (w?.left) w.left.color = 'black';
+          if (w) w.color = 'red';
+          root = rotateRight(root, w!);
+          w = cur.parent!.right;
+          annotations.push(`Rechtes Kind von Geschwister ${w?.value} schwarz (Fall 3) → Linkes Kind ${w?.left?.value} schwarz färben, Geschwister rot. Rechtsrotation bei ${w?.value}.`);
+        }
+        if (w) {
+          w.color = cur.parent!.color;
+          if (w.right) w.right.color = 'black';
+        }
+        cur.parent!.color = 'black';
+        root = rotateLeft(root, cur.parent!);
+        annotations.push(`Rechtes Kind von Geschwister ${w?.value} rot (Fall 4) → Farbe von ${cur.parent!.value} auf ${w?.value} übertragen, ${cur.parent!.value} und Kind schwarz färben. Linksrotation bei ${cur.parent!.value}.`);
+        cur = root;
+      }
+    } else {
+      let w = cur.parent!.left;
+      if (getColor(w) === 'red') {
+        w!.color = 'black';
+        cur.parent!.color = 'red';
+        root = rotateRight(root, cur.parent!);
+        w = cur.parent!.left;
+        annotations.push(`Geschwister ${w?.value} rot (Fall 1) → Umfärben: ${w?.value} schwarz, ${cur.parent!.value} rot. Rechtsrotation bei ${cur.parent!.value}.`);
+      }
+      if (getColor(w?.left) === 'black' && getColor(w?.right) === 'black') {
+        if (w) w.color = 'red';
+        annotations.push(`Beide Kinder von Geschwister ${w?.value} schwarz (Fall 2) → ${w?.value} rot färben. Problem wandert nach oben zu ${cur.parent!.value}.`);
+        cur = cur.parent!;
+      } else {
+        if (getColor(w?.left) === 'black') {
+          if (w?.right) w.right.color = 'black';
+          if (w) w.color = 'red';
+          root = rotateLeft(root, w!);
+          w = cur.parent!.left;
+          annotations.push(`Linkes Kind von Geschwister ${w?.value} schwarz (Fall 3) → Rechtes Kind ${w?.right?.value} schwarz färben, Geschwister rot. Linksrotation bei ${w?.value}.`);
+        }
+        if (w) {
+          w.color = cur.parent!.color;
+          if (w.left) w.left.color = 'black';
+        }
+        cur.parent!.color = 'black';
+        root = rotateRight(root, cur.parent!);
+        annotations.push(`Linkes Kind von Geschwister ${w?.value} rot (Fall 4) → Farbe von ${cur.parent!.value} auf ${w?.value} übertragen, ${cur.parent!.value} und Kind schwarz färben. Rechtsrotation bei ${cur.parent!.value}.`);
+        cur = root;
+      }
+    }
+  }
+  cur.color = 'black';
+  return root;
+}
+
+function deleteNode(root: RBNode, z: RBNode, annotations: string[]): RBNode | null {
+  let y = z;
+  let yOriginalColor = y.color;
+  let x: RBNode | null = null;
+  let newRoot = root;
+
+  const dummyNil = new RBNode(0, 'black');
+  let usedDummy = false;
+
+  if (z.left === null) {
+    x = z.right;
+    if (x === null) {
+      x = dummyNil;
+      usedDummy = true;
+      x.parent = z;
+    }
+    newRoot = transplant(newRoot, z, x);
+  } else if (z.right === null) {
+    x = z.left;
+    if (x === null) {
+      x = dummyNil;
+      usedDummy = true;
+      x.parent = z;
+    }
+    newRoot = transplant(newRoot, z, x);
+  } else {
+    let succ = z.right;
+    while (succ.left !== null) succ = succ.left;
+    y = succ;
+    yOriginalColor = y.color;
+    x = y.right;
+    if (x === null) {
+      x = dummyNil;
+      usedDummy = true;
+      x.parent = y;
+    }
+    if (y.parent === z) {
+      x.parent = y;
+    } else {
+      newRoot = transplant(newRoot, y, x);
+      y.right = z.right;
+      y.right.parent = y;
+    }
+    newRoot = transplant(newRoot, z, y);
+    y.left = z.left;
+    y.left.parent = y;
+    y.color = z.color;
+  }
+
+  let delDesc = '';
+  if (z.left === null && z.right === null) {
+    delDesc = `${z.value} ist ein Blatt → wird einfach entfernt.`;
+  } else if (z.left === null) {
+    delDesc = `${z.value} hat nur ein rechtes Kind → wird durch dieses ersetzt.`;
+  } else if (z.right === null) {
+    delDesc = `${z.value} hat nur ein linkes Kind → wird durch dieses ersetzt.`;
+  } else {
+    delDesc = `${z.value} hat zwei Kinder → wird durch den Inorder-Nachfolger ${y.value} (Minimum des rechten Teilbaums) ersetzt.`;
+  }
+  annotations.push(delDesc);
+
+  if (yOriginalColor === 'black') {
+    newRoot = deleteFixup(newRoot, x, annotations);
+  }
+
+  if (usedDummy) {
+    if (dummyNil.parent === null) {
+      newRoot = null;
+    } else {
+      if (dummyNil === dummyNil.parent.left) {
+        dummyNil.parent.left = null;
+      } else {
+        dummyNil.parent.right = null;
+      }
+    }
+  }
+
+  if (newRoot !== null) {
+    newRoot.color = 'black';
+  }
+
+  return newRoot;
+}
+
+function rbDelete(root: RBNode, value: number): { root: RBNode | null; annotation: string } {
+  const cloned = cloneNode(root)!;
+  const z = find(cloned, value);
+  if (!z) {
+    return { root: cloned, annotation: `Wert ${value} ist nicht im Baum.` };
+  }
+  const annotations: string[] = [];
+  const rootResult = deleteNode(cloned, z, annotations);
+  return { root: rootResult, annotation: annotations.join(' ') };
+}
+
+export function generateRedBlackDeletion(): TaskData {
+  const start = buildRandomRB(getRandomInt(4, 7))!;
+  const startJSON = toJSON(start);
+
+  const numOps = getRandomInt(1, 2);
+  const steps: TaskData['steps'] = [];
+  const taskList: string[] = [];
+  let current: RBNode = start;
+  const collect = (n: RBNode | null, acc: number[] = []): number[] => {
+    if (!n) return acc;
+    acc.push(n.value);
+    collect(n.left, acc);
+    collect(n.right, acc);
+    return acc;
+  };
+  for (let i = 0; i < numOps; i++) {
+    const all = collect(current);
+    // Prefer a deletion that changes the tree structure (not a no-op), for
+    // didactic value. rbDelete always rebuilds a valid RB tree, so every
+    // deletion is meaningful.
+    let chosen: number | null = null;
+    let chosenRes: { root: RBNode | null; annotation: string } | null = null;
+    for (let attempt = 0; attempt < 20 && chosen === null; attempt++) {
+      const v = all[getRandomInt(0, all.length - 1)];
+      const r = rbDelete(current, v);
+      if (r.root !== null) { chosen = v; chosenRes = r; }
+    }
+    if (chosen === null) {
+      const v = all[getRandomInt(0, all.length - 1)];
+      chosenRes = rbDelete(current, v);
+      chosen = v;
+    }
+    current = chosenRes!.root ?? current;
+    steps.push({
+      instruction: `Lösche den Wert ${chosen} aus dem Rot-Schwarz-Baum.`,
+      kind: 'tree',
+      tree: toJSON(current) ?? undefined,
+      annotation: chosenRes!.annotation,
+    });
+    taskList.push(`${i + 1}. ${chosen} löschen`);
+  }
+
+  return {
+    type: 'dsal_rb_delete',
+    mathQuery: `\\text{Führe die Lösch-Operationen nacheinander aus und gib den Baum nach jeder Operation an.}`,
+    answer: '',
+    renderMode: 'tree',
+    tree: startJSON ?? undefined,
+    prompt: `Rot-Schwarz-Baum: Ausgangsbaum mit ${size(start)} Knoten (Wurzel ist schwarz). Löschen wie im BST; bei Bedarf Schwarzhöhe durch Umfärben/Rotationen wiederherstellen.`,
+    inputHint: 'Zeige nach jeder Operation den korrekten Rot-Schwarz-Baum.',
+    taskList,
+    steps,
+    explanation: [
+      `Löschen wie im BST (Inorder-Nachfolger bei zwei Kindern).`,
+      `War der gelöschte Knoten schwarz, ist die Schwarzhöhe verletzt: Onkel (Geschwister) rot → umfärben + rotieren; sonst doppelte schwarze Knoten durch Rotationen auflösen.`,
+      `Die Wurzel ist am Ende immer schwarz.`,
+    ],
+  };
+}

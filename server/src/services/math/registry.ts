@@ -6,10 +6,10 @@ import { generateParamDeterminantFiniteField } from './paramDeterminant';
 import { generatePolyMappingMatrix } from './polyMappingMatrix';
 import { generateEigenbasis } from './eigenbasis';
 import { generateLinearCodeParameters } from './linearCodeParameters';
-import { generateBSTInsertion } from '../dsal/bst';
-import { generateAVLInsertion } from '../dsal/avl';
-import { generateRedBlackInsertion } from '../dsal/redblack';
-import { generateBTreeInsertion } from '../dsal/btree';
+import { generateBSTInsertion, generateBSTDeletion } from '../dsal/bst';
+import { generateAVLInsertion, generateAVLDeletion } from '../dsal/avl';
+import { generateRedBlackInsertion, generateRedBlackDeletion } from '../dsal/redblack';
+import { generateBTreeInsertion, generateBTreeDeletion } from '../dsal/btree';
 import {
   generateBubbleSort,
   generateInsertionSort,
@@ -63,9 +63,13 @@ export const taskGenerators: Record<string, () => TaskData> = {
   // 'os_page_table': generatePageTable,
   // DSAL — Algorithmen & Datenstrukturen (translated from exercisegenerator)
   'dsal_bst_insert': generateBSTInsertion,
+  'dsal_bst_delete': generateBSTDeletion,
   'dsal_avl_insert': generateAVLInsertion,
+  'dsal_avl_delete': generateAVLDeletion,
   'dsal_rb_insert': generateRedBlackInsertion,
+  'dsal_rb_delete': generateRedBlackDeletion,
   'dsal_btree_insert': generateBTreeInsertion,
+  'dsal_btree_delete': generateBTreeDeletion,
   // DSAL — sorting (translated from exercisegenerator)
   'dsal_sort_bubble': generateBubbleSort,
   'dsal_sort_insertion': generateInsertionSort,
