@@ -6,6 +6,38 @@ import { generateParamDeterminantFiniteField } from './paramDeterminant';
 import { generatePolyMappingMatrix } from './polyMappingMatrix';
 import { generateEigenbasis } from './eigenbasis';
 import { generateLinearCodeParameters } from './linearCodeParameters';
+import {
+  generateParamMatrixInvertible,
+  generateParamMatrixRank,
+  generateParamMatrixKernel,
+  generateParamMatrixSolutionCount,
+} from './paramMatrixField';
+import {
+  generatePolyApply,
+  generatePolyImageBasis,
+  generatePolyDefect,
+  generatePolyComposition,
+} from './polyMappingTasks';
+import {
+  generateCharPolyExpanded,
+  generateCharPolyFactored,
+  generateEigenvalues,
+  generateEigenspace,
+  generateDiagonalizable,
+} from './eigenTasks';
+import {
+  generateParityCheckMatrix,
+  generateNearestNeighborDecoding,
+} from './linearCodeTasks';
+import {
+  generateVectorSpaceSize,
+  generateSymmetricMatrixCount,
+  generateRREFRankCount,
+} from './fieldCombinatorics';
+import {
+  generateMatrixInverseField,
+  generatePreimageField,
+} from './matrixInverseField';
 import { generateBusAnkiTask } from './osBusAnki';
 import { generatePageTableTask } from './osPageTable';
 import { generateBSTInsertion, generateBSTDeletion } from '../dsal/bst';
@@ -62,6 +94,32 @@ export const taskGenerators: Record<string, () => TaskData | Promise<TaskData>> 
   'calc_poly_mapping_matrix': generatePolyMappingMatrix,
   'calc_eigenbasis': generateEigenbasis,
   'calc_linear_code_parameters': generateLinearCodeParameters,
+  // LA — parametrisierte Matrizen über F_p (Kategorie 1)
+  'calc_param_matrix_invertible': generateParamMatrixInvertible,
+  'calc_param_matrix_rank': generateParamMatrixRank,
+  'calc_param_matrix_kernel': generateParamMatrixKernel,
+  'calc_param_matrix_solution_count': generateParamMatrixSolutionCount,
+  // LA — lineare Abbildungen auf Polynomräumen (Kategorie 2)
+  'calc_poly_apply': generatePolyApply,
+  'calc_poly_image_basis': generatePolyImageBasis,
+  'calc_poly_defect': generatePolyDefect,
+  'calc_poly_composition': generatePolyComposition,
+  // LA — Eigenwerte, Eigenvektoren, Diagonalisierbarkeit (Kategorie 3)
+  'calc_charpoly_expanded': generateCharPolyExpanded,
+  'calc_charpoly_factored': generateCharPolyFactored,
+  'calc_eigenvalues': generateEigenvalues,
+  'calc_eigenspace': generateEigenspace,
+  'calc_diagonalizable': generateDiagonalizable,
+  // LA — lineare Codes (Kategorie 4)
+  'calc_linear_code_parity_check': generateParityCheckMatrix,
+  'calc_linear_code_nearest_neighbor': generateNearestNeighborDecoding,
+  // LA — Kombinatorik über F_q (Kategorie 5)
+  'calc_field_vecspace_size': generateVectorSpaceSize,
+  'calc_field_symmetric_count': generateSymmetricMatrixCount,
+  'calc_field_rref_rank_count': generateRREFRankCount,
+  // LA — Matrizeninversion & Basiswechsel über F_p (Kategorie 6)
+  'calc_matrix_inverse_field': generateMatrixInverseField,
+  'calc_preimage_field': generatePreimageField,
   'os_bus_anki': generateBusAnkiTask,
   'os_page_table': generatePageTableTask,
   // DSAL — Algorithmen & Datenstrukturen (translated from exercisegenerator)
