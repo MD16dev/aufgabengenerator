@@ -45,13 +45,16 @@ export async function generateBusAnkiTask(): Promise<TaskData> {
       ]
     : [`Die richtige Antwort lautet: <strong>${correct}</strong>`];
 
+  // Convert options to choices format (id = option text, used for comparison)
+  const choices = options.map((opt) => ({ id: opt, caption: opt }));
+
   return {
     type: 'os_bus_anki',
     // We store the question in prompt to avoid math-rendering it in standard mathQuery
     prompt: busQuestion.question,
     mathQuery: '',
     answer: correct,
-    options,
+    choices,
     explanation,
   };
 }

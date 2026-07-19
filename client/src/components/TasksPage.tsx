@@ -30,19 +30,6 @@ const MODULE_LABELS: Record<string, string> = {
   algo_struct: 'DSAL - Algorithmen & Datenstrukturen',
 };
 
-const TASK_LABELS: Record<string, string> = {
-  lin_alg_det: '2x2 Determinante',
-  lin_alg_det3x3: '3x3 Determinante (Sarrus)',
-  lin_alg_matmul: 'Matrizenmultiplikation',
-  calc_gl_n_cardinality: 'Kardinalität von GL_n(F_p)',
-  calc_param_determinant_finite_field: 'Determinante mit Parameter (F_p)',
-  calc_poly_mapping_matrix: 'Darstellungsmatrix (Polynomräume)',
-  calc_eigenbasis: 'Eigenbasis berechnen',
-  calc_linear_code_parameters: 'Parameter linearer Codes',
-  os_bus_anki: 'BUS Quizfragen',
-  os_page_table: 'Adressübersetzung',
-};
-
 export const TasksPage: React.FC<TasksPageProps> = ({
   activeTaskId, activeModuleId, setActiveModuleId, setActiveTaskId,
   user, sideLeaderboard, loadingSideLeaderboard, onSolved,
