@@ -66,7 +66,7 @@ export const LeaderboardPage: React.FC<LeaderboardPageProps> = ({
           <span
             className="absolute top-1 bottom-1 rounded-xl bg-purple-500/15 border border-purple-500/30 transition-transform duration-300 ease-out"
             style={{
-              width: 'calc((100% - 0.5rem) / 3)',
+              width: 'calc((100% - 0.5rem) / 4)',
               transform: `translateX(${activeIndex * 100}%)`,
             }}
           />
@@ -98,27 +98,45 @@ export const LeaderboardPage: React.FC<LeaderboardPageProps> = ({
               Modul and Aufgabe now only animates the task row in/out. */}
           <div
             className={`grid transition-all duration-300 ease-out ${
-              filter === 'module' || filter === 'task'
+              filter === 'module' || filter === 'task' || filter === 'elo'
                 ? 'grid-rows-[1fr] opacity-100 mb-4'
                 : 'grid-rows-[0fr] opacity-0 pointer-events-none'
             }`}
           >
             <div className="overflow-hidden">
               <div className="flex flex-wrap gap-2">
+                {/* Gesamt button for Elo tab */}
+                {filter === 'elo' && (
+                  <button
+                    type="button"
+                    onClick={() => setModuleFilter('Gesamt')}
+                    className={`px-3.5 py-1.5 rounded-full text-xs font-semibold border transition-all ${
+                      moduleFilter === 'Gesamt'
+                        ? 'bg-purple-500/15 border-purple-500/40 text-purple-600 dark:text-purple-400'
+                        : 'bg-theme-card border-theme-border text-theme-muted hover:text-theme-secondary hover:border-theme-muted/40'
+                    }`}
+                  >
+                    Gesamt
+                  </button>
+                )}
                 {MODULES.map((m) => (
                   <button
                     key={m.value}
                     type="button"
                     onClick={() => {
                       setModuleFilter(m.value);
-                      // Reuse the same module selection for the Aufgabe tab so the
-                      // task list follows the chosen module and we avoid a second,
-                      // duplicate module row.
-                      setTaskModuleFilter(m.value);
-                      const firstTask = LEADERBOARD_MODULE_TASKS.find(
-                        (x) => x.module === m.value
-                      )?.tasks[0];
-                      if (firstTask) setTaskFilter(firstTask.id);
+                      // On the Elo tab we only need the module selection to drive
+                      // the per-module Elo leaderboard; the task list is irrelevant.
+                      if (filter !== 'elo') {
+                        // Reuse the same module selection for the Aufgabe tab so the
+                        // task list follows the chosen module and we avoid a second,
+                        // duplicate module row.
+                        setTaskModuleFilter(m.value);
+                        const firstTask = LEADERBOARD_MODULE_TASKS.find(
+                          (x) => x.module === m.value
+                        )?.tasks[0];
+                        if (firstTask) setTaskFilter(firstTask.id);
+                      }
                     }}
                     className={`px-3.5 py-1.5 rounded-full text-xs font-semibold border transition-all ${
                       moduleFilter === m.value

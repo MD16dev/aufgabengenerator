@@ -3,7 +3,14 @@ import { ModuleSelector } from './ModuleSelector';
 import { GenericTaskRunner } from './GenericTaskRunner';
 import { BusTaskRunner } from './BusTaskRunner';
 import { PageTableTaskRunner } from './PageTableTaskRunner';
+import { LEADERBOARD_MODULE_TASKS } from '../hooks/useLeaderboard';
 import type { LeaderboardItem } from '../types';
+
+// Flat lookup of task id -> human-readable label, derived from the shared
+// module/task mapping so the side leaderboard shows the correct task type.
+const TASK_LABELS: Record<string, string> = Object.fromEntries(
+  LEADERBOARD_MODULE_TASKS.flatMap((m) => m.tasks.map((t) => [t.id, t.label])),
+);
 
 interface TasksPageProps {
   activeTaskId: string | null;
@@ -83,7 +90,7 @@ export const TasksPage: React.FC<TasksPageProps> = ({
               </h3>
             </div>
             <span className="text-[10px] font-bold text-theme-muted block mb-4 uppercase tracking-wider border-b border-theme-border pb-2">
-              {activeTaskId ? `Typ: ${TASK_LABELS[activeTaskId] || 'Aufgabe'}` : `Modul: ${MODULE_LABELS[activeModuleId] || 'LA - Lineare Algebra'}`}
+              {activeTaskId ? `Typ: ${TASK_LABELS[activeTaskId] || activeTaskId}` : `Modul: ${MODULE_LABELS[activeModuleId] || 'LA - Lineare Algebra'}`}
             </span>
 
             {loadingSideLeaderboard ? (

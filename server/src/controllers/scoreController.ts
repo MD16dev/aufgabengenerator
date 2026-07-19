@@ -11,12 +11,30 @@ export const solveTask = async (req: AuthenticatedRequest, res: Response, next: 
       return res.status(401).json({ error: { message: 'Nicht authentifiziert.' } });
     }
 
-    const { taskTypeId } = req.body;
+    const { taskTypeId, outcome, points } = req.body;
     if (!taskTypeId) {
       return res.status(400).json({ error: { message: 'Bitte taskTypeId angeben.' } });
     }
 
+    // outcome: "solved" (correct on first try) or "revealed" (solution shown,
+    // user self-reported whether they had it right). "skipped" is not recorded.
+    const resolvedOutcome =
+      outcome === 'revealed' ? 'revealed' : 'solved';
+    // Points: a genuine solve is worth 1 point. A revealed task is worth 1 point
+    // ONLY when the user self-reported "Ich hatte es richtig" (outcome "revealed"
+    // with the optional `correct` flag). This keeps the leaderboard reachable for
+    // every task type (stepwise tasks can only be self-assessed) while still
+    // distinguishing genuine solves from self-reported ones in the data.
+    const selfReportedCorrect = outcome === 'revealed' && req.body.correct === true;
+    const resolvedPoints = resolvedOutcome === 'solved' || selfReportedCorrect ? 1 : 0;
+
     // Auto-create/upsert the TaskType in the DB to ensure constraints match
+    const isLinAlg = (taskTypeId === 'lin_alg_det' || taskTypeId === 'lin_alg_det3x3' || taskTypeId === 'lin_alg_matmul'
+      || taskTypeId === 'calc_gl_n_cardinality' || taskTypeId === 'calc_param_determinant_finite_field'
+      || taskTypeId === 'calc_poly_mapping_matrix' || taskTypeId === 'calc_eigenbasis'
+      || taskTypeId === 'calc_linear_code_parameters');
+    const isDSAL = taskTypeId.startsWith('dsal_');
+
     const taskType = await prisma.taskType.upsert({
       where: { id: taskTypeId },
       update: {},
@@ -29,9 +47,9 @@ export const solveTask = async (req: AuthenticatedRequest, res: Response, next: 
           : taskTypeId === 'lin_alg_matmul'
           ? 'Matrizenmultiplikation'
           : taskTypeId === 'calc_gl_n_cardinality'
-          ? 'Kardinalität von GL_n'
+          ? 'Kardinalität GL_n(F_p)'
           : taskTypeId === 'calc_param_determinant_finite_field'
-          ? 'Determinante mit Parameter'
+          ? 'Determinante mit Parameter (F_p)'
           : taskTypeId === 'calc_poly_mapping_matrix'
           ? 'Darstellungsmatrix (Polynomräume)'
           : taskTypeId === 'calc_eigenbasis'
@@ -42,9 +60,73 @@ export const solveTask = async (req: AuthenticatedRequest, res: Response, next: 
           ? 'BUS Quizfragen'
           : taskTypeId === 'os_page_table'
           ? 'Adressübersetzung'
+          : taskTypeId === 'dsal_bst_insert'
+          ? 'BST: Wert einfügen'
+          : taskTypeId === 'dsal_avl_insert'
+          ? 'AVL-Baum: Wert einfügen'
+          : taskTypeId === 'dsal_rb_insert'
+          ? 'Rot-Schwarz-Baum: Wert einfügen'
+          : taskTypeId === 'dsal_btree_insert'
+          ? 'B-Baum: Wert einfügen'
+          : taskTypeId === 'dsal_sort_bubble'
+          ? 'Bubblesort'
+          : taskTypeId === 'dsal_sort_insertion'
+          ? 'Insertionsort'
+          : taskTypeId === 'dsal_sort_selection'
+          ? 'Selectionsort'
+          : taskTypeId === 'dsal_sort_quick'
+          ? 'Quicksort'
+          : taskTypeId === 'dsal_sort_merge'
+          ? 'Mergesort'
+          : taskTypeId === 'dsal_sort_heap'
+          ? 'Heapsort'
+          : taskTypeId === 'dsal_sort_counting'
+          ? 'Countingsort'
+          : taskTypeId === 'dsal_sort_bucket'
+          ? 'Bucketsort'
+          : taskTypeId === 'dsal_graph_bfs'
+          ? 'Breitensuche (BFS)'
+          : taskTypeId === 'dsal_graph_dfs'
+          ? 'Tiefensuche (DFS)'
+          : taskTypeId === 'dsal_graph_topo'
+          ? 'Topologische Sortierung'
+          : taskTypeId === 'dsal_graph_dijkstra'
+          ? 'Dijkstra'
+          : taskTypeId === 'dsal_graph_bellmanford'
+          ? 'Bellman-Ford'
+          : taskTypeId === 'dsal_graph_prim'
+          ? 'Prim (Minimalbaum)'
+          : taskTypeId === 'dsal_graph_kruskal'
+          ? 'Kruskal (Minimalbaum)'
+          : taskTypeId === 'dsal_graph_unionfind'
+          ? 'Union-Find'
+          : taskTypeId === 'dsal_graph_kosaraju'
+          ? 'Kosaraju-Sharir'
+          : taskTypeId === 'dsal_graph_floydwarshall'
+          ? 'Floyd-Warshall'
+          : taskTypeId === 'dsal_hash_div_open'
+          ? 'Hashing: Division + Verkettung'
+          : taskTypeId === 'dsal_hash_div_linear'
+          ? 'Hashing: Division + lineare Sondierung'
+          : taskTypeId === 'dsal_hash_div_quadratic'
+          ? 'Hashing: Division + quadratische Sondierung'
+          : taskTypeId === 'dsal_hash_mul_open'
+          ? 'Hashing: Multiplikation + Verkettung'
+          : taskTypeId === 'dsal_hash_mul_linear'
+          ? 'Hashing: Multiplikation + lineare Sondierung'
+          : taskTypeId === 'dsal_hash_mul_quadratic'
+          ? 'Hashing: Multiplikation + quadratische Sondierung'
+          : taskTypeId === 'dsal_opt_knapsack'
+          ? 'Rucksackproblem (DP)'
+          : taskTypeId === 'dsal_opt_lcs'
+          ? 'Längste gemeinsame Teilfolge (DP)'
+          : taskTypeId === 'dsal_opt_simplex'
+          ? 'Simplex-Algorithmus'
           : 'Aufgabe',
-        module: (taskTypeId.startsWith('lin_alg') || taskTypeId.startsWith('calc'))
-          ? 'Lineare Algebra' 
+        module: isLinAlg
+          ? 'Lineare Algebra'
+          : isDSAL
+          ? 'Algorithmen & Datenstrukturen'
           : taskTypeId.startsWith('os')
           ? 'Betriebssysteme'
           : 'Allgemein'
@@ -55,13 +137,15 @@ export const solveTask = async (req: AuthenticatedRequest, res: Response, next: 
     await prisma.solvedTask.create({
       data: {
         userId: req.user.userId,
-        taskTypeId: taskType.id
+        taskTypeId: taskType.id,
+        outcome: resolvedOutcome,
+        points: resolvedPoints,
       }
     });
 
-    // Count new score for this user
+    // Count new score for this user (only genuine solves count toward the leaderboard)
     const solvedCount = await prisma.solvedTask.count({
-      where: { userId: req.user.userId }
+      where: { userId: req.user.userId, outcome: 'solved' }
     });
 
     res.status(201).json({
@@ -100,6 +184,8 @@ export const getLeaderboard = async (req: AuthenticatedRequest, res: Response, n
         solvedTasks: {
           where: solvedTasksWhereClause,
           select: {
+            outcome: true,
+            points: true,
             taskType: {
               select: {
                 module: true
@@ -112,14 +198,21 @@ export const getLeaderboard = async (req: AuthenticatedRequest, res: Response, n
 
     // Map details to rank items
     const leaderboard = users.map(user => {
-      const solvedCount = user.solvedTasks.length;
-      const lastSolvedModule = user.solvedTasks[solvedCount - 1]?.taskType.module || 'Keines';
+      // Points already encode what counts: genuine solves (outcome "solved")
+      // and self-reported-correct reveals (outcome "revealed", correct:true)
+      // both carry points = 1. Summing points therefore includes both.
+      const solvedCount = user.solvedTasks.reduce((sum, s) => sum + s.points, 0);
+      const revealedCount = user.solvedTasks.filter((s) => s.outcome === 'revealed').length;
+      const lastSolvedModule = user.solvedTasks
+        .filter((s) => s.points > 0)
+        .slice(-1)[0]?.taskType.module || 'Keines';
       
       return {
         username: user.username,
         displayName: user.displayName || user.username,
         profilePic: user.profilePic,
         solvedCount,
+        revealedCount,
         module: lastSolvedModule,
         isUser: req.user ? req.user.userId === user.id : false
       };

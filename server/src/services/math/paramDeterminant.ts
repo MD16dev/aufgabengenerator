@@ -34,7 +34,7 @@ function pmul(a: Poly, b: Poly, p: number): Poly {
   return trim(r);
 }
 
-/** Determinant of a 3x3 matrix of polynomials. */
+/** Determinant of a 3x3 matrix of polynomials (coefficients reduced mod p). */
 function det3Poly(M: Poly[][], p: number): Poly {
   const m = (r: number, c: number) => M[r][c];
   const term =
@@ -42,8 +42,44 @@ function det3Poly(M: Poly[][], p: number): Poly {
   const minor00 = term(m(1, 1), m(2, 2), m(1, 2), m(2, 1));
   const minor01 = term(m(1, 0), m(2, 2), m(1, 2), m(2, 0));
   const minor02 = term(m(1, 0), m(2, 1), m(1, 1), m(2, 0));
-  // det = a00*(a11*a22 - a12*a21) - a01*(a10*a22 - a12*a20) + a02*(a10*a21 - a11*a20)
-  return padd(psub(pmul(m(0, 0), minor00, p), pmul(m(0, 1), minor01, p), p), pmul(m(0, 2), minor02, p), p);
+  // Cofactor expansion along the first row: det = m00·M00 − m01·M01 + m02·M02.
+  return psub(padd(pmul(m(0, 0), minor00, p), pmul(m(0, 2), minor02, p), p), pmul(m(0, 1), minor01, p), p);
+}
+
+/** Integer polynomial helpers (no modulo) for the expanded intermediate step. */
+function iAdd(a: number[], b: number[]): number[] {
+  const n = Math.max(a.length, b.length);
+  const r = new Array(n).fill(0);
+  for (let i = 0; i < n; i++) r[i] = (a[i] || 0) + (b[i] || 0);
+  let k = r.length - 1;
+  while (k > 0 && r[k] === 0) k--;
+  return r.slice(0, k + 1);
+}
+function iSub(a: number[], b: number[]): number[] {
+  const n = Math.max(a.length, b.length);
+  const r = new Array(n).fill(0);
+  for (let i = 0; i < n; i++) r[i] = (a[i] || 0) - (b[i] || 0);
+  let k = r.length - 1;
+  while (k > 0 && r[k] === 0) k--;
+  return r.slice(0, k + 1);
+}
+function iMul(a: number[], b: number[]): number[] {
+  if (a.length === 0 || b.length === 0) return [];
+  const r = new Array(a.length + b.length - 1).fill(0);
+  for (let i = 0; i < a.length; i++)
+    for (let j = 0; j < b.length; j++) r[i + j] += a[i] * b[j];
+  return r;
+}
+/** Determinant of a 3x3 matrix of integer polynomials (no modulo reduction). */
+function det3Int(M: number[][][]): number[] {
+  const m = (r: number, c: number) => M[r][c];
+  const term = (A: number[], B: number[], C: number[], D: number[]) =>
+    iSub(iMul(A, B), iMul(C, D));
+  const minor00 = term(m(1, 1), m(2, 2), m(1, 2), m(2, 1));
+  const minor01 = term(m(1, 0), m(2, 2), m(1, 2), m(2, 0));
+  const minor02 = term(m(1, 0), m(2, 1), m(1, 1), m(2, 0));
+  // Cofactor expansion along the first row: det = m00·M00 − m01·M01 + m02·M02.
+  return iSub(iAdd(iMul(m(0, 0), minor00), iMul(m(0, 2), minor02)), iMul(m(0, 1), minor01));
 }
 
 function formatPoly(poly: Poly): string {
@@ -52,11 +88,11 @@ function formatPoly(poly: Poly): string {
   for (let d = poly.length - 1; d >= 0; d--) {
     const c = poly[d];
     if (c === 0) continue;
-    if (d === 0) parts.push(String(c));
-    else if (d === 1) parts.push(c === 1 ? 'a' : `${c}a`);
-    else parts.push(c === 1 ? `a^${d}` : `${c}a^${d}`);
+    const abs = Math.abs(c);
+    const termStr = d === 0 ? String(abs) : d === 1 ? (abs === 1 ? 'a' : `${abs}a`) : (abs === 1 ? `a^${d}` : `${abs}a^${d}`);
+    parts.push((c < 0 ? '-' : (parts.length === 0 ? '' : '+')) + termStr);
   }
-  return parts.join('+');
+  return parts.join(' ');
 }
 
 function randInt(min: number, max: number): number {
@@ -110,11 +146,16 @@ export function generateParamDeterminantFiniteField(): TaskData {
     term(m(0, 1), m(1, 0), m(2, 2))
   ];
 
+  // Raw (pre-modulo) integer polynomial for the expanded intermediate step.
+  const rawDet = det3Int(matrix.map((row) => row.map((e) => e.slice())));
+
   const explanation = [
     `Wir berechnen die Determinante der $3\\times 3$ Matrix über $\\mathbb{F}_{${p}}$ mit der Regel von Sarrus. Die Variable ist $a$.`,
     `$$\\det = ${sarrusPos.join(' + ')} - \\left(${sarrusNeg.join(' + ')}\\right)$$`,
-    `Jetzt fassen wir nach Potenzen von $a$ zusammen. Da wir in $\\mathbb{F}_{${p}}$ rechnen, werden alle Koeffizienten modulo $p = ${p}$ reduziert.`,
-    `Das liefert das Polynom in $a$: $${formatPoly(det)}$$`
+    `Wir multiplizieren aus und fassen nach Potenzen von $a$ zusammen (noch vor der Modulo-Rechnung):`,
+    `$$\\det = ${formatPoly(rawDet)}$$`,
+    `Da wir in $\\mathbb{F}_{${p}}$ rechnen, reduzieren wir jeden Koeffizienten modulo $p = ${p}$ (also $x \\equiv x \\bmod ${p}$):`,
+    `Das liefert das endgültige Polynom in $a$: $$${formatPoly(det)}$$`
   ];
 
   return {

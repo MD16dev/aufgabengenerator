@@ -17,30 +17,71 @@ export const PomodoroWidget: React.FC = () => {
   const labelColor = mode === 'work' ? 'text-purple-600' : 'text-emerald-500';
 
   return (
-    <div className="fixed bottom-6 right-6 z-40 pointer-events-none" id="pomodoro-widget">
-      {!isWidgetExpanded ? (
-        <button
-          onClick={() => setIsWidgetExpanded(true)}
-          style={{ transition: 'all 0.3s cubic-bezier(0.25, 1, 0.5, 1)' }}
-          className={`pointer-events-auto p-3.5 rounded-full glass-panel shadow-2xl flex items-center gap-2 hover:scale-105 cursor-pointer animate-fadeIn ${
-            isActive ? 'animate-pulse' : ''
-          }`}
+    <div
+      className="fixed bottom-6 right-6 z-40 pointer-events-none"
+      id="pomodoro-widget"
+      onMouseEnter={() => setIsWidgetExpanded(true)}
+      onMouseLeave={() => setIsWidgetExpanded(false)}
+    >
+      {/* Single morphing box: the pill grows into the panel.
+          Only the outer "window" animates its size; inner layers keep fixed
+          dimensions so nothing reflows -> smooth morph. The timestamp is ONE
+          shared element that slides between the pill-center and the ring-center. */}
+      <div
+        style={{
+          transition:
+            'width 0.42s cubic-bezier(0.22, 1, 0.36, 1), height 0.42s cubic-bezier(0.22, 1, 0.36, 1), border-radius 0.42s cubic-bezier(0.22, 1, 0.36, 1)',
+          willChange: 'width, height, border-radius',
+          transform: 'translateZ(0)',
+        }}
+        className={`pointer-events-auto glass-panel shadow-2xl overflow-hidden relative ${
+          isWidgetExpanded ? 'w-64 h-[224px] rounded-2xl' : 'w-[124px] h-12 rounded-[56px]'
+        }`}
+      >
+        {/* Clock icon — only meaningful in the collapsed pill, just fades */}
+        <Clock
+          style={{
+            position: 'absolute',
+            left: '40px',
+            top: '24px',
+            transform: 'translate(-50%, -50%)',
+            opacity: isWidgetExpanded ? 0 : 1,
+            transition: `opacity 0.25s ease ${isWidgetExpanded ? '0s' : '0.12s'}`,
+          }}
+          className={`w-5 h-5 ${labelColor} ${isActive && !isWidgetExpanded ? 'animate-pulse' : ''}`}
+        />
+
+        {/* ONE shared timestamp — slides from pill-center to ring-center */}
+        <span
+          style={{
+            position: 'absolute',
+            left: isWidgetExpanded ? '128px' : '84px',
+            top: isWidgetExpanded ? '100px' : '24px',
+            transform: 'translate(-50%, -50%)',
+            fontSize: isWidgetExpanded ? '16px' : '12px',
+            transition:
+              'left 0.42s cubic-bezier(0.22, 1, 0.36, 1), top 0.42s cubic-bezier(0.22, 1, 0.36, 1), font-size 0.42s cubic-bezier(0.22, 1, 0.36, 1)',
+          }}
+          className="font-extrabold text-theme-primary tabular-nums whitespace-nowrap"
         >
-          <Clock className={`w-5 h-5 ${labelColor}`} />
-          <span className="text-xs font-bold text-theme-primary tabular-nums">
-            {formatTime(minutes, seconds)}
-          </span>
-        </button>
-      ) : (
-        <div className="pointer-events-auto p-5 rounded-2xl glass-panel shadow-2xl w-64 animate-fadeIn">
+          {formatTime(minutes, seconds)}
+        </span>
+
+        {/* Expanded-only content (ring, label, header, buttons) — fades in on
+            expand (slight delay) and out IMMEDIATELY on collapse so it never
+            appears to "fly" while the box shrinks. */}
+        <div
+          style={{
+            position: 'absolute',
+            inset: 0,
+            opacity: isWidgetExpanded ? 1 : 0,
+            pointerEvents: isWidgetExpanded ? 'auto' : 'none',
+            transition: `opacity 0.3s ease ${isWidgetExpanded ? '0.16s' : '0s'}`,
+          }}
+          className="flex flex-col p-5"
+        >
           <div className="flex justify-between items-center mb-4">
             <span className="text-xs font-bold text-theme-secondary">Pomodoro Timer</span>
-            <button
-              onClick={() => setIsWidgetExpanded(false)}
-              className="text-[10px] font-bold text-theme-muted hover:text-theme-primary cursor-pointer"
-            >
-              Minimieren
-            </button>
           </div>
 
           <div className="flex flex-col items-center justify-center mb-4">
@@ -55,14 +96,13 @@ export const PomodoroWidget: React.FC = () => {
                   strokeLinecap="round"
                 />
               </svg>
-              <div className="absolute flex flex-col items-center">
-                <span className="text-base font-extrabold text-theme-primary tabular-nums">
-                  {formatTime(minutes, seconds)}
-                </span>
-                <span className={`text-[8px] font-extrabold uppercase ${labelColor}`}>
-                  {mode === 'work' ? 'Fokus' : 'Pause'}
-                </span>
-              </div>
+              {/* Fokus/Pause label sits just below the shared timestamp */}
+              <span
+                style={{ position: 'absolute', left: '50%', top: '62%', transform: 'translate(-50%, 0)' }}
+                className={`text-[8px] font-extrabold uppercase ${labelColor}`}
+              >
+                {mode === 'work' ? 'Fokus' : 'Pause'}
+              </span>
             </div>
           </div>
 
@@ -82,7 +122,7 @@ export const PomodoroWidget: React.FC = () => {
             </button>
           </div>
         </div>
-      )}
+      </div>
     </div>
   );
 };

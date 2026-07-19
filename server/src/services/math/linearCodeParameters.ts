@@ -4,8 +4,8 @@ function randInt(min: number, max: number): number {
   return Math.floor(Math.random() * (max - min + 1)) + min;
 }
 
-/** Gaussian elimination over F_2 to compute the row rank of a binary matrix. */
-function rankF2(matrix: number[][]): number {
+/** Gaussian elimination over F_2. Returns the rank and the row-echelon form. */
+function rankF2(matrix: number[][]): { rank: number; echelon: number[][] } {
   const rows = matrix.length;
   const cols = matrix[0].length;
   const M = matrix.map((r) => r.slice());
@@ -28,7 +28,7 @@ function rankF2(matrix: number[][]): number {
     row++;
     rank++;
   }
-  return rank;
+  return { rank, echelon: M };
 }
 
 /** Hamming weight of a binary vector. */
@@ -53,6 +53,8 @@ export function generateLinearCodeParameters(): TaskData {
   let A: number[][];
   let k: number;
   let d: number;
+  let echelon: number[][];
+  let codewords: number[][] = [];
   let attempts = 0;
 
   do {
@@ -60,10 +62,12 @@ export function generateLinearCodeParameters(): TaskData {
     A = Array.from({ length: rows }, () =>
       Array.from({ length: cols }, () => (Math.random() < 0.5 ? 0 : 1))
     );
-    k = rankF2(A);
+    const res = rankF2(A);
+    k = res.rank;
+    echelon = res.echelon;
 
     // Generate all 2^k - 1 non-zero linear combinations of the rows.
-    const codewords: number[][] = [];
+    codewords = [];
     for (let mask = 1; mask < (1 << k); mask++) {
       const cw = new Array(cols).fill(0);
       for (let r = 0; r < rows; r++) {
@@ -81,27 +85,36 @@ export function generateLinearCodeParameters(): TaskData {
 
   const mathQuery = `A = \\begin{pmatrix} ${A.map((r) => r.join(' & ')).join(' \\\\ ')} \\end{pmatrix}`;
 
-  // Find a concrete minimal-weight non-zero codeword to illustrate d.
-  const codewords: number[][] = [];
-  for (let mask = 1; mask < (1 << k); mask++) {
+  // Concrete codewords to illustrate d: a few non-trivial combinations.
+  const exampleCombos: Array<{ label: string; cw: number[] }> = [];
+  for (let mask = 1; mask < (1 << k) && exampleCombos.length < 3; mask++) {
     const cw = new Array(cols).fill(0);
+    const usedRows: number[] = [];
     for (let r = 0; r < rows; r++) {
       if ((mask >> r) & 1) {
+        usedRows.push(r + 1);
         for (let c = 0; c < cols; c++) cw[c] ^= A[r][c];
       }
     }
-    codewords.push(cw);
+    exampleCombos.push({ label: usedRows.join('+'), cw });
   }
+  // The displayed example must be a genuine minimum-weight codeword.
+  // Reuse the full codeword list that was already used to compute d.
   const minCodeword = codewords.reduce((best, cw) =>
     weight(cw) < weight(best) ? cw : best
   );
 
   const explanation = [
     `$n$ ist die Länge des Codes, also die Spaltenanzahl der Erzeugermatrix: $n = ${n}$.`,
-    `$k$ ist die Dimension, gleich dem Zeilenrang von $A$ über $\\mathbb{F}_2$ (nach Zeilenstufenform): $k = ${k}$. Es gibt also $2^{${k}}$ Codewörter.`,
-    `Die Minimaldistanz $d$ ist das kleinste Hamming-Gewicht eines von Null verschiedenen Codeworts. Wir betrachten alle $2^{${k}}-1$ nichttrivialen Linearkombinationen der Zeilen.`,
-    `Ein Codewort mit minimalem Gewicht ist $c = (${minCodeword.join('\\;')})$ mit Hamming-Gewicht $\\operatorname{wt}(c) = ${d}$.`,
-    `Also gilt $d = ${d}$, und der Code hat die Parameter: $${answer}$$`
+    `Für die Dimension $k$ bringen wir $A$ über $\\mathbb{F}_2$ auf Zeilenstufenform (Gauß-Elimination):`,
+    `$$A \\xrightarrow{\\text{Zeilenstufenform}} \\begin{pmatrix} ${echelon.map((r) => r.join(' & ')).join(' \\\\ ')} \\end{pmatrix}$$`,
+    `Es bleiben ${k} linear unabhängige Zeilen (Pivotzeilen) übrig, also ist die Dimension $k = ${k}$. Der Code hat $2^{${k}}$ Codewörter.`,
+    `Die Minimaldistanz $d$ ist das kleinste Hamming-Gewicht eines von Null verschiedenen Codeworts. Wir bilden Linearkombinationen der Zeilen (Addition über $\\mathbb{F}_2$):`,
+    exampleCombos
+      .map((ex) => `$$\\text{Zeile } ${ex.label}: \\; (${ex.cw.join('\\;')}) \\quad \\operatorname{wt} = ${weight(ex.cw)}$$`)
+      .join(' '),
+    `Unter allen $2^{${k}}-1$ nichttrivialen Kombinationen ist das minimale Gewicht $d = ${d}$ (z.B. das Codewort $(${minCodeword.join('\\;')})$).`,
+    `Damit hat der Code die Parameter: $$${answer}$$`
   ];
 
   return {

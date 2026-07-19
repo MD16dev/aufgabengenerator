@@ -8,6 +8,45 @@ import { generateEigenbasis } from './eigenbasis';
 import { generateLinearCodeParameters } from './linearCodeParameters';
 import { generateBusAnkiTask } from './osBusAnki';
 import { generatePageTableTask } from './osPageTable';
+import { generateBSTInsertion } from '../dsal/bst';
+import { generateAVLInsertion } from '../dsal/avl';
+import { generateRedBlackInsertion } from '../dsal/redblack';
+import { generateBTreeInsertion } from '../dsal/btree';
+import {
+  generateBubbleSort,
+  generateInsertionSort,
+  generateSelectionSort,
+  generateQuickSort,
+  generateMergeSort,
+  generateHeapSort,
+  generateCountingSort,
+  generateBucketSort,
+} from '../dsal/sorting';
+import {
+  generateBFS,
+  generateDFS,
+  generateTopoSort,
+  generateDijkstra,
+  generateBellmanFord,
+  generatePrim,
+  generateKruskal,
+  generateUnionFind,
+  generateKosaraju,
+  generateFloydWarshall,
+} from '../dsal/graphs';
+import {
+  generateHashingDivisionOpen,
+  generateHashingDivisionLinear,
+  generateHashingDivisionQuadratic,
+  generateHashingMultiplicationOpen,
+  generateHashingMultiplicationLinear,
+  generateHashingMultiplicationQuadratic,
+} from '../dsal/hashing';
+import {
+  generateKnapsack,
+  generateLCS,
+  generateSimplex,
+} from '../dsal/optimization';
 
 /**
  * Registry mapping a task type id (sent by the frontend) to its generator
@@ -25,6 +64,42 @@ export const taskGenerators: Record<string, () => TaskData | Promise<TaskData>> 
   'calc_linear_code_parameters': generateLinearCodeParameters,
   'os_bus_anki': generateBusAnkiTask,
   'os_page_table': generatePageTableTask,
+  // DSAL — Algorithmen & Datenstrukturen (translated from exercisegenerator)
+  'dsal_bst_insert': generateBSTInsertion,
+  'dsal_avl_insert': generateAVLInsertion,
+  'dsal_rb_insert': generateRedBlackInsertion,
+  'dsal_btree_insert': generateBTreeInsertion,
+  // DSAL — sorting (translated from exercisegenerator)
+  'dsal_sort_bubble': generateBubbleSort,
+  'dsal_sort_insertion': generateInsertionSort,
+  'dsal_sort_selection': generateSelectionSort,
+  'dsal_sort_quick': generateQuickSort,
+  'dsal_sort_merge': generateMergeSort,
+  'dsal_sort_heap': generateHeapSort,
+  'dsal_sort_counting': generateCountingSort,
+  'dsal_sort_bucket': generateBucketSort,
+  // DSAL — graph algorithms (translated from exercisegenerator)
+  'dsal_graph_bfs': generateBFS,
+  'dsal_graph_dfs': generateDFS,
+  'dsal_graph_topo': generateTopoSort,
+  'dsal_graph_dijkstra': generateDijkstra,
+  'dsal_graph_bellmanford': generateBellmanFord,
+  'dsal_graph_prim': generatePrim,
+  'dsal_graph_kruskal': generateKruskal,
+  'dsal_graph_unionfind': generateUnionFind,
+  'dsal_graph_kosaraju': generateKosaraju,
+  'dsal_graph_floydwarshall': generateFloydWarshall,
+  // DSAL — hashing (translated from exercisegenerator)
+  'dsal_hash_div_open': generateHashingDivisionOpen,
+  'dsal_hash_div_linear': generateHashingDivisionLinear,
+  'dsal_hash_div_quadratic': generateHashingDivisionQuadratic,
+  'dsal_hash_mul_open': generateHashingMultiplicationOpen,
+  'dsal_hash_mul_linear': generateHashingMultiplicationLinear,
+  'dsal_hash_mul_quadratic': generateHashingMultiplicationQuadratic,
+  // DSAL — optimization (dynamic programming + linear programming)
+  'dsal_opt_knapsack': generateKnapsack,
+  'dsal_opt_lcs': generateLCS,
+  'dsal_opt_simplex': generateSimplex,
   // ...new task types go here
 };
 

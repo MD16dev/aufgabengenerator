@@ -12,6 +12,7 @@ model User {
   username     String       @unique
   passwordHash String
   displayName  String?
+  isAdmin      Boolean      @default(false)
   profilePic   String?      // Will store base64 data URI
   createdAt    DateTime     @default(now())
   solvedTasks  SolvedTask[]
@@ -38,6 +39,10 @@ model SolvedTask {
   userId     String
   taskTypeId String
   solvedAt   DateTime @default(now())
+  // How the task was resolved: "solved" (correct on first try) or "revealed" (solution shown).
+  outcome    String   @default("solved")
+  // Points awarded. Correct = 1; revealed = 0 (not counted toward the leaderboard).
+  points     Int      @default(1)
 
   user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   taskType TaskType @relation(fields: [taskTypeId], references: [id], onDelete: Cascade)

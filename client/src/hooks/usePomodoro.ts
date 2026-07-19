@@ -1,10 +1,31 @@
-import { useState, useEffect } from 'react';
+import { createContext, useContext, useState, useEffect, createElement, type ReactNode } from 'react';
 
 /**
  * Manages the Pomodoro timer state: countdown, work/break modes,
  * configurable durations and the completion chime.
+ *
+ * The state lives in a single `PomodoroProvider` so that every consumer
+ * (e.g. the HomePage panel and the floating widget) stays synchronized.
  */
-export function usePomodoro() {
+interface PomodoroContextValue {
+  workTime: number;
+  breakTime: number;
+  minutes: number;
+  seconds: number;
+  isActive: boolean;
+  mode: 'work' | 'break';
+  isWidgetExpanded: boolean;
+  setIsWidgetExpanded: (v: boolean) => void;
+  setIsActive: (v: boolean) => void;
+  handleWorkTimeChange: (mins: number) => void;
+  handleBreakTimeChange: (mins: number) => void;
+  reset: () => void;
+  getProgressPercentage: () => number;
+}
+
+const PomodoroContext = createContext<PomodoroContextValue | null>(null);
+
+function usePomodoroState(): PomodoroContextValue {
   const [workTime, setWorkTime] = useState<number>(25);
   const [breakTime, setBreakTime] = useState<number>(5);
   const [minutes, setMinutes] = useState<number>(25);
@@ -101,4 +122,17 @@ export function usePomodoro() {
     setIsWidgetExpanded, setIsActive,
     handleWorkTimeChange, handleBreakTimeChange, reset, getProgressPercentage,
   };
+}
+
+export function PomodoroProvider({ children }: { children: ReactNode }) {
+  const value = usePomodoroState();
+  return createElement(PomodoroContext.Provider, { value }, children);
+}
+
+export function usePomodoro(): PomodoroContextValue {
+  const ctx = useContext(PomodoroContext);
+  if (!ctx) {
+    throw new Error('usePomodoro must be used within a PomodoroProvider');
+  }
+  return ctx;
 }

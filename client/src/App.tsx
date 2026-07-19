@@ -14,6 +14,7 @@ import { DuelLobby } from './components/DuelLobby';
 import { DuelRunner } from './components/DuelRunner';
 import { useAuth } from './hooks/useAuth';
 import { useLeaderboard } from './hooks/useLeaderboard';
+import { PomodoroProvider } from './hooks/usePomodoro';
 
 type TabType = 'home' | 'tasks' | 'leaderboard' | 'profile' | 'admin' | 'duels';
 
@@ -35,8 +36,7 @@ export default function App() {
     eloLeaderboard, fetchEloLeaderboard,
   } = useLeaderboard();
 
-  const adminUsername = import.meta.env.VITE_ADMIN_USERNAME || 'MD16';
-  const isAdmin = user?.username === adminUsername;
+  const isAdmin = !!user?.isAdmin;
 
   // Local storage reading fallback for guest score
   const [guestScore, setGuestScore] = useState<number>(() => {
@@ -99,6 +99,7 @@ export default function App() {
   };
 
   return (
+    <PomodoroProvider>
     <div className="min-h-screen flex flex-col transition-colors duration-200">
       <div className="absolute top-0 left-1/4 w-96 h-96 bg-purple-600/5 rounded-full blur-3xl pointer-events-none" />
       <div className="absolute top-1/3 right-1/4 w-96 h-96 bg-indigo-600/5 rounded-full blur-3xl pointer-events-none" />
@@ -197,5 +198,6 @@ export default function App() {
       )}
       <FeedbackModal isOpen={isFeedbackOpen} onClose={() => setIsFeedbackOpen(false)} currentUser={user} />
     </div>
+    </PomodoroProvider>
   );
 }

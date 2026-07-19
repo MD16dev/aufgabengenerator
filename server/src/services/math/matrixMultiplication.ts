@@ -71,12 +71,13 @@ export function generateMatrixMultiplicationTask(): MatrixMultiplicationTask {
   const steps = [
     `Gegeben sind die Matrizen:
      $$A = ${latexA} \\quad (${n} \\times ${m}) \\quad \\text{und} \\quad B = ${latexB} \\quad (${m} \\times ${k})$$`,
-    `Gesucht ist das Produkt $C = A \\cdot B$. Da die Anzahl der Spalten von $A$ ($${m}$$) mit der Anzahl der Zeilen von $B$ ($${m}$$) übereinstimmt, ist die Multiplikation definiert. Die Produktmatrix $C$ hat die Dimension $${n} \\times ${k}$$.`,
+    `Gesucht ist das Produkt $C = A \\cdot B$. Die Multiplikation ist definiert, weil die Spaltenzahl von $A$ (${m}) gleich der Zeilenzahl von $B$ (${m}) ist. Die Ergebnismatrix $C$ hat die Dimension $${n} \\times ${k}$.`,
   ];
 
-  let calcSteps = `Wir berechnen die einzelnen Einträge $C_{i,j}$ (Zeile $i$, Spalte $j$) der Ergebnismatrix nach dem Schema „Zeile mal Spalte“:\n\n`;
+  steps.push(`Wir berechnen die Eintraege von $C$ mit dem Schema "Zeile mal Spalte": jedes $C_{i,j}$ ist das Skalarprodukt aus der $i$-ten Zeile von $A$ und der $j$-ten Spalte von $B$.`);
 
   for (let i = 0; i < n; i++) {
+    const rowLines: string[] = [];
     for (let j = 0; j < k; j++) {
       const terms: string[] = [];
       let sumVal = 0;
@@ -90,11 +91,10 @@ export function generateMatrixMultiplicationTask(): MatrixMultiplicationTask {
       const termProducts = matrixA[i].map((valA, p) => valA * matrixB[p][j]);
       const termProductsStr = termProducts.map(fmt).join(' + ');
 
-      calcSteps += `* **$C_{${i+1},${j+1}}$** (Zeile ${i+1} von $A$, Spalte ${j+1} von $B$):
-        $$C_{${i+1},${j+1}} = ${sumExpr} = ${termProductsStr} = ${sumVal}$$\n`;
+      rowLines.push(`C_{${i+1},${j+1}} = ${sumExpr} = ${termProductsStr} = ${sumVal}`);
     }
+    steps.push(`Zeile ${i+1} von $C$ (Zeile ${i+1} von $A$ mal die Spalten von $B$):\n$$${rowLines.join(' \\\\ ')}$$`);
   }
-  steps.push(calcSteps);
 
   steps.push(`Wir setzen die berechneten Werte in die Produktmatrix ein:
      $$C = A \\cdot B = ${latexC}$$`);

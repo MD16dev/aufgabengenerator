@@ -3,8 +3,7 @@ import { prisma } from '../utils/db';
 import { AuthenticatedRequest } from '../middleware/auth';
 
 function isAdmin(req: AuthenticatedRequest): boolean {
-  const adminUsername = process.env.ADMIN_USERNAME || 'MD16';
-  return !!req.user && req.user.username === adminUsername;
+  return !!req.user && req.user.isAdmin === true;
 }
 
 function buildDefaultIssueTitle(category: string, message: string): string {

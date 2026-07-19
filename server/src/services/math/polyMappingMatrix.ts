@@ -10,6 +10,8 @@ interface PolyRule {
   description: string;
   /** images[col] = coordinate vector (in basis B) of phi(b_col). */
   images: number[][];
+  /** Optional derivation shown for complex rules (e.g. finite differences). */
+  derivation?: string[];
 }
 
 function randInt(min: number, max: number): number {
@@ -54,6 +56,12 @@ function pickRule(): PolyRule {
         [0, 0, 2, 1], // phi(X^2) = 2X + 1
         [0, 0, 0, 1], // phi(X)   = 1
         [0, 0, 0, 0]  // phi(1)   = 0
+      ],
+      derivation: [
+        `\\varphi(X^3) = (X+1)^3 - X^3 = (X^3 + 3X^2 + 3X + 1) - X^3 = 3X^2 + 3X + 1`,
+        `\\varphi(X^2) = (X+1)^2 - X^2 = (X^2 + 2X + 1) - X^2 = 2X + 1`,
+        `\\varphi(X) = (X+1) - X = 1`,
+        `\\varphi(1) = 1 - 1 = 0`
       ]
     }),
     // Shift up: phi(X^k) = X^{k+1} for k<3, phi(X^3)=0
@@ -123,18 +131,27 @@ export function generatePolyMappingMatrix(): TaskData {
 
   const explanation = [
     `Gegeben ist die lineare Abbildung $${rule.description}$ auf dem Polynomraum $P_3$ mit Basis $B = \\{X^3, X^2, X, 1\\}$.`,
-    `Wir bestimmen das Bild jedes Basisvektors und schreiben es als Linearkombination der Basis:`,
-    imageLatex.map((s) => `$$${s}$$`).join(' '),
-    `Die Koeffizienten von $\\varphi(b_i)$ sind genau die $i$-te Spalte der Darstellungsmatrix $M_B^B(\\varphi)$.`,
-    `Damit erhalten wir: $${formatMatrix(matrix)}$$`
+    `Wir bestimmen das Bild jedes Basisvektors und schreiben es als Linearkombination der Basis:`
   ];
+
+  if (rule.derivation) {
+    explanation.push(`Zunächst rechnen wir die Abbildung für die einzelnen Potenzen aus:`);
+    explanation.push(...rule.derivation.map((d) => `$$${d}$$`));
+    explanation.push(`Daraus ergeben sich die Bilder der Basisvektoren:`);
+  }
+
+  explanation.push(imageLatex.map((s) => `$$${s}$$`).join(' '));
+  explanation.push(
+    `Die Koeffizienten von $\\varphi(b_i)$ sind genau die $i$-te Spalte der Darstellungsmatrix $M_B^B(\\varphi)$.`
+  );
+  explanation.push(`Damit erhalten wir: $$${formatMatrix(matrix)}$$`);
 
   return {
     type: 'calc_poly_mapping_matrix',
     mathQuery,
     answer: formatMatrix(matrix),
     explanation,
-    prompt: `Gegeben sei die lineare Abbildung $\\varphi$ mit ${rule.description}. Bestimme die Darstellungsmatrix $M_B^B(\\varphi)$ bezüglich $B = \\{X^3, X^2, X, 1\\}$.`,
+    prompt: `Gegeben sei die lineare Abbildung $\\varphi$ mit ${rule.description}. Bestimme die Darstellungsmatrix $M_B^B(\\varphi)$ bezüglich $B = \\{X^3, X^2, X, 1\\}$. (Achtung: Der Koordinatenvektor ist absteigend nach Grad geordnet als $[c_3, c_2, c_1, c_0]$ – das konstante Glied steht also am Ende.)`,
     inputHint: 'Matrix zeilenweise, Einträge durch Komma, Zeilen durch Semikolon, z.B. [1,0,0,0;0,2,1,0;...]'
   };
 }
