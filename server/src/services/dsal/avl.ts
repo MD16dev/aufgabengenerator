@@ -166,3 +166,114 @@ export function generateAVLInsertion(): TaskData {
     ],
   };
 }
+
+function minAVL(node: AVLNode): AVLNode {
+  let n = node;
+  while (n.left) n = n.left;
+  return n;
+}
+
+/** Immutable AVL delete with rebalancing on the way up. */
+function deleteAVL(node: AVLNode | null, value: number): { node: AVLNode | null; rotation: string | null } {
+  if (!node) return { node: null, rotation: null };
+  let rotation: string | null = null;
+  let newNode: AVLNode;
+  if (value < node.value) {
+    const r = deleteAVL(node.left, value);
+    newNode = { value: node.value, left: r.node, right: node.right, height: 0 };
+    if (r.rotation) rotation = r.rotation;
+  } else if (value > node.value) {
+    const r = deleteAVL(node.right, value);
+    newNode = { value: node.value, left: node.left, right: r.node, height: 0 };
+    if (r.rotation) rotation = r.rotation;
+  } else {
+    // Node found
+    if (!node.left) return { node: node.right, rotation: null };
+    if (!node.right) return { node: node.left, rotation: null };
+    const succ = minAVL(node.right);
+    const r = deleteAVL(node.right, succ.value);
+    newNode = { value: succ.value, left: node.left, right: r.node, height: 0 };
+    if (r.rotation) rotation = r.rotation;
+  }
+  update(newNode);
+  const balance = h(newNode.left) - h(newNode.right);
+  if (balance > 1) {
+    const left = newNode.left!;
+    if (h(left.left) >= h(left.right)) {
+      const rot = `Balancefaktor bei ${newNode.value} = +${balance} (linkslastig) → Rechtsrotation.`;
+      return { node: rotateRight(newNode), rotation: rotation ? `${rotation} ${rot}` : rot };
+    }
+    const rot = `Balancefaktor bei ${newNode.value} = +${balance} (linkslastig) → Links-Rechts-Drehung.`;
+    const rotated = rotateRight({ value: newNode.value, left: rotateLeft(left), right: newNode.right, height: 0 });
+    return { node: rotated, rotation: rotation ? `${rotation} ${rot}` : rot };
+  }
+  if (balance < -1) {
+    const right = newNode.right!;
+    if (h(right.right) >= h(right.left)) {
+      const rot = `Balancefaktor bei ${newNode.value} = ${balance} (rechtslastig) → Linksrotation.`;
+      return { node: rotateLeft(newNode), rotation: rotation ? `${rotation} ${rot}` : rot };
+    }
+    const rot = `Balancefaktor bei ${newNode.value} = ${balance} (rechtslastig) → Rechts-Links-Drehung.`;
+    const rotated = rotateLeft({ value: newNode.value, left: newNode.left, right: rotateRight(right), height: 0 });
+    return { node: rotated, rotation: rotation ? `${rotation} ${rot}` : rot };
+  }
+  return { node: newNode, rotation };
+}
+
+export function generateAVLDeletion(): TaskData {
+  const start = buildRandomAVL(getRandomInt(4, 7));
+  const startJSON = toJSON(start);
+
+  const numOps = getRandomInt(1, 2);
+  const steps: TaskData['steps'] = [];
+  const taskList: string[] = [];
+  let current: AVLNode | null = start;
+  const collect = (n: AVLNode | null, acc: number[] = []): number[] => {
+    if (!n) return acc;
+    acc.push(n.value);
+    collect(n.left, acc);
+    collect(n.right, acc);
+    return acc;
+  };
+  for (let i = 0; i < numOps; i++) {
+    const all = collect(current);
+    // Prefer a deletion that triggers a rebalance (rotation), for didactic value.
+    let chosen: number | null = null;
+    let chosenRes: { node: AVLNode | null; rotation: string | null } | null = null;
+    for (let attempt = 0; attempt < 15 && chosen === null; attempt++) {
+      const v = all[getRandomInt(0, all.length - 1)];
+      const r = deleteAVL(current, v);
+      if (r.rotation) { chosen = v; chosenRes = r; }
+    }
+    if (chosen === null) {
+      const v = all[getRandomInt(0, all.length - 1)];
+      chosenRes = deleteAVL(current, v);
+      chosen = v;
+    }
+    current = chosenRes!.node;
+    steps.push({
+      instruction: `Lösche den Wert ${chosen} aus dem AVL-Baum.`,
+      kind: 'tree',
+      tree: toJSON(current)!,
+      annotation: chosenRes!.rotation ? chosenRes!.rotation : 'Keine Rotation nötig (Baum bleibt balanciert).',
+    });
+    taskList.push(`${i + 1}. ${chosen} löschen`);
+  }
+
+  return {
+    type: 'dsal_avl_delete',
+    mathQuery: `\\text{Führe die Lösch-Operationen nacheinander aus und gib den Baum nach jeder Operation an.}`,
+    answer: '',
+    renderMode: 'tree',
+    tree: startJSON ?? undefined,
+    prompt: `AVL-Baum: Ausgangsbaum mit ${size(start)} Knoten. Löschen wie im BST, danach Balancefaktor prüfen und ggf. rotieren.`,
+    inputHint: 'Zeige nach jeder Operation den balancierten Baum.',
+    taskList,
+    steps,
+    explanation: [
+      `Löschen wie im BST (Inorder-Nachfolger bei zwei Kindern), dann Balancefaktor auf dem Rückweg prüfen.`,
+      `Der Balancefaktor ist $\\text{Höhe(links)} - \\text{Höhe(rechts)}$; erlaubt sind nur $-1, 0, +1$.`,
+      `Bei Ungleichgewicht (\\pm 2) wird rotiert: einfach (außenlastig) oder doppelt (innenlastig).`,
+    ],
+  };
+}

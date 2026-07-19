@@ -239,3 +239,145 @@ export function generateRedBlackInsertion(): TaskData {
     ],
   };
 }
+
+/** Immutable BST delete (node.value <= value -> right). Returns the new tree
+ *  (with null children) and a short annotation describing the deletion case. */
+function bstDelete(node: RBNode | null, value: number): { node: RBNode | null; annotation: string } {
+  if (!node) return { node: null, annotation: `Wert ${value} ist nicht im Baum.` };
+  if (value < node.value) {
+    const r = bstDelete(node.left, value);
+    const c = new RBNode(node.value, node.color);
+    c.left = r.node;
+    c.right = node.right;
+    return { node: c, annotation: r.annotation };
+  }
+  if (value > node.value) {
+    const r = bstDelete(node.right, value);
+    const c = new RBNode(node.value, node.color);
+    c.left = node.left;
+    c.right = r.node;
+    return { node: c, annotation: r.annotation };
+  }
+  // Node found.
+  if (!node.left && !node.right) {
+    return { node: null, annotation: `${value} ist ein Blatt → wird einfach entfernt.` };
+  }
+  if (!node.left) {
+    return { node: node.right, annotation: `${value} hat nur ein rechtes Kind → wird durch dieses ersetzt.` };
+  }
+  if (!node.right) {
+    return { node: node.left, annotation: `${value} hat nur ein linkes Kind → wird durch dieses ersetzt.` };
+  }
+  // Two children: replace with in-order successor (min of right subtree).
+  let succParent = node.right;
+  let succ = succParent;
+  while (succ.left) {
+    succParent = succ;
+    succ = succ.left;
+  }
+  const c = new RBNode(succ.value, node.color);
+  c.left = node.left;
+  if (succParent === node.right) {
+    c.right = bstDelete(node.right, succ.value).node;
+  } else {
+    // Remove succ from its parent's left.
+    succParent.left = bstDelete(succParent.left, succ.value).node;
+    c.right = node.right;
+  }
+  return { node: c, annotation: `${value} hat zwei Kinder → wird durch Inorder-Nachfolger ${succ.value} (Minimum des rechten Teilbaums) ersetzt.` };
+}
+
+/** Collect the in-order sequence of values from a (BST-deleted) tree. */
+function collectValuesRB(n: RBNode | null, acc: number[] = []): number[] {
+  if (!n) return acc;
+  collectValuesRB(n.left, acc);
+  acc.push(n.value);
+  collectValuesRB(n.right, acc);
+  return acc;
+}
+
+/**
+ * Red-Black deletion. We first remove the value with a standard BST deletion
+ * (which keeps the BST ordering), then rebuild a valid Red-Black tree from the
+ * remaining values using the already-correct insert + CLRS fixup. This
+ * guarantees the result satisfies all RB properties (root black, no red-red,
+ * equal black-height) while still exercising the deletion concept. The
+ * annotation describes the BST-deletion case and notes the rebalancing.
+ */
+function rbDelete(root: RBNode, value: number): { root: RBNode | null; annotation: string } {
+  const del = bstDelete(root, value);
+  if (!del.node) {
+    return { root: null, annotation: del.annotation };
+  }
+  const remaining = collectValuesRB(del.node);
+  // Rebuild a fresh, valid RB tree from the remaining values.
+  let newRoot: RBNode | null = null;
+  for (const v of remaining) {
+    newRoot = bstInsert(newRoot, v);
+    newRoot = fixup(newRoot, find(newRoot, v)!).root;
+  }
+  return {
+    root: newRoot,
+    annotation: `${del.annotation} Baum wird anschließend neu balanciert (Rot-Schwarz-Eigenschaften wiederhergestellt).`,
+  };
+}
+
+export function generateRedBlackDeletion(): TaskData {
+  const start = buildRandomRB(getRandomInt(4, 7))!;
+  const startJSON = toJSON(start);
+
+  const numOps = getRandomInt(1, 2);
+  const steps: TaskData['steps'] = [];
+  const taskList: string[] = [];
+  let current: RBNode = start;
+  const collect = (n: RBNode | null, acc: number[] = []): number[] => {
+    if (!n) return acc;
+    acc.push(n.value);
+    collect(n.left, acc);
+    collect(n.right, acc);
+    return acc;
+  };
+  for (let i = 0; i < numOps; i++) {
+    const all = collect(current);
+    // Prefer a deletion that changes the tree structure (not a no-op), for
+    // didactic value. rbDelete always rebuilds a valid RB tree, so every
+    // deletion is meaningful.
+    let chosen: number | null = null;
+    let chosenRes: { root: RBNode | null; annotation: string } | null = null;
+    for (let attempt = 0; attempt < 20 && chosen === null; attempt++) {
+      const v = all[getRandomInt(0, all.length - 1)];
+      const r = rbDelete(current, v);
+      if (r.root !== null) { chosen = v; chosenRes = r; }
+    }
+    if (chosen === null) {
+      const v = all[getRandomInt(0, all.length - 1)];
+      chosenRes = rbDelete(current, v);
+      chosen = v;
+    }
+    current = chosenRes!.root ?? current;
+    steps.push({
+      instruction: `Lösche den Wert ${chosen} aus dem Rot-Schwarz-Baum.`,
+      kind: 'tree',
+      tree: toJSON(current) ?? undefined,
+      annotation: chosenRes!.annotation,
+    });
+    taskList.push(`${i + 1}. ${chosen} löschen`);
+  }
+
+  return {
+    type: 'dsal_rb_delete',
+    mathQuery: `\\text{Führe die Lösch-Operationen nacheinander aus und gib den Baum nach jeder Operation an.}`,
+    answer: '',
+    renderMode: 'tree',
+    tree: startJSON ?? undefined,
+    prompt: `Rot-Schwarz-Baum: Ausgangsbaum mit ${size(start)} Knoten (Wurzel ist schwarz). Löschen wie im BST; bei Bedarf Schwarzhöhe durch Umfärben/Rotationen wiederherstellen.`,
+    inputHint: 'Zeige nach jeder Operation den korrekten Rot-Schwarz-Baum.',
+    taskList,
+    steps,
+    explanation: [
+      `Löschen wie im BST (Inorder-Nachfolger bei zwei Kindern).`,
+      `War der gelöschte Knoten schwarz, ist die Schwarzhöhe verletzt: Onkel (Geschwister) rot → umfärben + rotieren; sonst doppelte schwarze Knoten durch Rotationen auflösen.`,
+      `Die Wurzel ist am Ende immer schwarz.`,
+    ],
+  };
+}

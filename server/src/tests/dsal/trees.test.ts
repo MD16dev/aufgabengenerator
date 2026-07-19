@@ -1,8 +1,8 @@
 import { describe, it, expect } from 'vitest';
-import { generateBSTInsertion } from '../../services/dsal/bst';
-import { generateAVLInsertion } from '../../services/dsal/avl';
-import { generateRedBlackInsertion } from '../../services/dsal/redblack';
-import { generateBTreeInsertion } from '../../services/dsal/btree';
+import { generateBSTInsertion, generateBSTDeletion } from '../../services/dsal/bst';
+import { generateAVLInsertion, generateAVLDeletion } from '../../services/dsal/avl';
+import { generateRedBlackInsertion, generateRedBlackDeletion } from '../../services/dsal/redblack';
+import { generateBTreeInsertion, generateBTreeDeletion } from '../../services/dsal/btree';
 import type { TreeNodeJSON } from '../../services/math/types';
 
 function countNodes(n: TreeNodeJSON | null | undefined): number {
@@ -88,6 +88,60 @@ describe('B-Tree insertion generator', () => {
     const maxKeys = 3; // degree 2 -> 2*2-1
     for (let i = 0; i < 20; i++) {
       const t = generateBTreeInsertion();
+      expect(t.steps!.length).toBeGreaterThan(0);
+      for (const s of t.steps!) {
+        expect(s.kind).toBe('tree');
+        expect(maxKeysPerNode(s.tree)).toBeLessThanOrEqual(maxKeys);
+      }
+    }
+  });
+});
+
+describe('BST deletion generator', () => {
+  it('produces a valid BST after each deletion step', () => {
+    for (let i = 0; i < 20; i++) {
+      const t = generateBSTDeletion();
+      expect(t.type).toBe('dsal_bst_delete');
+      expect(t.steps!.length).toBeGreaterThan(0);
+      for (const s of t.steps!) {
+        expect(s.kind).toBe('tree');
+        expect(isBST(s.tree)).toBe(true);
+      }
+    }
+  });
+});
+
+describe('AVL deletion generator', () => {
+  it('produces a balanced tree after each deletion step', () => {
+    for (let i = 0; i < 20; i++) {
+      const t = generateAVLDeletion();
+      expect(t.steps!.length).toBeGreaterThan(0);
+      for (const s of t.steps!) {
+        expect(s.kind).toBe('tree');
+        expect(isBalanced(s.tree)).toBe(true);
+      }
+    }
+  });
+});
+
+describe('Red-Black deletion generator', () => {
+  it('produces a valid RB tree (root black) after each deletion step', () => {
+    for (let i = 0; i < 20; i++) {
+      const t = generateRedBlackDeletion();
+      expect(t.steps!.length).toBeGreaterThan(0);
+      for (const s of t.steps!) {
+        expect(s.kind).toBe('tree');
+        expect(s.tree!.color).toBe('black');
+      }
+    }
+  });
+});
+
+describe('B-Tree deletion generator', () => {
+  it('produces a valid B-tree with <=3 keys per node after each deletion step', () => {
+    const maxKeys = 3; // degree 2 -> 2*2-1
+    for (let i = 0; i < 20; i++) {
+      const t = generateBTreeDeletion();
       expect(t.steps!.length).toBeGreaterThan(0);
       for (const s of t.steps!) {
         expect(s.kind).toBe('tree');

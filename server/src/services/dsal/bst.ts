@@ -144,3 +144,92 @@ export function generateBSTInsertion(): TaskData {
     ],
   };
 }
+
+function findNode(node: BSTNode | null, value: number): BSTNode | null {
+  let n = node;
+  while (n) {
+    if (n.value === value) return n;
+    n = value < n.value ? n.left : n.right;
+  }
+  return null;
+}
+
+function minNode(node: BSTNode): BSTNode {
+  let n = node;
+  while (n.left) n = n.left;
+  return n;
+}
+
+/** Immutable BST delete. Returns the new tree and an annotation. */
+function deleteValue(node: BSTNode | null, value: number): { node: BSTNode | null; annotation: string } {
+  if (!node) return { node: null, annotation: `Wert ${value} ist nicht im Baum.` };
+  if (value < node.value) {
+    const r = deleteValue(node.left, value);
+    return { node: { value: node.value, left: r.node, right: node.right }, annotation: r.annotation };
+  }
+  if (value > node.value) {
+    const r = deleteValue(node.right, value);
+    return { node: { value: node.value, left: node.left, right: r.node }, annotation: r.annotation };
+  }
+  // Node found
+  if (!node.left && !node.right) {
+    return { node: null, annotation: `${value} ist ein Blatt → wird einfach entfernt.` };
+  }
+  if (!node.left) {
+    return { node: node.right, annotation: `${value} hat nur ein rechtes Kind → wird durch dieses ersetzt.` };
+  }
+  if (!node.right) {
+    return { node: node.left, annotation: `${value} hat nur ein linkes Kind → wird durch dieses ersetzt.` };
+  }
+  const succ = minNode(node.right);
+  const r = deleteValue(node.right, succ.value);
+  return {
+    node: { value: succ.value, left: node.left, right: r.node },
+    annotation: `${value} hat zwei Kinder → wird durch den Inorder-Nachfolger ${succ.value} (Minimum des rechten Teilbaums) ersetzt.`,
+  };
+}
+
+export function generateBSTDeletion(): TaskData {
+  const startTree = buildRandomBST(getRandomInt(5, 8), 99);
+  const startJSON = toJSON(startTree);
+
+  const numOps = getRandomInt(1, 2);
+  const steps: TaskData['steps'] = [];
+  const taskList: string[] = [];
+  let current = startTree;
+  for (let i = 0; i < numOps; i++) {
+    const all = collectValues(current);
+    // Prefer a node with two children (most interesting deletion case).
+    const twoChild = all.filter((v) => {
+      const n = findNode(current, v);
+      return n && n.left && n.right;
+    });
+    const pool = twoChild.length > 0 ? twoChild : all;
+    const delVal = pool[getRandomInt(0, pool.length - 1)];
+    const res = deleteValue(current, delVal);
+    current = res.node;
+    steps.push({
+      instruction: `Lösche den Wert ${delVal} aus dem Baum.`,
+      kind: 'tree',
+      tree: toJSON(current)!,
+      annotation: res.annotation,
+    });
+    taskList.push(`${i + 1}. ${delVal} löschen`);
+  }
+
+  return {
+    type: 'dsal_bst_delete',
+    mathQuery: `\\text{Führe die Lösch-Operationen nacheinander aus und gib den Baum nach jeder Operation an.}`,
+    answer: '',
+    renderMode: 'tree',
+    tree: startJSON ?? undefined,
+    prompt: `Binärbaum-Suche: Ausgangsbaum mit ${size(startTree)} Knoten. Löschregel: Blatt → entfernen; 1 Kind → ersetzen; 2 Kinder → durch Inorder-Nachfolger ersetzen.`,
+    inputHint: 'Zeige nach jeder Operation den entstehenden Baum.',
+    taskList,
+    steps,
+    explanation: [
+      `Ausgangsbaum hat ${size(startTree)} Knoten.`,
+      `Löschregel: Ist der zu löschende Knoten ein Blatt, wird er entfernt; hat er genau ein Kind, wird er durch dieses ersetzt; hat er zwei Kinder, wird er durch den Inorder-Nachfolger (Minimum des rechten Teilbaums) ersetzt.`,
+    ],
+  };
+}
