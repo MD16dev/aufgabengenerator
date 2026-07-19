@@ -562,7 +562,7 @@ export function generateDijkstra(): TaskData {
     steps: [{ instruction: `Kürzeste Distanz von ${start} nach ${target}`, kind: 'text' as const, answer: String(d), annotation: `Distanzen: ${distStr}` }],
     explanation: [
       `Dijkstra ist gierig: eine Prioritätswarteschlange wählt stets den unbesuchten Knoten mit kleinster Distanz, danach werden Nachbarn via Relaxation aktualisiert.`,
-      `Kürzester Weg von ${start}$ nach ${target}$: ${path}$ (Länge ${d}$).`,
+      `Kürzester Weg von $${start}$ nach $${target}$: $${path}$ (Länge $${d}$).`,
     ],
   };
 }
@@ -589,7 +589,7 @@ export function generateBellmanFord(): TaskData {
     steps: [{ instruction: `Kürzeste Distanz von ${start} nach ${target}`, kind: 'text' as const, answer: String(d), annotation: `Distanzen: ${distStr}` }],
     explanation: [
       `Bellman-Ford entspannt alle Kanten wiederholt (hier mit positiven Gewichten) und kann im Gegensatz zu Dijkstra auch negative Kantengewichte verarbeiten.`,
-      `Kürzester Weg von ${start}$ nach ${target}$: ${path}$ (Länge ${d}$).`,
+      `Kürzester Weg von $${start}$ nach $${target}$: $${path}$ (Länge $${d}$).`,
     ],
   };
 }
