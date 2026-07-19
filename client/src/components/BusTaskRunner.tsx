@@ -2,6 +2,11 @@ import React, { useState, useEffect } from 'react';
 import { CheckCircle2, XCircle, HelpCircle, ArrowRight, RefreshCw, ArrowLeft, Lock } from 'lucide-react';
 import { API_BASE } from '../config';
 
+interface ChoiceOption {
+  id: string;
+  caption?: string;
+}
+
 interface TaskData {
   type: string;
   mathQuery: string;
@@ -9,7 +14,7 @@ interface TaskData {
   explanation?: string[];
   prompt?: string;
   inputHint?: string;
-  options?: string[];
+  choices?: ChoiceOption[];
 }
 
 interface BusTaskRunnerProps {
@@ -159,13 +164,13 @@ export const BusTaskRunner: React.FC<BusTaskRunnerProps> = ({
 
             <form onSubmit={handleSubmit} className="space-y-4 my-6">
               <div className="flex flex-col gap-3">
-                {task.options?.map((option, idx) => {
-                  const isSelected = selectedOption === option;
-                  const isCorrectAnswer = option === task.answer;
+                {task.choices?.map((option, idx) => {
+                  const isSelected = selectedOption === option.id;
+                  const isCorrectAnswer = option.id === task.answer;
                   const hasAnswered = status !== 'idle';
-                  
+
                   let optionClass = 'border-theme-border bg-theme-card hover:border-emerald-500/50';
-                  
+
                   if (isSelected) {
                     optionClass = 'border-emerald-500 bg-emerald-500/5 dark:bg-emerald-500/10';
                   }
@@ -195,11 +200,11 @@ export const BusTaskRunner: React.FC<BusTaskRunnerProps> = ({
                       key={idx}
                       type="button"
                       disabled={hasAnswered || isLocked}
-                      onClick={() => setSelectedOption(option)}
+                      onClick={() => setSelectedOption(option.id)}
                       className={`w-full text-left p-4 rounded-xl border transition-all text-theme-primary cursor-pointer flex items-center justify-between gap-3 ${optionClass}`}
                     >
                       <div className="flex-grow">
-                        <SafeHtml html={option} />
+                        <SafeHtml html={option.caption ?? option.id} />
                       </div>
                       {hasAnswered && isCorrectAnswer && (
                         <CheckCircle2 className="w-5 h-5 text-emerald-500 shrink-0" />
