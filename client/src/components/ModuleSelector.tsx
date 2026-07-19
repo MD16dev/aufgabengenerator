@@ -449,9 +449,9 @@ export const ModuleSelector: React.FC<ModuleSelectorProps> = ({ activeModule, on
                       </div>
                     )}
                   </div>
-                  <p className="text-theme-muted text-xs md:text-sm leading-relaxed mb-4 font-medium">
+                  <div className="text-theme-muted text-xs md:text-sm leading-relaxed mb-4 font-medium">
                     <LatexTextRenderer text={task.description} />
-                  </p>
+                  </div>
                 </div>
 
                 {task.isActive && (
