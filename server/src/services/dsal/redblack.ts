@@ -31,6 +31,11 @@ function getRandomInt(min: number, max: number): number {
   return Math.floor(Math.random() * (max - min + 1)) + min;
 }
 
+function size(n: RBNode | null): number {
+  if (!n) return 0;
+  return 1 + size(n.left) + size(n.right);
+}
+
 /** BST insert (node.value <= value -> right), new node red. Returns new root. */
 function bstInsert(root: RBNode | null, value: number): RBNode {
   const node = new RBNode(value, 'red');
@@ -223,7 +228,7 @@ export function generateRedBlackInsertion(): TaskData {
     answer: '',
     renderMode: 'tree',
     tree: startJSON ?? undefined,
-    prompt: `Ausgangs-Rot-Schwarz-Baum (Wurzel ist schwarz).`,
+    prompt: `Rot-Schwarz-Baum: Ausgangsbaum mit ${size(start)} Knoten (Wurzel ist schwarz). Neuer Knoten wird rot eingefügt; bei rot-rot-Konflikt umfärben oder rotieren.`,
     inputHint: 'Zeige nach jeder Operation den korrekten Rot-Schwarz-Baum.',
     taskList,
     steps,

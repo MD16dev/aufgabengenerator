@@ -81,6 +81,7 @@ export const GraphRenderer: React.FC<GraphRendererProps> = ({
     mx: number; my: number;
     px: number; py: number;
     lx: number; ly: number;
+    angleDeg: number;
   }
   const geoms: EdgeGeom[] = [];
   graph.edges.forEach((e, idx) => {
@@ -94,6 +95,7 @@ export const GraphRenderer: React.FC<GraphRendererProps> = ({
     const dx = b.x - a.x;
     const dy = b.y - a.y;
     const len = Math.hypot(dx, dy) || 1;
+    const angleDeg = (Math.atan2(dy, dx) * 180) / Math.PI;
     const r = 18;
     const x1 = a.x + (dx / len) * r;
     const y1 = a.y + (dy / len) * r;
@@ -106,9 +108,22 @@ export const GraphRenderer: React.FC<GraphRendererProps> = ({
     const py = dx / len;
     const mx = (x1 + x2) / 2 + px * bow * bowSide;
     const my = (y1 + y2) / 2 + py * bow * bowSide;
-    const lx = mx + px * (bow === 0 ? 12 : 6) * bowSide;
-    const ly = my + py * (bow === 0 ? 12 : 6) * bowSide - 2;
-    geoms.push({ e, idx, a, b, x1, y1, x2, y2, hi, bidirectional, bowSide, bow, mx, my, px, py, lx, ly });
+    
+    // Position label at 38% along the edge/curve instead of exact midpoint.
+    // This shifts labels away from the center of the ring where edges cross,
+    // making them significantly cleaner and easier to read.
+    const t = 0.38;
+    const mt = 1 - t;
+    const kx = bow === 0
+      ? x1 + (x2 - x1) * t
+      : mt * mt * x1 + 2 * mt * t * mx + t * t * x2;
+    const ky = bow === 0
+      ? y1 + (y2 - y1) * t
+      : mt * mt * y1 + 2 * mt * t * my + t * t * y2;
+
+    const lx = kx + px * (bow === 0 ? 12 : 6) * bowSide;
+    const ly = ky + py * (bow === 0 ? 12 : 6) * bowSide - 2;
+    geoms.push({ e, idx, a, b, x1, y1, x2, y2, hi, bidirectional, bowSide, bow, mx, my, px, py, lx, ly, angleDeg });
   });
 
   // Detect straight edges that lie on the same line and overlap (e.g. two
@@ -151,8 +166,14 @@ export const GraphRenderer: React.FC<GraphRendererProps> = ({
       g.bowSide = k % 2 === 0 ? 1 : -1;
       g.mx = (g.x1 + g.x2) / 2 + g.px * g.bow * g.bowSide;
       g.my = (g.y1 + g.y2) / 2 + g.py * g.bow * g.bowSide;
-      g.lx = g.mx + g.px * 6 * g.bowSide;
-      g.ly = g.my + g.py * 6 * g.bowSide - 2;
+      
+      const t = 0.38;
+      const mt = 1 - t;
+      const kx = mt * mt * g.x1 + 2 * mt * t * g.mx + t * t * g.x2;
+      const ky = mt * mt * g.y1 + 2 * mt * t * g.my + t * t * g.y2;
+      
+      g.lx = kx + g.px * 6 * g.bowSide;
+      g.ly = ky + g.py * 6 * g.bowSide - 2;
     });
   });
 
@@ -254,7 +275,7 @@ export const GraphRenderer: React.FC<GraphRendererProps> = ({
       </defs>
 
       {geoms.map((g) => {
-        const { e, idx, a, x1, y1, x2, y2, hi, bow, mx, my, lx, ly } = g;
+        const { e, idx, a, x1, y1, x2, y2, hi, bow, mx, my, lx, ly, angleDeg } = g;
         const stroke = hi ? '#10b981' : '#94a3b8';
         const strokeW = hi ? 3 : 2;
         const arrow = hi ? 'graph-arrow-hi' : 'graph-arrow';
@@ -274,21 +295,37 @@ export const GraphRenderer: React.FC<GraphRendererProps> = ({
                 strokeWidth={strokeW}
                 markerEnd={graph.directed ? `url(#${arrow})` : undefined}
               />
-              {e.weight !== undefined && (
-                <text
-                  x={cx}
-                  y={cy - loopR - 4}
-                  textAnchor="middle"
-                  fontSize="13"
-                  fontWeight="bold"
-                  fill={hi ? '#10b981' : '#64748b'}
-                  stroke="#ffffff"
-                  strokeWidth="3"
-                  paintOrder="stroke"
-                >
-                  {e.weight}
-                </text>
-              )}
+              {e.weight !== undefined && (() => {
+                const labelStr = String(e.weight);
+                const bgWidth = labelStr.length * 7 + 10;
+                const bgHeight = 16;
+                const lx = cx;
+                const ly = cy - loopR - 8;
+                return (
+                  <g>
+                    <rect
+                      x={lx - bgWidth / 2}
+                      y={ly - bgHeight / 2 - 2}
+                      width={bgWidth}
+                      height={bgHeight}
+                      rx="4"
+                      fill="#ffffff"
+                      stroke={hi ? '#10b981' : '#cbd5e1'}
+                      strokeWidth="1"
+                    />
+                    <text
+                      x={lx}
+                      y={ly + 3}
+                      textAnchor="middle"
+                      fontSize="11"
+                      fontWeight="bold"
+                      fill={hi ? '#047857' : '#475569'}
+                    >
+                      {e.weight}
+                    </text>
+                  </g>
+                );
+              })()}
             </g>
           );
         }
@@ -314,33 +351,43 @@ export const GraphRenderer: React.FC<GraphRendererProps> = ({
                 markerEnd={graph.directed ? `url(#${arrow})` : undefined}
               />
             )}
-            {e.weight !== undefined && (
-              <>
-                <text
-                  x={lx}
-                  y={ly}
-                  textAnchor="middle"
-                  fontSize="13"
-                  fontWeight="bold"
-                  fill={hi ? '#10b981' : '#64748b'}
-                  stroke="#ffffff"
-                  strokeWidth="3.5"
-                  paintOrder="stroke"
-                >
-                  {e.weight}
-                </text>
-                <text
-                  x={lx}
-                  y={ly}
-                  textAnchor="middle"
-                  fontSize="13"
-                  fontWeight="bold"
-                  fill={hi ? '#10b981' : '#64748b'}
-                >
-                  {e.weight}
-                </text>
-              </>
-            )}
+            {e.weight !== undefined && (() => {
+              const labelStr = String(e.weight);
+              const hasArrow = graph.directed;
+              const bgWidth = labelStr.length * 7 + (hasArrow ? 18 : 10);
+              const bgHeight = 16;
+              return (
+                <g>
+                  <rect
+                    x={lx - bgWidth / 2}
+                    y={ly - bgHeight / 2 - 2}
+                    width={bgWidth}
+                    height={bgHeight}
+                    rx="4"
+                    fill="#ffffff"
+                    stroke={hi ? '#10b981' : '#cbd5e1'}
+                    strokeWidth="1"
+                  />
+                  <text
+                    x={hasArrow ? lx - 4 : lx}
+                    y={ly + 3}
+                    textAnchor="middle"
+                    fontSize="11"
+                    fontWeight="bold"
+                    fill={hi ? '#047857' : '#475569'}
+                  >
+                    {e.weight}
+                  </text>
+                  {hasArrow && (
+                    <path
+                      d="M -3.5 -2.5 L 2.5 0 L -3.5 2.5 Z"
+                      fill={hi ? '#047857' : '#475569'}
+                      transform={`translate(${lx + labelStr.length * 3.5 + 4}, ${ly - 1}) rotate(${angleDeg})`}
+                    />
+                  )}
+                </g>
+              );
+            })()}
           </g>
         );
       })}

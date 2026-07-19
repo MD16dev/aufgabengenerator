@@ -155,7 +155,7 @@ export function generateParamDeterminantFiniteField(): TaskData {
     `Wir multiplizieren aus und fassen nach Potenzen von $a$ zusammen (noch vor der Modulo-Rechnung):`,
     `$$\\det = ${formatPoly(rawDet)}$$`,
     `Da wir in $\\mathbb{F}_{${p}}$ rechnen, reduzieren wir jeden Koeffizienten modulo $p = ${p}$ (also $x \\equiv x \\bmod ${p}$):`,
-    `Das liefert das endgültige Polynom in $a$: $${formatPoly(det)}$$`
+    `Das liefert das endgültige Polynom in $a$: $$${formatPoly(det)}$$`
   ];
 
   return {

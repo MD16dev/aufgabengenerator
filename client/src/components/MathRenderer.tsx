@@ -35,11 +35,13 @@ export const LatexTextRenderer: React.FC<LatexTextRendererProps> = ({ text }) =>
           // This is a block math segment
           return <MathRenderer key={blockIdx} math={blockContent} block />;
         }
-        
-        // This is a text segment, which may contain inline math ($)
+
+        // This is a text segment, which may contain inline math ($).
+        // Use a Fragment (not <p>) so we never nest a <p> inside another <p>
+        // (which produces invalid HTML / hydration errors and breaks rendering).
         const inlines = blockContent.split('$');
         return (
-          <p key={blockIdx} className="inline-block w-full my-1">
+          <React.Fragment key={blockIdx}>
             {inlines.map((inlineContent, inlineIdx) => {
               if (inlineIdx % 2 === 1) {
                 // This is an inline math segment
@@ -48,7 +50,7 @@ export const LatexTextRenderer: React.FC<LatexTextRendererProps> = ({ text }) =>
               // Regular text
               return <span key={inlineIdx}>{inlineContent}</span>;
             })}
-          </p>
+          </React.Fragment>
         );
       })}
     </div>

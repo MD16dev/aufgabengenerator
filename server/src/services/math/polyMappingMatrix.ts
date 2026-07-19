@@ -144,7 +144,7 @@ export function generatePolyMappingMatrix(): TaskData {
   explanation.push(
     `Die Koeffizienten von $\\varphi(b_i)$ sind genau die $i$-te Spalte der Darstellungsmatrix $M_B^B(\\varphi)$.`
   );
-  explanation.push(`Damit erhalten wir: $${formatMatrix(matrix)}$$`);
+  explanation.push(`Damit erhalten wir: $$${formatMatrix(matrix)}$$`);
 
   return {
     type: 'calc_poly_mapping_matrix',

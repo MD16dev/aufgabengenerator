@@ -72,20 +72,33 @@ describe('DSAL graph generators (stepwise + visual)', () => {
     }
   });
 
-  it('kosaraju: single step mapping every vertex to a representative', () => {
+  it('kosaraju: partition into strong components (sets of vertices)', () => {
     for (let t = 0; t < 20; t++) {
       const task = generateKosaraju();
-      const parts = task.steps![0].answer!.split(', ');
-      expect(parts.length).toBe(task.graph!.vertices.length);
-      for (const p of parts) expect(p).toMatch(/^[a-z]→[a-z]$/);
+      const answer = task.steps![0].answer!;
+      // Sets are joined by "}, {", so split on "}, " and re-add the closing brace.
+      const sets = answer.split('}, ').map((s, i, arr) => (i === arr.length - 1 ? s : s + '}'));
+      // Every set is of the form "{a, b, c}".
+      for (const s of sets) expect(s).toMatch(/^\{[a-z](, [a-z])*\}$/);
+      // The union of all sets covers every vertex exactly once.
+      const letters = answer.match(/[a-z]/g)!;
+      expect(letters.sort().join(',')).toBe([...task.graph!.vertices].sort().join(','));
     }
   });
 
-  it('floyd-warshall: single step with a square matrix', () => {
+  it('floyd-warshall: single distance answer plus full matrix in annotation', () => {
     for (let t = 0; t < 20; t++) {
       const task = generateFloydWarshall();
-      const rows = task.steps![0].answer!.split(' | ');
-      const n = rows.length;
+      // The step answer is now a single integer distance.
+      expect(task.steps![0].answer).toMatch(/^\d+$/);
+      // The full matrix is preserved in the annotation for the solution view.
+      const ann = task.steps![0].annotation ?? '';
+      expect(ann).toContain('Vollständige Matrix');
+      // Extract the matrix part after the colon.
+      const matrixPart = ann.split(': ')[1];
+      const rows = matrixPart.split(' | ');
+      const n = task.graph!.vertices.length;
+      expect(rows.length).toBe(n);
       for (const row of rows) {
         const cells = row.split(' ');
         expect(cells.length).toBe(n);

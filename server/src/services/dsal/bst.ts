@@ -133,7 +133,7 @@ export function generateBSTInsertion(): TaskData {
     answer: '',
     renderMode: 'tree',
     tree: startJSON ?? undefined,
-    prompt: `Ausgangsbaum mit ${size(startTree)} Knoten.`,
+    prompt: `Binärbaum-Suche: Ausgangsbaum mit ${size(startTree)} Knoten. Einfügeregel: Wert $\\ge$ Knotenwert $\\to$ rechts, sonst links (gleiche Werte werden rechts eingehängt).`,
     inputHint: 'Zeige nach jeder Operation den entstehenden Baum.',
     taskList,
     steps,

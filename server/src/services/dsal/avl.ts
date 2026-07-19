@@ -95,6 +95,11 @@ function getRandomInt(min: number, max: number): number {
   return Math.floor(Math.random() * (max - min + 1)) + min;
 }
 
+function size(n: AVLNode | null): number {
+  if (!n) return 0;
+  return 1 + size(n.left) + size(n.right);
+}
+
 function buildRandomAVL(size: number): AVLNode | null {
   const values = new Set<number>();
   while (values.size < size) values.add(getRandomInt(1, 99));
@@ -150,7 +155,7 @@ export function generateAVLInsertion(): TaskData {
     answer: '',
     renderMode: 'tree',
     tree: startJSON ?? undefined,
-    prompt: `Ausgangs-AVL-Baum.`,
+    prompt: `AVL-Baum: Ausgangsbaum mit ${size(start)} Knoten. Einfügen wie im BST, danach Balancefaktor prüfen und ggf. rotieren.`,
     inputHint: 'Zeige nach jeder Operation den balancierten Baum.',
     taskList,
     steps,

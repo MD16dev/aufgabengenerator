@@ -29,6 +29,8 @@ interface HashResult {
   walkthrough: string[];
   /** True iff every value was placed without silently overwriting another. */
   success: boolean;
+  /** True iff at least one collision occurred (a value landed in an occupied slot). */
+  collision: boolean;
 }
 
 function getRandomInt(min: number, max: number): number {
@@ -83,6 +85,7 @@ function hashValues(values: number[], cfg: HashConfig): HashResult {
   const table: Slot[] = Array.from({ length: cfg.capacity }, () => []);
   const walkthrough: string[] = [];
   let recordedFirstCollision = false;
+  let collision = false;
 
   if (cfg.probing) {
     const probeType = cfg.probeType ?? 'linear';
@@ -94,13 +97,14 @@ function hashValues(values: number[], cfg: HashConfig): HashResult {
       let iteration = 0;
       const steps: string[] = [];
       const collided = table[pos].length > 0;
+      if (collided) collision = true;
       while (table[pos].length > 0) {
         iteration++;
         const offset = cfg.probing(iteration);
         const next = (initial + offset) % cfg.capacity;
         const occupied = table[next].length > 0;
         if (!recordedFirstCollision) {
-          steps.push(formatProbeStep(initial, iteration, probeType, c1, c2, next, occupied));
+          steps.push(formatProbeStep(initial, iteration, probeType, c1, c2, next, occupied, cfg.capacity));
         }
         pos = next;
         if (iteration > cfg.capacity) break; // safety: no free slot found
@@ -112,16 +116,20 @@ function hashValues(values: number[], cfg: HashConfig): HashResult {
       table[pos] = [value];
     }
   } else {
-    // Open hashing (chaining): append to the slot list.
+    // Open hashing (chaining): append to the slot list. A collision occurs when
+    // a slot already holds at least one value before this insert.
     for (const value of values) {
       const pos = cfg.hash(value);
+      if (table[pos].length > 0) collision = true;
       table[pos].push(value);
     }
   }
 
   const flat = table.flat();
-  const success = values.every((v) => flat.includes(v));
-  return { table, walkthrough, success };
+  // success requires that EVERY inserted value is present AND that no value was
+  // silently overwritten (the safety break above can otherwise drop a value).
+  const success = values.every((v) => flat.includes(v)) && flat.length === values.length;
+  return { table, walkthrough, success, collision };
 }
 
 function tableToAnswer(table: Slot[]): string {
@@ -153,13 +161,14 @@ function formatProbeStep(
   c2: number,
   next: number,
   occupied: boolean,
+  capacity: number,
 ): string {
   const term =
     probeType === 'linear'
-      ? `${initial} + ${i} = ${next}`
-      : `${initial} + c_1 \cdot ${i} + c_2 \cdot ${i}^2 = ${next}`;
+      ? `${initial} + ${i} \\equiv ${next}`
+      : `${initial} + c_1 \\cdot ${i} + c_2 \\cdot ${i}^2 \\equiv ${next}`;
   const verdict = occupied ? 'belegt' : 'frei \\rightarrow Wert dort';
-  return `i=${i}: ${term} \\rightarrow ${verdict}`;
+  return `i=${i}: ${term} \\pmod{${capacity}} \\rightarrow ${verdict}`;
 }
 
 function buildExplanation(opts: {
@@ -167,10 +176,27 @@ function buildExplanation(opts: {
   walkthrough: string[];
   table: Slot[];
   chaining: boolean;
+  values: number[];
+  hash: (v: number) => number;
+  capacity: number;
 }): string[] {
   // Wrap the LaTeX bits in $...$ / $$...$$ so the frontend LatexTextRenderer
   // actually renders them with KaTeX (otherwise they show as literal text).
   const lines = [`Formel: $$${opts.formula}$$`];
+  // Explain WHY a collision happens: group values by their initial hash slot.
+  const bySlot = new Map<number, number[]>();
+  for (const v of opts.values) {
+    const h = opts.hash(v);
+    if (!bySlot.has(h)) bySlot.set(h, []);
+    bySlot.get(h)!.push(v);
+  }
+  const collisions = [...bySlot.entries()].filter(([, vs]) => vs.length > 1);
+  if (collisions.length > 0) {
+    const desc = collisions
+      .map(([slot, vs]) => `Slot ${slot} (wegen $h(k)=${slot}$): ${vs.join(', ')}`)
+      .join('; ');
+    lines.push(`Kollision: Mehrere Werte landen im selben Slot — ${desc}.`);
+  }
   if (opts.chaining) {
     lines.push('Verkettung: Werte mit gleichem $h(k)$ werden im selben Slot aneinandergehängt.');
   } else if (opts.walkthrough.length > 0) {
@@ -199,7 +225,7 @@ export function generateHashingDivisionOpen(): TaskData {
     capacity = pickCapacity(numValues);
     values = randomValues(numValues, 1, 99);
     result = hashValues(values, { capacity, hash: divisionHash(capacity) });
-  } while (!result.success);
+  } while (!result.success || !result.collision);
   const table = result.table;
   return {
     type: 'dsal_hash_div_open',
@@ -211,7 +237,7 @@ export function generateHashingDivisionOpen(): TaskData {
     answer: tableToAnswer(table),
     prompt: `Fügen Sie die Werte nacheinander mit der Divisionsmethode (ohne Sondierung, also Verkettung) in eine Hash-Tabelle der Länge ${capacity} ein.`,
     inputHint: 'Format: "0: [a, b]; 1: [c]; 2: []; …".',
-    explanation: buildExplanation({ formula: 'h(k) = k \\bmod m', walkthrough: result.walkthrough, table, chaining: true }),
+    explanation: buildExplanation({ formula: 'h(k) = k \bmod m', walkthrough: result.walkthrough, table, chaining: true, values, hash: divisionHash(capacity), capacity }),
   };
 }
 
@@ -224,7 +250,7 @@ export function generateHashingDivisionLinear(): TaskData {
     capacity = pickCapacity(numValues);
     values = randomValues(numValues, 1, 99);
     result = hashValues(values, { capacity, hash: divisionHash(capacity), probing: linearProbing(), probeType: 'linear' });
-  } while (!result.success);
+  } while (!result.success || !result.collision);
   const table = result.table;
   return {
     type: 'dsal_hash_div_linear',
@@ -236,7 +262,7 @@ export function generateHashingDivisionLinear(): TaskData {
     answer: tableToAnswer(table),
     prompt: `Fügen Sie die Werte nacheinander mit der Divisionsmethode und linearer Sondierung in eine Hash-Tabelle der Länge ${capacity} ein.`,
     inputHint: 'Format: "0: [a]; 1: [b]; 2: []; …".',
-    explanation: buildExplanation({ formula: 'h(k) = k \\bmod m,\\ h(k) + i', walkthrough: result.walkthrough, table, chaining: false }),
+    explanation: buildExplanation({ formula: 'h(k) = k \bmod m,\ h(k) + i', walkthrough: result.walkthrough, table, chaining: false, values, hash: divisionHash(capacity), capacity }),
   };
 }
 
@@ -260,7 +286,7 @@ export function generateHashingDivisionQuadratic(): TaskData {
       c1,
       c2,
     });
-  } while (!result.success);
+  } while (!result.success || !result.collision);
   const table = result.table;
   return {
     type: 'dsal_hash_div_quadratic',
@@ -272,7 +298,7 @@ export function generateHashingDivisionQuadratic(): TaskData {
     answer: tableToAnswer(table),
     prompt: `Fügen Sie die Werte nacheinander mit der Divisionsmethode und quadratischer Sondierung (c₁=${c1}, c₂=${c2}) in eine Hash-Tabelle der Länge ${capacity} ein.`,
     inputHint: 'Format: "0: [a]; 1: [b]; 2: []; …".',
-    explanation: buildExplanation({ formula: 'h(k) = k \\bmod m,\\ h(k) + c_1 i + c_2 i^2', walkthrough: result.walkthrough, table, chaining: false }),
+    explanation: buildExplanation({ formula: 'h(k) = k \bmod m,\ h(k) + c_1 i + c_2 i^2', walkthrough: result.walkthrough, table, chaining: false, values, hash: divisionHash(capacity), capacity }),
   };
 }
 
@@ -287,7 +313,7 @@ export function generateHashingMultiplicationOpen(): TaskData {
     factor = (getRandomInt(0, 98) + 1) / 100; // c in (0,1), strictly < 1
     values = randomValues(numValues, 1, 99);
     result = hashValues(values, { capacity, hash: multiplicationHash(capacity, factor) });
-  } while (!result.success);
+  } while (!result.success || !result.collision);
   const table = result.table;
   return {
     type: 'dsal_hash_mul_open',
@@ -299,7 +325,7 @@ export function generateHashingMultiplicationOpen(): TaskData {
     answer: tableToAnswer(table),
     prompt: `Fügen Sie die Werte nacheinander mit der Multiplikationsmethode (c=${factor}, ohne Sondierung) in eine Hash-Tabelle der Länge ${capacity} ein.`,
     inputHint: 'Format: "0: [a, b]; 1: [c]; 2: []; …".',
-    explanation: buildExplanation({ formula: 'h(k) = \\lfloor m \\cdot \\operatorname{frac}(c \\cdot k) \\rfloor', walkthrough: result.walkthrough, table, chaining: true }),
+    explanation: buildExplanation({ formula: 'h(k) = \lfloor m \cdot \operatorname{frac}(c \cdot k) \rfloor', walkthrough: result.walkthrough, table, chaining: true, values, hash: multiplicationHash(capacity, factor), capacity }),
   };
 }
 
@@ -314,7 +340,7 @@ export function generateHashingMultiplicationLinear(): TaskData {
     factor = (getRandomInt(0, 98) + 1) / 100;
     values = randomValues(numValues, 1, 99);
     result = hashValues(values, { capacity, hash: multiplicationHash(capacity, factor), probing: linearProbing(), probeType: 'linear' });
-  } while (!result.success);
+  } while (!result.success || !result.collision);
   const table = result.table;
   return {
     type: 'dsal_hash_mul_linear',
@@ -326,7 +352,7 @@ export function generateHashingMultiplicationLinear(): TaskData {
     answer: tableToAnswer(table),
     prompt: `Fügen Sie die Werte nacheinander mit der Multiplikationsmethode (c=${factor}) und linearer Sondierung in eine Hash-Tabelle der Länge ${capacity} ein.`,
     inputHint: 'Format: "0: [a]; 1: [b]; 2: []; …".',
-    explanation: buildExplanation({ formula: 'h(k) = \\lfloor m \\cdot \\operatorname{frac}(c \\cdot k) \\rfloor,\\ h(k) + i', walkthrough: result.walkthrough, table, chaining: false }),
+    explanation: buildExplanation({ formula: 'h(k) = \lfloor m \cdot \operatorname{frac}(c \cdot k) \rfloor,\ h(k) + i', walkthrough: result.walkthrough, table, chaining: false, values, hash: multiplicationHash(capacity, factor), capacity }),
   };
 }
 
@@ -352,7 +378,7 @@ export function generateHashingMultiplicationQuadratic(): TaskData {
       c1,
       c2,
     });
-  } while (!result.success);
+  } while (!result.success || !result.collision);
   const table = result.table;
   return {
     type: 'dsal_hash_mul_quadratic',
@@ -364,6 +390,6 @@ export function generateHashingMultiplicationQuadratic(): TaskData {
     answer: tableToAnswer(table),
     prompt: `Fügen Sie die Werte nacheinander mit der Multiplikationsmethode (c=${factor}) und quadratischer Sondierung (c₁=${c1}, c₂=${c2}) in eine Hash-Tabelle der Länge ${capacity} ein.`,
     inputHint: 'Format: "0: [a]; 1: [b]; 2: []; …".',
-    explanation: buildExplanation({ formula: 'h(k) = \\lfloor m \\cdot \\operatorname{frac}(c \\cdot k) \\rfloor,\\ h(k) + c_1 i + c_2 i^2', walkthrough: result.walkthrough, table, chaining: false }),
+    explanation: buildExplanation({ formula: 'h(k) = \lfloor m \cdot \operatorname{frac}(c \cdot k) \rfloor,\ h(k) + c_1 i + c_2 i^2', walkthrough: result.walkthrough, table, chaining: false, values, hash: multiplicationHash(capacity, factor), capacity }),
   };
 }

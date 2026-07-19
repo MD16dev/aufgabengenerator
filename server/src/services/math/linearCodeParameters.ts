@@ -114,7 +114,7 @@ export function generateLinearCodeParameters(): TaskData {
       .map((ex) => `$$\\text{Zeile } ${ex.label}: \\; (${ex.cw.join('\\;')}) \\quad \\operatorname{wt} = ${weight(ex.cw)}$$`)
       .join(' '),
     `Unter allen $2^{${k}}-1$ nichttrivialen Kombinationen ist das minimale Gewicht $d = ${d}$ (z.B. das Codewort $(${minCodeword.join('\\;')})$).`,
-    `Damit hat der Code die Parameter: $${answer}$$`
+    `Damit hat der Code die Parameter: $$${answer}$$`
   ];
 
   return {

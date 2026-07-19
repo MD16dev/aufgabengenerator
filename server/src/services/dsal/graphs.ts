@@ -64,19 +64,71 @@ function randomConnectedGraph(n: number, directed = false): Graph {
     seen.add(k);
     edges.push({ from: a, to: b, weight: weights[wIdx++] });
   };
-  // Spanning tree to guarantee connectivity.
-  for (let i = 1; i < n; i++) {
-    const j = getRandomInt(0, i - 1);
-    addEdge(vertices[i], vertices[j]);
-  }
-  // Only a small number of extra edges so the graph stays sparse and readable.
-  // A dense graph (tree + many chords) produces a tangle of crossing lines that
-  // is hard to follow, so we cap extras at 1-2 regardless of n.
-  const extra = getRandomInt(1, 2);
-  for (let e = 0; e < extra; e++) {
-    const a = vertices[getRandomInt(0, n - 1)];
-    const b = vertices[getRandomInt(0, n - 1)];
-    addEdge(a, b);
+  // Pre-defined non-crossing planar edge connections for vertices a-g.
+  const allowedPlanarEdges = [
+    ['e', 'd'],
+    ['d', 'f'],
+    ['d', 'b'],
+    ['f', 'b'],
+    ['f', 'a'],
+    ['b', 'a'],
+    ['b', 'c'],
+    ['b', 'g'],
+    ['c', 'a'],
+    ['g', 'c'],
+  ].filter(([u, v]) => vertices.includes(u) && vertices.includes(v));
+
+  // Determine if we can build a planar graph using the allowed planar connections
+  const usePlanarGeneration = vertices.every(
+    (v) => ['a', 'b', 'c', 'd', 'e', 'f', 'g'].includes(v.toLowerCase())
+  );
+
+  if (usePlanarGeneration && allowedPlanarEdges.length > 0) {
+    // Spanning tree over the allowed planar edges to guarantee planarity and connectivity.
+    const connectedVertices = [vertices[0]];
+    const remaining = new Set(vertices.slice(1));
+    const treeEdges: [string, string][] = [];
+
+    while (remaining.size > 0) {
+      const candidates = allowedPlanarEdges.filter(
+        ([u, v]) =>
+          (connectedVertices.includes(u) && remaining.has(v)) ||
+          (connectedVertices.includes(v) && remaining.has(u))
+      );
+      if (candidates.length === 0) break;
+      const edge = candidates[getRandomInt(0, candidates.length - 1)];
+      const [u, v] = edge;
+      const newVertex = remaining.has(u) ? u : v;
+      connectedVertices.push(newVertex);
+      remaining.delete(newVertex);
+      treeEdges.push([u, v]);
+    }
+
+    for (const [u, v] of treeEdges) {
+      addEdge(u, v);
+    }
+
+    // Add 1-2 extra random edges from the remaining allowed planar edges
+    const remainingAllowed = allowedPlanarEdges.filter(([u, v]) => !seen.has(key(u, v)));
+    const extra = Math.min(getRandomInt(1, 2), remainingAllowed.length);
+    for (let e = 0; e < extra; e++) {
+      const idx = getRandomInt(0, remainingAllowed.length - 1);
+      const [u, v] = remainingAllowed[idx];
+      addEdge(u, v);
+      remainingAllowed.splice(idx, 1);
+    }
+  } else {
+    // Fallback standard connectivity spanning tree
+    for (let i = 1; i < n; i++) {
+      const j = getRandomInt(0, i - 1);
+      addEdge(vertices[i], vertices[j]);
+    }
+    const extra = getRandomInt(1, 2);
+    for (let e = 0; e < extra; e++) {
+      const a = vertices[getRandomInt(0, n - 1)];
+      const b = vertices[getRandomInt(0, n - 1)];
+      addEdge(a, b);
+    }
   }
   return { directed, vertices, edges };
 }
@@ -106,19 +158,32 @@ function graphToText(graph: Graph): string {
  *  graph stays readable even with a few chords. A tiny deterministic jitter
  *  keeps it from looking like a rigid clock face. */
 function toGraphJSON(g: Graph): GraphJSON {
-  const n = g.vertices.length;
-  // Order vertices by their letter so the ring follows a, b, c, … This makes
-  // the spanning tree (which links each new vertex to an earlier one) hug the
-  // circle instead of shooting across the centre.
-  const ordered = [...g.vertices].sort();
-  const layout = ordered.map((v, i) => {
-    const angle = (2 * Math.PI * i) / n - Math.PI / 2;
-    const jitter = ((i * 17) % 7) / 140; // 0..0.05, deterministic
-    const radius = 0.36 + jitter;
+  const presetCoords: Record<string, { x: number; y: number }> = {
+    a: { x: 0.85, y: 0.65 },
+    b: { x: 0.58, y: 0.38 },
+    c: { x: 0.85, y: 0.38 },
+    d: { x: 0.32, y: 0.65 },
+    e: { x: 0.08, y: 0.92 },
+    f: { x: 0.58, y: 0.65 },
+    g: { x: 0.85, y: 0.12 },
+  };
+
+  const usePreset = g.vertices.every((v) => presetCoords[v.toLowerCase()] !== undefined);
+
+  const layout = g.vertices.map((v, i) => {
+    if (usePreset) {
+      return { vertex: v, ...presetCoords[v.toLowerCase()] };
+    }
+    const n = g.vertices.length;
+    const ordered = [...g.vertices].sort();
+    const idx = ordered.indexOf(v);
+    const angle = (2 * Math.PI * idx) / n - Math.PI / 2;
+    const radius = 0.38;
     const x = 0.5 + radius * Math.cos(angle);
     const y = 0.5 + radius * Math.sin(angle);
-    return { vertex: v, x: Math.min(0.94, Math.max(0.06, x)), y: Math.min(0.94, Math.max(0.06, y)) };
+    return { vertex: v, x, y };
   });
+
   return {
     directed: g.directed,
     vertices: g.vertices,
@@ -180,10 +245,14 @@ function topoSort(graph: Graph): string[] | null {
 
 /* ------------------------------- Dijkstra -------------------------------- */
 
-function dijkstra(graph: Graph, start: string): Map<string, number> {
+function dijkstra(graph: Graph, start: string): { dist: Map<string, number>; prev: Map<string, string | null> } {
   const adj = adjacency(graph);
   const dist = new Map<string, number>();
-  for (const v of graph.vertices) dist.set(v, Infinity);
+  const prev = new Map<string, string | null>();
+  for (const v of graph.vertices) {
+    dist.set(v, Infinity);
+    prev.set(v, null);
+  }
   dist.set(start, 0);
   const used = new Set<string>();
   while (used.size < graph.vertices.length) {
@@ -200,18 +269,36 @@ function dijkstra(graph: Graph, start: string): Map<string, number> {
     used.add(cur);
     for (const n of adj.get(cur)!) {
       const nd = dist.get(cur)! + n.weight;
-      if (nd < dist.get(n.to)!) dist.set(n.to, nd);
+      if (nd < dist.get(n.to)!) {
+        dist.set(n.to, nd);
+        prev.set(n.to, cur);
+      }
     }
   }
-  return dist;
+  return { dist, prev };
+}
+
+/** Reconstruct the shortest path from start to target via predecessor map. */
+function shortestPath(prev: Map<string, string | null>, start: string, target: string): string {
+  const path: string[] = [];
+  let cur: string | null = target;
+  while (cur !== null) {
+    path.unshift(cur);
+    cur = prev.get(cur) ?? null;
+  }
+  return path.join(' \\to ');
 }
 
 /* ------------------------------ Bellman-Ford ----------------------------- */
 
-function bellmanFord(graph: Graph, start: string): Map<string, number> {
+function bellmanFord(graph: Graph, start: string): { dist: Map<string, number>; prev: Map<string, string | null> } {
   const adj = adjacency(graph);
   const dist = new Map<string, number>();
-  for (const v of graph.vertices) dist.set(v, Infinity);
+  const prev = new Map<string, string | null>();
+  for (const v of graph.vertices) {
+    dist.set(v, Infinity);
+    prev.set(v, null);
+  }
   dist.set(start, 0);
   const n = graph.vertices.length;
   for (let i = 0; i < n - 1; i++) {
@@ -222,13 +309,14 @@ function bellmanFord(graph: Graph, start: string): Map<string, number> {
       for (const nbr of neighbours) {
         if (d + nbr.weight < dist.get(nbr.to)!) {
           dist.set(nbr.to, d + nbr.weight);
+          prev.set(nbr.to, from);
           changed = true;
         }
       }
     }
     if (!changed) break;
   }
-  return dist;
+  return { dist, prev };
 }
 
 /* ------------------------------ Minimum spanning tree --------------------- */
@@ -418,10 +506,14 @@ export function generateTopoSort(): TaskData {
 
   // 2) Add 1-2 extra forward edges to make it look like a general DAG.
   const extra = getRandomInt(1, 2);
+  const seenTopo = new Set(edges.map((e) => `${e.from}->${e.to}`));
   for (let e = 0; e < extra; e++) {
     // Pick i and j such that i < j - 1 to avoid duplicating Hamiltonian path edges
     const i = getRandomInt(0, n - 3);
     const j = getRandomInt(i + 2, n - 1);
+    const key = `${orderedVertices[i]}->${orderedVertices[j]}`;
+    if (seenTopo.has(key)) continue;
+    seenTopo.add(key);
     edges.push({ from: orderedVertices[i], to: orderedVertices[j], weight: 1 });
   }
 
@@ -442,7 +534,7 @@ export function generateTopoSort(): TaskData {
       : [{ instruction: 'Topologische Sortierung', kind: 'text' as const, answer: 'keine (Zyklus)' }],
     explanation: [
       `Eine topologische Sortierung entspricht der umgekehrten Abschlussreihenfolge einer Tiefensuche (DFS).`,
-      `Da dieser Graph einen gerichteten Pfad enthält, der alle Knoten abdeckt (Hamiltonpfad), ist die topologische Sortierung eindeutig: $${(order || []).join(', ')}$.`
+      `Da dieser Graphen einen gerichteten Pfad enthält, der alle Knoten abdeckt (Hamiltonpfad), ist die topologische Sortierung eindeutig: $${(order || []).join(', ')}$.`
     ],
   };
 }
@@ -450,7 +542,7 @@ export function generateTopoSort(): TaskData {
 export function generateDijkstra(): TaskData {
   const g = randomConnectedGraph(getRandomInt(5, 7));
   const start = g.vertices[getRandomInt(0, g.vertices.length - 1)];
-  const dist = dijkstra(g, start);
+  const { dist, prev } = dijkstra(g, start);
   // Pick a target that is NOT a direct neighbour of start, so the answer
   // requires at least one intermediate hop (not just reading an edge weight).
   const directNeighbours = new Set(adjacency(g).get(start)!.map((n) => n.to));
@@ -459,6 +551,7 @@ export function generateDijkstra(): TaskData {
   const target = targetPool[getRandomInt(0, targetPool.length - 1)];
   const d = dist.get(target)!;
   const distStr = g.vertices.map((v) => `${v}=${dist.get(v)}`).join(', ');
+  const path = shortestPath(prev, start, target);
   return {
     type: 'dsal_graph_dijkstra',
     mathQuery: graphToText(g),
@@ -467,14 +560,17 @@ export function generateDijkstra(): TaskData {
     prompt: `Führen Sie Dijkstra ab Startknoten ${start} aus. Wie groß ist die kürzeste Distanz zum Knoten ${target}?`,
     inputHint: 'Gib die Distanz als ganze Zahl ein.',
     steps: [{ instruction: `Kürzeste Distanz von ${start} nach ${target}`, kind: 'text' as const, answer: String(d), annotation: `Distanzen: ${distStr}` }],
-    explanation: [`Dijkstra ist gierig: eine Prioritätswarteschlange wählt stets den unbesuchten Knoten mit kleinster Distanz, danach werden Nachbarn via Relaxation aktualisiert. Kürzeste Distanz von $${start}$ nach $${target}$: $${d}$.`],
+    explanation: [
+      `Dijkstra ist gierig: eine Prioritätswarteschlange wählt stets den unbesuchten Knoten mit kleinster Distanz, danach werden Nachbarn via Relaxation aktualisiert.`,
+      `Kürzester Weg von ${start}$ nach ${target}$: ${path}$ (Länge ${d}$).`,
+    ],
   };
 }
 
 export function generateBellmanFord(): TaskData {
   const g = randomConnectedGraph(getRandomInt(5, 7));
   const start = g.vertices[getRandomInt(0, g.vertices.length - 1)];
-  const dist = bellmanFord(g, start);
+  const { dist, prev } = bellmanFord(g, start);
   // Same clarity fix as Dijkstra: avoid a target that is a direct neighbour.
   const directNeighbours = new Set(adjacency(g).get(start)!.map((n) => n.to));
   const candidates = g.vertices.filter((v) => v !== start && !directNeighbours.has(v));
@@ -482,6 +578,7 @@ export function generateBellmanFord(): TaskData {
   const target = targetPool[getRandomInt(0, targetPool.length - 1)];
   const d = dist.get(target)!;
   const distStr = g.vertices.map((v) => `${v}=${dist.get(v)}`).join(', ');
+  const path = shortestPath(prev, start, target);
   return {
     type: 'dsal_graph_bellmanford',
     mathQuery: graphToText(g),
@@ -490,7 +587,10 @@ export function generateBellmanFord(): TaskData {
     prompt: `Führen Sie Bellman-Ford ab Startknoten ${start} aus. Wie groß ist die kürzeste Distanz zum Knoten ${target}? (Der kürzeste Weg führt nicht direkt über eine Kante, sondern über Zwischenknoten.)`,
     inputHint: 'Gib die Distanz als ganze Zahl ein.',
     steps: [{ instruction: `Kürzeste Distanz von ${start} nach ${target}`, kind: 'text' as const, answer: String(d), annotation: `Distanzen: ${distStr}` }],
-    explanation: [`Bellman-Ford entspannt alle Kanten $${g.vertices.length - 1}$ Mal (hier mit positiven Gewichten) und kann im Gegensatz zu Dijkstra auch negative Kantengewichte verarbeiten. Kürzeste Distanz von $${start}$ nach $${target}$: $${d}$.`],
+    explanation: [
+      `Bellman-Ford entspannt alle Kanten wiederholt (hier mit positiven Gewichten) und kann im Gegensatz zu Dijkstra auch negative Kantengewichte verarbeiten.`,
+      `Kürzester Weg von ${start}$ nach ${target}$: ${path}$ (Länge ${d}$).`,
+    ],
   };
 }
 
@@ -565,7 +665,7 @@ export function generateUnionFind(): TaskData {
     inputHint: 'Gib die Repräsentanten-Zahl ein.',
     steps: [{ instruction: `Repräsentant (find) von Element ${query}`, kind: 'text' as const, answer: String(rep) }],
     explanation: [
-      `Union-Find vereint mit den Operationen $${unions.map(([a, b]) => `\\mathrm{Union}(${a}, ${b})`).join(', ')}$ jeweils die Mengen der beiden Elemente; $\\mathrm{find}(${query})$ liefert den Repräsentanten der Komponente, in der $${query}$ liegt: $${rep}$.`,
+      `Union-Find vereint mit den Operationen $${unions.map(([a, b]) => `\\mathrm{Union}(${a}, ${b})`).join(', ')}$ jeweils die Mengen der beiden Elemente. $\\mathrm{find}(${query})$ liefert den Repräsentanten der Komponente, in der sich Element $${query}$ befindet: $${rep}$.`,
     ],
   };
 }
@@ -573,36 +673,61 @@ export function generateUnionFind(): TaskData {
 export function generateKosaraju(): TaskData {
   const g = randomConnectedGraph(getRandomInt(5, 7), true);
   const assignment = kosaraju(g);
-  const parts = g.vertices.map((v) => `${v}→${assignment.get(v)}`).join(', ');
-  const partsLatex = g.vertices.map((v) => `${v} \\to ${assignment.get(v)}`).join(', ');
+  // Group vertices by their representative to form the partition (sets of SCCs).
+  // This is implementation-independent: any valid representative choice yields
+  // the same partition, so grading is fair.
+  const comps = new Map<string, string[]>();
+  for (const v of g.vertices) {
+    const rep = assignment.get(v)!;
+    if (!comps.has(rep)) comps.set(rep, []);
+    comps.get(rep)!.push(v);
+  }
+  const partition = [...comps.values()].map((set) => `{${set.sort().join(', ')}}`).sort();
+  const partitionStr = partition.join(', ');
+  const partitionLatex = partition.map((s) => `\\{${s.slice(1, -1)}\\}`).join('\\ \\ ');
   return {
     type: 'dsal_graph_kosaraju',
     mathQuery: graphToText(g),
     answer: '',
     graph: toGraphJSON(g),
-    prompt: 'Wenden Sie Kosaraju-Sharir an. Geben Sie die Zuordnung Knoten→Repräsentant der starken Zusammenhangskomponenten an.',
-    inputHint: 'Format: a→a, b→a, c→c, …',
-    steps: [{ instruction: 'Zuordnung Knoten→Repräsentant (starke Zusammenhangskomponenten)', kind: 'text' as const, answer: parts }],
-    explanation: [`Kosaraju läuft in zwei Durchläufen: zuerst DFS zur Ermittlung der Abschlussreihenfolge, dann DFS auf dem transponierten Graphen. Der Repräsentant ist der zuerst besuchte Knoten der jeweiligen starken Komponente. Zuordnung: $${partsLatex}$.`],
+    prompt: 'Wenden Sie Kosaraju-Sharir an. Geben Sie die starken Zusammenhangskomponenten als Partition an.',
+    inputHint: 'Format: "{a, b}, {c, d, e}, …" (jede Komponente in geschweiften Klammern).',
+    steps: [{ instruction: 'Starke Zusammenhangskomponenten (Partition)', kind: 'text' as const, answer: partitionStr }],
+    explanation: [`Kosaraju läuft in zwei Durchläufen: zuerst DFS zur Ermittlung der Abschlussreihenfolge, dann DFS auf dem transponierten Graphen. Jede starke Zusammenhangskomponente ist eine Menge von Knoten, die sich gegenseitig erreichen. Partition: $${partitionLatex}$.`],
   };
 }
 
 export function generateFloydWarshall(): TaskData {
   const g = randomConnectedGraph(getRandomInt(4, 6));
   const d = floydWarshall(g);
+  // Pick a target that is NOT a direct neighbour of start, so the answer
+  // requires at least one intermediate hop (not just reading an edge weight).
+  const start = g.vertices[getRandomInt(0, g.vertices.length - 1)];
+  const directNeighbours = new Set(adjacency(g).get(start)!.map((n) => n.to));
+  const candidates = g.vertices.filter((v) => v !== start && !directNeighbours.has(v));
+  const targetPool = candidates.length > 0 ? candidates : g.vertices.filter((v) => v !== start);
+  const target = targetPool[getRandomInt(0, targetPool.length - 1)];
+  const dist = d[g.vertices.indexOf(start)][g.vertices.indexOf(target)];
   // Store the matrix numerically for KaTeX pmatrix rendering, and a plain-text
   // fallback (rows joined by " | ") for the input hint / comparison.
   const matrix = d.map((row) => row.map((x) => (x === Infinity ? Infinity : x)));
   const matrixText = d.map((row) => row.map((x) => (x === Infinity ? '∞' : String(x))).join(' ')).join(' | ');
-  const matrixLatex = `\\begin{pmatrix} ${d.map((row) => row.map((x) => (x === Infinity ? '\\infty' : String(x))).join(' & ')).join(' \\\\ ')} \\end{pmatrix}`;
+  const headerRow = g.vertices.map((v) => v).join(' & ');
+  const matrixLatex = `\\begin{pmatrix} & ${headerRow} \\\\ ${g.vertices
+    .map((v, i) => `${v} & ${d[i].map((x) => (x === Infinity ? '\\infty' : String(x))).join(' & ')}`)
+    .join(' \\\\ ')} \\end{pmatrix}`;
   return {
     type: 'dsal_graph_floydwarshall',
     mathQuery: graphToText(g),
     answer: '',
     graph: toGraphJSON(g),
-    prompt: 'Führen Sie Floyd-Warshall aus. Geben Sie die finale Distanzmatrix an.',
-    inputHint: 'Format: "0 3 ∞ 2 | 3 0 1 5 | …". Unerreichbar = ∞.',
-    steps: [{ instruction: 'Finale Distanzmatrix (∞ für unerreichbar)', kind: 'matrix' as const, matrix, answer: matrixText }],
-    explanation: [`Floyd-Warshall ist dynamisch: $d_{ij}^{(k)}$ ist der kürzeste Weg von $i$ nach $j$ nur über Zwischenknoten $1,\\dots,k$. Finale Distanzmatrix: ${matrixLatex}.`],
+    prompt: `Führen Sie Floyd-Warshall aus. Wie groß ist die kürzeste Distanz von ${start} nach ${target}? (Die vollständige Matrix finden Sie in der Lösung.)`,
+    inputHint: 'Gib die Distanz als ganze Zahl ein (∞ falls unerreichbar).',
+    steps: [{ instruction: `Kürzeste Distanz von ${start} nach ${target}`, kind: 'text' as const, answer: String(dist), annotation: `Vollständige Matrix (Zeile/Spalte in Reihenfolge ${g.vertices.join(', ')}): ${matrixText}` }],
+    explanation: [
+      `Floyd-Warshall ist dynamisch: $d_{ij}^{(k)}$ ist der kürzeste Weg von $i$ nach $j$ nur über Zwischenknoten $1,\\dots,k$.`,
+      `Vollständige Distanzmatrix (Zeile/Spalte in Reihenfolge $${g.vertices.join(', ')}$): $$${matrixLatex}$$`,
+      `Daraus abgelesen: kürzeste Distanz von $${start}$ nach $${target}$ ist $${dist}$.`,
+    ],
   };
 }

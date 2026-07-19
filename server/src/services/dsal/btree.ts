@@ -172,7 +172,7 @@ export function generateBTreeInsertion(): TaskData {
     answer: '',
     renderMode: 'tree',
     tree: startJSON,
-    prompt: `Ausgangs-B-Baum (max. ${maxKeys(degree)} Schlüssel pro Knoten).`,
+    prompt: `B-Baum, Grad $t=${degree}$ (max. ${maxKeys(degree)} Schlüssel pro Knoten). Fügen Sie die Werte nacheinander sortiert ein; bei Überlauf wird der Knoten gespalten.`,
     inputHint: 'Zeige nach jeder Operation den korrekten B-Baum.',
     taskList,
     steps,

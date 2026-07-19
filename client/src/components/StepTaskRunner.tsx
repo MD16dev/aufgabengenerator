@@ -188,6 +188,20 @@ export const StepTaskRunner: React.FC<StepTaskRunnerProps> = ({
                 </div>
               ))
             )}
+            {task.explanation && task.explanation.length > 0 && (
+              <div className="mt-5 p-5 bg-theme-card border border-theme-border rounded-2xl animate-fadeIn">
+                <h3 className="text-sm font-bold text-purple-600 dark:text-purple-400 uppercase tracking-wider mb-4">
+                  Regeln & Rechenweg:
+                </h3>
+                <div className="space-y-3 text-theme-secondary text-sm md:text-base">
+                  {task.explanation.map((line, idx) => (
+                    <div key={idx} className="pb-3 last:pb-0 border-b last:border-0 border-theme-border">
+                      <LatexTextRenderer text={line} />
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
             <div className="mt-5 flex justify-end">
               <button
                 type="button"

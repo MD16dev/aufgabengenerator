@@ -101,14 +101,14 @@ export function generateKnapsack(): TaskData {
     type: 'dsal_opt_knapsack',
     mathQuery: `\\text{Rucksack Kapazität } ${capacity}.\\ w = [${weights.join(', ')}],\\ v = [${values.join(', ')}].`,
     answer: taskAnswer,
-    prompt: `Bestimmen Sie mit dynamischer Programmierung den maximalen Gesamtwert und die mitzunehmenden Gegenstände (1-indiziert).`,
+    prompt: `Kapazität ${capacity}, Gewichte w = [${weights.join(', ')}], Werte v = [${values.join(', ')}]. Bestimmen Sie mit dynamischer Programmierung den maximalen Gesamtwert und die mitzunehmenden Gegenstände (1-indiziert).`,
     inputHint: 'Format: "Wert: X, Gegenstände: {i, j, ...}".',
     explanation: [
       `Wir füllen eine DP-Tabelle $T_{i,w}$ zeilenweise von $i=0$ bis $n$ und $w=0$ bis $W$ auf. Für jeden Gegenstand $i$ und jedes Gewicht $w$ gilt die Rekursion $T_{i,w} = \\max\\bigl(T_{i-1,w},\\ T_{i-1,\\,w-w_i}+v_i\\bigr)$ (falls $w_i \\le w$; sonst übernimmt man einfach $T_{i-1,w}$).`,
       `Die vollständig gefüllte Tabelle (Zeile $i$ = nach Betrachtung der ersten $i$ Gegenstände, Spalte $w$ = Kapazität):`,
       `$$${tableLatex}$$`,
       `Der Eintrag $T_{n,W}$ liefert den maximalen Gesamtwert. Die konkret mitgenommenen Gegenstände erhält man durch Backtracking: man startet bei $(n,W)$ und nimmt Gegenstand $i$, sobald $T_{i,w} > T_{i-1,w}$ gilt, und verringert dann $w$ um $w_i$.`,
-      `$${taskAnswerLatex}$`,
+      `${taskAnswerLatex}`,
     ],
   };
 }
@@ -137,6 +137,7 @@ export function generateLCS(): TaskData {
     // Quick shared-character check before building the full DP table.
     const shared = word1.split('').some((ch) => word2.includes(ch));
     if (!shared) continue;
+    // Require a non-trivial LCS (length >= 2) so the task isn't a single letter.
 
     const rows = word1.length;
     const cols = word2.length;
@@ -168,7 +169,7 @@ export function generateLCS(): TaskData {
         c--;
       }
     }
-  } while (result.length === 0 && attempts < 200);
+  } while (result.length < 2 && attempts < 200);
 
   const rows = word1.length;
   const cols = word2.length;
@@ -265,8 +266,7 @@ class Frac {
 
 type SimplexResult =
   | { status: 'solved'; x: Frac[]; z: Frac }
-  | { status: 'unbounded' }
-  | { status: 'unsolvable' };
+  | { status: 'unbounded' };
 
 /**
  * Two-phase simplex for a maximization LP in standard form:
@@ -344,15 +344,27 @@ function simplexSolve(c: Frac[], A: Frac[][], b: Frac[]): SimplexResult {
   return { status: 'solved', x, z };
 }
 
+/** Format a coefficient for display, suppressing a factor of 1 / -1. */
+function coefStr(coef: Frac, varIdx: number): string {
+  const v = `x_{${varIdx + 1}}`;
+  if (coef.num === 1n && coef.den === 1n) return v;
+  if (coef.num === -1n && coef.den === 1n) return `-${v}`;
+  return `${coef.toString()}${v}`;
+}
+
 export function generateSimplex(): TaskData {
   const n = getRandomInt(2, 3);
   const m = getRandomInt(2, 3);
-  // target coefficients: nonzero integers in [-10,10]
+  // target coefficients: nonzero integers in [-10,10]; force at least one
+  // positive so the optimum is non-trivial (not x=0, z=0).
   const c: Frac[] = [];
   for (let j = 0; j < n; j++) {
     let v = getRandomInt(1, 10);
     if (getRandomInt(1, 4) === 1) v = -v;
     c.push(new Frac(v));
+  }
+  if (!c.some((coef) => coef.isPositive())) {
+    c[getRandomInt(0, n - 1)] = new Frac(getRandomInt(1, 10));
   }
   // constraints: positive coefficients (=> bounded) and positive RHS (=> feasible)
   const A: Frac[][] = [];
@@ -366,27 +378,17 @@ export function generateSimplex(): TaskData {
 
   const result = simplexSolve(c, A, b);
 
-  const targetStr = c.map((coef, idx) => `${coef.toString()}x_{${idx + 1}}`).join(' + ').replace(/\+ -/g, '- ');
-  const consStr = A.map((row, i) => `${row.map((coef, idx) => `${coef.toString()}x_{${idx + 1}}`).join(' + ')} \\leq ${b[i].toString()}`).join(',\\ ');
+  const targetStr = c.map((coef, idx) => coefStr(coef, idx)).join(' + ').replace(/\+ -/g, '- ');
+  const consStr = A.map((row, i) => `${row.map((coef, idx) => coefStr(coef, idx)).join(' + ')} \\leq ${b[i].toString()}`).join(',\\ ');
 
   if (result.status === 'unbounded') {
     return {
       type: 'dsal_opt_simplex',
       mathQuery: `\\max\\ ${targetStr}\\ \\text{ s.t. }\\ ${consStr},\\ x_i \\geq 0.`,
       answer: 'unbeschränkt',
-      prompt: `Lösen Sie das lineare Programm (Simplex) und geben Sie die optimale Belegung und den Zielfunktionswert an, oder begründen Sie, warum es keine optimale Lösung gibt.`,
+      prompt: `Lösen Sie das lineare Programm (Simplex): Maximiere ${targetStr} unter den Nebenbedingungen ${consStr} (und $x_i \\geq 0$). Geben Sie die optimale Belegung und den Zielfunktionswert an, oder begründen Sie, warum es keine optimale Lösung gibt.`,
       inputHint: 'Bei Unbeschränktheit: "unbeschränkt".',
       explanation: ['Das LP ist unbeschränkt: im Simplex-Schritt existiert eine Spalte mit positiven reduzierten Kosten, aber kein positiver Eintrag in der rechten Seite – die Zielfunktion lässt sich beliebig vergrößern.'],
-    };
-  }
-  if (result.status === 'unsolvable') {
-    return {
-      type: 'dsal_opt_simplex',
-      mathQuery: `\\max\\ ${targetStr}\\ \\text{ s.t. }\\ ${consStr},\\ x_i \\geq 0.`,
-      answer: 'unlösbar',
-      prompt: `Lösen Sie das lineare Programm (Simplex) und geben Sie die optimale Belegung und den Zielfunktionswert an, oder begründen Sie, warum es keine optimale Lösung gibt.`,
-      inputHint: 'Bei Unlösbarkeit: "unlösbar".',
-      explanation: ['Das LP ist unlösbar (die Nebenbedingungen sind inkonsistent, es existiert keine zulässige Lösung).'],
     };
   }
 
