@@ -81,6 +81,132 @@ export const ModuleSelector: React.FC<ModuleSelectorProps> = ({ activeModule, on
           name: 'Parameter linearer Codes',
           description: 'Bestimme $[n,k,d]$ eines linearen Blockcodes über $\\mathbb{F}_2$.',
           isActive: true
+        },
+        // Kategorie 1 — parametrisierte Matrizen über F_p
+        {
+          id: 'calc_param_matrix_invertible',
+          name: 'Invertierbarkeit (Parameter, $\\mathbb{F}_p$)',
+          description: 'Für welche $a\\in\\mathbb{F}_p$ ist $A_a$ nicht invertierbar?',
+          isActive: true
+        },
+        {
+          id: 'calc_param_matrix_rank',
+          name: 'Rang (Parameter, $\\mathbb{F}_p$)',
+          description: 'Bestimme $\\operatorname{Rang}(A_a)$ für einen konkreten Wert von $a$.',
+          isActive: true
+        },
+        {
+          id: 'calc_param_matrix_kernel',
+          name: 'Kern/Lösungsraum ($\\mathbb{F}_p$)',
+          description: 'Basis des Lösungsraums $L(A_x,0)$ für einen eingesetzten Wert $x$.',
+          isActive: true
+        },
+        {
+          id: 'calc_param_matrix_solution_count',
+          name: 'Lösungsanzahl ($\\mathbb{F}_p$)',
+          description: 'Wie viele Lösungen hat $A_x\\cdot v = b$ für konkretes $x$?',
+          isActive: true
+        },
+        // Kategorie 2 — lineare Abbildungen auf Polynomräumen
+        {
+          id: 'calc_poly_apply',
+          name: 'Abbildung anwenden (Polynomraum)',
+          description: 'Berechne $\\varphi(p(X))$ für ein generiertes Polynom $p(X)$.',
+          isActive: true
+        },
+        {
+          id: 'calc_poly_image_basis',
+          name: 'Basis des Bildes (Polynomraum)',
+          description: 'Bestimme eine Basis von $\\operatorname{Bild}(\\varphi)$.',
+          isActive: true
+        },
+        {
+          id: 'calc_poly_defect',
+          name: 'Defekt (Polynomraum)',
+          description: 'Bestimme den Defekt $\\operatorname{Def}(\\varphi) = 4 - \\operatorname{Rang}(M)$.',
+          isActive: true
+        },
+        {
+          id: 'calc_poly_composition',
+          name: 'Verkettung $\\varphi^3$ (Polynomraum)',
+          description: 'Basis von $\\operatorname{Bild}(\\varphi\\circ\\varphi\\circ\\varphi)$ via $M^3$.',
+          isActive: true
+        },
+        // Kategorie 3 — Eigenwerte, Eigenvektoren, Diagonalisierbarkeit
+        {
+          id: 'calc_charpoly_expanded',
+          name: 'Charakteristisches Polynom (ausmultipliziert)',
+          description: 'Berechne $\\chi_A$ in Standardform $X^3 - aX^2 + bX - c$.',
+          isActive: true
+        },
+        {
+          id: 'calc_charpoly_factored',
+          name: 'Charakteristisches Polynom (faktoriert)',
+          description: 'Gib $\\chi_A$ in Linearfaktoren an.',
+          isActive: true
+        },
+        {
+          id: 'calc_eigenvalues',
+          name: 'Eigenwerte & Vielfachheiten',
+          description: 'Bestimme Eigenwerte und deren algebraische Vielfachheiten.',
+          isActive: true
+        },
+        {
+          id: 'calc_eigenspace',
+          name: 'Eigenraum berechnen',
+          description: 'Basis des Eigenraums zum kleinsten/großten Eigenwert.',
+          isActive: true
+        },
+        {
+          id: 'calc_diagonalizable',
+          name: 'Diagonalisierbarkeit',
+          description: 'Entscheide, ob $A$ diagonalisierbar ist; gib $T$ und $D$ an.',
+          isActive: true
+        },
+        // Kategorie 4 — lineare Codes
+        {
+          id: 'calc_linear_code_parity_check',
+          name: 'Kontrollmatrix (Parity-Check)',
+          description: 'Bestimme eine Kontrollmatrix $H$ für den Code $C$.',
+          isActive: true
+        },
+        {
+          id: 'calc_linear_code_nearest_neighbor',
+          name: 'Nearest-Neighbor-Decoding',
+          description: 'Alle Codewörter mit minimalem Hamming-Abstand zu $v$.',
+          isActive: true
+        },
+        // Kategorie 5 — Kombinatorik über F_q
+        {
+          id: 'calc_field_vecspace_size',
+          name: 'Größe eines Matrizenraums',
+          description: 'Wie viele Elemente hat $\\mathbb{F}_q^{m\\times n}$?',
+          isActive: true
+        },
+        {
+          id: 'calc_field_symmetric_count',
+          name: 'Symmetrische Matrizen zählen',
+          description: 'Wie viele symmetrische Matrizen in $\\mathbb{F}_q^{n\\times n}$?',
+          isActive: true
+        },
+        {
+          id: 'calc_field_rref_rank_count',
+          name: 'RREF-Matrizen (Rang $r$)',
+          description: 'Anzahl der RREF-Matrizen mit Rang $r$ über $\\mathbb{F}_q$.',
+          isActive: true
+        },
+        // Kategorie 6 — Matrizeninversion & Basiswechsel über F_p
+        {
+          id: 'calc_matrix_inverse_field',
+          name: 'Matrixinversion ($\\mathbb{F}_p$)',
+          description: 'Bestimme $A^{-1}$ über einem endlichen Körper $\\mathbb{F}_p$.',
+          isActive: true
+        },
+        {
+          id: 'calc_preimage_field',
+          name: 'Urbild bestimmen ($\\mathbb{F}_p$)',
+          description: 'Löse $A\\cdot x = b$ und gib das Urbild $\\varphi^{-1}(\\{b\\})$ an.',
+          isActive: true
         }
       ]
     },

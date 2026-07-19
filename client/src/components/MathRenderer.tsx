@@ -17,6 +17,33 @@ export const MathRenderer: React.FC<MathRendererProps> = ({ math, block = false 
   return <InlineMath math={math} />;
 };
 
+function renderFormattedText(content: string): React.ReactNode[] {
+  // Convert basic HTML formatting tags to markdown bold/italic
+  const normalized = content
+    .replace(/<\/?strong>/gi, '**')
+    .replace(/<\/?b>/gi, '**')
+    .replace(/<\/?em>/gi, '*')
+    .replace(/<\/?i>/gi, '*');
+
+  const boldParts = normalized.split('**');
+  return boldParts.map((bText, bIdx) => {
+    const isBold = bIdx % 2 === 1;
+    const italicParts = bText.split('*');
+    const renderedItalic = italicParts.map((iText, iIdx) => {
+      const isItalic = iIdx % 2 === 1;
+      if (isItalic) {
+        return <em key={iIdx}>{iText}</em>;
+      }
+      return iText;
+    });
+
+    if (isBold) {
+      return <strong key={bIdx}>{renderedItalic}</strong>;
+    }
+    return <span key={bIdx}>{renderedItalic}</span>;
+  });
+}
+
 interface LatexTextRendererProps {
   text: string;
 }
@@ -47,8 +74,12 @@ export const LatexTextRenderer: React.FC<LatexTextRendererProps> = ({ text }) =>
                 // This is an inline math segment
                 return <MathRenderer key={inlineIdx} math={inlineContent} />;
               }
-              // Regular text
-              return <span key={inlineIdx}>{inlineContent}</span>;
+              // Regular text parsed for bold/italic formatting
+              return (
+                <React.Fragment key={inlineIdx}>
+                  {renderFormattedText(inlineContent)}
+                </React.Fragment>
+              );
             })}
           </React.Fragment>
         );

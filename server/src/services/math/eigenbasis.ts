@@ -124,7 +124,7 @@ function gaussEchelon(M: Frac[][]): { echelon: Frac[][]; steps: string[] } {
       for (let c = 0; c < cols; c++) {
         A[i][c] = fAdd(A[i][c], fMul(fNeg(factor), A[r][c]));
       }
-      steps.push('$' + 'Zeile ' + (i + 1) + ' \\leftarrow Zeile ' + (i + 1) + ' - (' + fToLatex(factor) + ')\\cdot \\text{Zeile } ' + (r + 1) + '$: $$' + fracMatToLatex(A) + '$$');
+      steps.push('$' + '\\text{Zeile } ' + (i + 1) + ' \\leftarrow \\text{Zeile } ' + (i + 1) + ' - (' + fToLatex(factor) + ')\\cdot \\text{Zeile } ' + (r + 1) + '$: $$' + fracMatToLatex(A) + '$$');
     }
     lead++;
     r++;
@@ -195,12 +195,13 @@ export function generateEigenbasis(): TaskData {
 
     // Pick T with det ±1 from a small set of simple invertible matrices.
     const candidates: number[][][] = [
+      [[1, 0, 0], [0, 1, 0], [0, 0, 1]],
       [[1, 1, 0], [0, 1, 1], [0, 0, 1]],
-      [[1, 0, 1], [0, 1, 0], [1, 0, 1]],
-      [[1, 2, 0], [0, 1, 0], [0, 0, 1]],
       [[1, 0, 0], [1, 1, 0], [0, 1, 1]],
-      [[2, 1, 0], [1, 1, 0], [0, 0, 1]],
-      [[1, 1, 1], [0, 1, 1], [0, 0, 1]]
+      [[1, 1, 1], [0, 1, 1], [0, 0, 1]],
+      [[1, 0, 1], [0, 1, 0], [1, 0, 2]],
+      [[1, 0, -1], [0, 1, 1], [1, 0, 0]],
+      [[1, 1, 0], [0, 1, 1], [-1, 0, 0]]
     ];
     T = candidates[randInt(0, candidates.length - 1)];
     const det = det3(T);

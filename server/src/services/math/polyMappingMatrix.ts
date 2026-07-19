@@ -23,13 +23,13 @@ function randInt(min: number, max: number): number {
  * the basis vectors. The representation matrix M_B^B(phi) has these images as
  * its columns.
  */
-function pickRule(): PolyRule {
+export function pickRule(): PolyRule {
   const rules: Array<() => PolyRule> = [
     // Scaled derivative: phi(f) = m * f'
     () => {
       const m = randInt(1, 3);
       return {
-        description: `\\varphi(f) = ${m}\\, f'`,
+        description: `$\\varphi(f) = ${m}\\, f'$`,
         images: [
           [0, 3 * m, 0, 0], // phi(X^3) = 3m X^2
           [0, 0, 2 * m, 0], // phi(X^2) = 2m X
@@ -40,7 +40,7 @@ function pickRule(): PolyRule {
     },
     // Multiply derivative by X: phi(f) = X * f'
     () => ({
-      description: `\\varphi(f) = X \\cdot f'`,
+      description: `$\\varphi(f) = X \\cdot f'$`,
       images: [
         [3, 0, 0, 0], // phi(X^3) = 3 X^3
         [0, 2, 0, 0], // phi(X^2) = 2 X^2
@@ -50,7 +50,7 @@ function pickRule(): PolyRule {
     }),
     // Finite difference: phi(f) = f(X+1) - f(X)
     () => ({
-      description: `\\varphi(f) = f(X+1) - f(X)`,
+      description: `$\\varphi(f) = f(X+1) - f(X)$`,
       images: [
         [0, 3, 3, 1], // phi(X^3) = 3X^2 + 3X + 1
         [0, 0, 2, 1], // phi(X^2) = 2X + 1
@@ -66,7 +66,7 @@ function pickRule(): PolyRule {
     }),
     // Shift up: phi(X^k) = X^{k+1} for k<3, phi(X^3)=0
     () => ({
-      description: `\\varphi(X^k) = X^{k+1} \\text{ für } k<3,\\; \\varphi(X^3)=0`,
+      description: `$\\varphi(X^k) = X^{k+1} \\text{ für } k<3,\\; \\varphi(X^3)=0$`,
       images: [
         [0, 0, 0, 0], // phi(X^3) = 0
         [1, 0, 0, 0], // phi(X^2) = X^3
@@ -78,7 +78,7 @@ function pickRule(): PolyRule {
     () => {
       const s = randInt(2, 3);
       return {
-        description: `\\varphi(f) = ${s}\\, f`,
+        description: `$\\varphi(f) = ${s}\\, f$`,
         images: [
           [s, 0, 0, 0],
           [0, s, 0, 0],
@@ -92,9 +92,53 @@ function pickRule(): PolyRule {
   return rules[randInt(0, rules.length - 1)]();
 }
 
-function formatMatrix(M: number[][]): string {
+export function formatMatrix(M: number[][]): string {
   const rows = M.map((row) => row.join(',')).join(';');
   return `[${rows}]`;
+}
+
+/**
+ * Formats a coordinate vector [c3, c2, c1, c0] (descending by degree) as a
+ * canonical polynomial string, e.g. [2,3,0,1] -> "2X^3+3X^2+1".
+ */
+export function formatPoly(coords: number[]): string {
+  const [c3, c2, c1, c0] = coords;
+  const parts = [
+    { c: c3, mono: 'X^3' },
+    { c: c2, mono: 'X^2' },
+    { c: c1, mono: 'X' },
+    { c: c0, mono: '' }
+  ];
+  const terms: string[] = [];
+  let first = true;
+  for (const { c, mono } of parts) {
+    if (c === 0) continue;
+    const abs = Math.abs(c);
+    const coeffStr = abs === 1 && mono !== '' ? '' : String(abs);
+    let term = coeffStr + mono;
+    if (first) {
+      term = (c < 0 ? '-' : '') + term;
+      first = false;
+    } else {
+      term = (c < 0 ? ' - ' : ' + ') + term;
+    }
+    terms.push(term);
+  }
+  return terms.length ? terms.join('') : '0';
+}
+
+/**
+ * Builds the 4x4 representation matrix M_B^B(phi) from the images of the basis
+ * vectors. Column `col` equals `images[col]` (the coordinate vector of phi(b_col)).
+ */
+export function buildRepresentationMatrix(images: number[][]): number[][] {
+  const M: number[][] = [[], [], [], []];
+  for (let col = 0; col < 4; col++) {
+    for (let row = 0; row < 4; row++) {
+      M[row][col] = images[col][row];
+    }
+  }
+  return M;
 }
 
 /**
@@ -118,15 +162,7 @@ export function generatePolyMappingMatrix(): TaskData {
   // Basis vectors in order B = {X^3, X^2, X, 1}
   const basisNames = ['X^3', 'X^2', 'X', '1'];
   const imageLatex = rule.images.map((img, i) => {
-    // Build polynomial string from coordinate vector [c3,c2,c1,c0].
-    const [c3, c2, c1, c0] = img;
-    const terms: string[] = [];
-    if (c3) terms.push(c3 === 1 ? 'X^3' : `${c3}X^3`);
-    if (c2) terms.push(c2 === 1 ? 'X^2' : `${c2}X^2`);
-    if (c1) terms.push(c1 === 1 ? 'X' : `${c1}X`);
-    if (c0) terms.push(String(c0));
-    const poly = terms.length ? terms.join(' + ') : '0';
-    return `\\varphi(${basisNames[i]}) = ${poly}`;
+    return `\\varphi(${basisNames[i]}) = ${formatPoly(img)}`;
   });
 
   const explanation = [
