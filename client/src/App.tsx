@@ -10,11 +10,13 @@ import { AdminPanel } from './components/AdminPanel';
 import { AuthModal } from './components/AuthModal';
 import { OnboardingTour } from './components/OnboardingTour';
 import { FeedbackModal } from './components/FeedbackModal';
+import { DuelLobby } from './components/DuelLobby';
+import { DuelRunner } from './components/DuelRunner';
 import { useAuth } from './hooks/useAuth';
 import { useLeaderboard } from './hooks/useLeaderboard';
 import { PomodoroProvider } from './hooks/usePomodoro';
 
-type TabType = 'home' | 'tasks' | 'leaderboard' | 'profile' | 'admin';
+type TabType = 'home' | 'tasks' | 'leaderboard' | 'profile' | 'admin' | 'duels';
 
 export default function App() {
   const [activeTab, setActiveTab] = useState<TabType>('home');
@@ -23,6 +25,7 @@ export default function App() {
   const [isAuthModalOpen, setIsAuthModalOpen] = useState<boolean>(false);
   const [isOnboardingOpen, setIsOnboardingOpen] = useState<boolean>(false);
   const [isFeedbackOpen, setIsFeedbackOpen] = useState<boolean>(false);
+  const [activeDuel, setActiveDuel] = useState<any>(null);
 
   const { user, loadingUser, checkUserSession, handleLogout, updateProfile } = useAuth();
   const {
@@ -30,6 +33,7 @@ export default function App() {
     selectedModuleFilter, setSelectedModuleFilter, selectedTaskFilter, setSelectedTaskFilter,
     selectedTaskModuleFilter, setSelectedTaskModuleFilter,
     sideLeaderboard, loadingSideLeaderboard, fetchLeaderboard, fetchSideLeaderboard,
+    eloLeaderboard, fetchEloLeaderboard,
   } = useLeaderboard();
 
   const isAdmin = !!user?.isAdmin;
@@ -48,9 +52,18 @@ export default function App() {
 
   useEffect(() => {
     if (activeTab === 'leaderboard') {
-      fetchLeaderboard();
+      if (leaderboardFilter === 'elo') {
+        fetchEloLeaderboard(selectedModuleFilter === 'Gesamt' ? undefined
+          : selectedModuleFilter === 'Lineare Algebra' ? 'lin_alg'
+          : selectedModuleFilter === 'Betriebssysteme' ? 'os'
+          : selectedModuleFilter === 'Formale Systeme' ? 'formal_sys'
+          : selectedModuleFilter === 'Algorithmen & Datenstrukturen' ? 'algo_struct'
+          : undefined);
+      } else {
+        fetchLeaderboard();
+      }
     }
-  }, [activeTab, leaderboardFilter, selectedModuleFilter, selectedTaskFilter, fetchLeaderboard]);
+  }, [activeTab, leaderboardFilter, selectedModuleFilter, selectedTaskFilter, fetchLeaderboard, fetchEloLeaderboard]);
 
   useEffect(() => {
     if (activeTab === 'tasks') {
@@ -134,6 +147,7 @@ export default function App() {
             setTaskFilter={setSelectedTaskFilter}
             taskModuleFilter={selectedTaskModuleFilter}
             setTaskModuleFilter={setSelectedTaskModuleFilter}
+            eloLeaderboard={eloLeaderboard}
           />
         )}
 
@@ -145,6 +159,25 @@ export default function App() {
             guestScore={guestScore}
             onOpenAuth={() => setIsAuthModalOpen(true)}
             onUpdateProfile={updateProfile}
+          />
+        )}
+
+        {activeTab === 'duels' && !activeDuel && (
+          <DuelLobby
+            user={user}
+            onDuelStart={(payload: any) => setActiveDuel(payload)}
+            onDuelWaiting={() => {}}
+            onDuelMatched={() => {}}
+          />
+        )}
+
+        {activeTab === 'duels' && activeDuel && (
+          <DuelRunner
+            startPayload={activeDuel}
+            onExit={() => {
+              setActiveDuel(null);
+              setActiveTab('duels');
+            }}
           />
         )}
       </main>

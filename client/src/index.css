@@ -104,6 +104,30 @@ body {
   overflow-x: auto;
   overflow-y: hidden;
   padding: 0.2em 0;
+  max-width: 100%;
+  /* Allow long expressions (e.g. prose-style task descriptions like
+     Union-Find) to wrap instead of forcing a horizontal scrollbar. */
+  white-space: normal;
+  text-wrap: wrap;
+}
+
+/* Let KaTeX text spans break so long prose descriptions wrap cleanly
+   instead of overflowing horizontally. */
+.katex-display > .katex {
+  white-space: normal;
+  word-break: break-word;
+  max-width: 100%;
+}
+.katex-display > .katex > .katex-html {
+  white-space: normal;
+  word-break: break-word;
+}
+/* KaTeX's .base uses nowrap + inline-block which prevents wrapping of
+   long prose. Allow it to wrap so task descriptions fit the container. */
+.katex-display > .katex > .katex-html > .base {
+  white-space: normal;
+  word-break: break-word;
+  display: inline;
 }
 
 /* Onboarding: the spotlight "hole" punches through the dim overlay.

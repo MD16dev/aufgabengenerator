@@ -42,7 +42,8 @@ function det3Poly(M: Poly[][], p: number): Poly {
   const minor00 = term(m(1, 1), m(2, 2), m(1, 2), m(2, 1));
   const minor01 = term(m(1, 0), m(2, 2), m(1, 2), m(2, 0));
   const minor02 = term(m(1, 0), m(2, 1), m(1, 1), m(2, 0));
-  return padd(padd(pmul(m(0, 0), minor00, p), pmul(m(0, 1), minor01, p), p), pmul(m(0, 2), minor02, p), p);
+  // Cofactor expansion along the first row: det = m00·M00 − m01·M01 + m02·M02.
+  return psub(padd(pmul(m(0, 0), minor00, p), pmul(m(0, 2), minor02, p), p), pmul(m(0, 1), minor01, p), p);
 }
 
 /** Integer polynomial helpers (no modulo) for the expanded intermediate step. */
@@ -77,7 +78,8 @@ function det3Int(M: number[][][]): number[] {
   const minor00 = term(m(1, 1), m(2, 2), m(1, 2), m(2, 1));
   const minor01 = term(m(1, 0), m(2, 2), m(1, 2), m(2, 0));
   const minor02 = term(m(1, 0), m(2, 1), m(1, 1), m(2, 0));
-  return iAdd(iAdd(iMul(m(0, 0), minor00), iMul(m(0, 1), minor01)), iMul(m(0, 2), minor02));
+  // Cofactor expansion along the first row: det = m00·M00 − m01·M01 + m02·M02.
+  return iSub(iAdd(iMul(m(0, 0), minor00), iMul(m(0, 2), minor02)), iMul(m(0, 1), minor01));
 }
 
 function formatPoly(poly: Poly): string {
@@ -153,7 +155,7 @@ export function generateParamDeterminantFiniteField(): TaskData {
     `Wir multiplizieren aus und fassen nach Potenzen von $a$ zusammen (noch vor der Modulo-Rechnung):`,
     `$$\\det = ${formatPoly(rawDet)}$$`,
     `Da wir in $\\mathbb{F}_{${p}}$ rechnen, reduzieren wir jeden Koeffizienten modulo $p = ${p}$ (also $x \\equiv x \\bmod ${p}$):`,
-    `Das liefert das endgültige Polynom in $a$: $${formatPoly(det)}$$`
+    `Das liefert das endgültige Polynom in $a$: $$${formatPoly(det)}$$`
   ];
 
   return {

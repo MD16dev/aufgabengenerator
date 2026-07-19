@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Trophy, BookOpen, Clock, Edit, Save, Camera, RefreshCw, Medal, Sparkles, LogIn } from 'lucide-react';
+import { Trophy, BookOpen, Clock, Edit, Save, Camera, RefreshCw, Medal, Sparkles, LogIn, Swords } from 'lucide-react';
 import type { UserProfile } from '../types';
 
 interface ProfilePageProps {
@@ -177,11 +177,38 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ user, guestScore, onOp
           <StatCard icon={<Clock className="w-5 h-5" />} color="blue" label="Status" value={user.solvedCount >= 10 ? 'Fortgeschritten' : 'Anfänger'} sub="Lernniveau" />
         </div>
 
+        <h3 className="text-sm font-bold text-theme-muted uppercase tracking-wider mb-4 flex items-center gap-2">
+          <Swords className="w-4 h-4 text-purple-600 dark:text-purple-400" /> Duell-Elo
+        </h3>
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-8">
+          <EloCard label="Gesamt" value={user.elo} />
+          <EloCard label="Lineare Algebra" value={user.eloLinAlg} />
+          <EloCard label="Betriebssysteme" value={user.eloOs} />
+          <EloCard label="Formale Systeme" value={user.eloFormalSys} />
+          <EloCard label="Algo & DS" value={user.eloAlgoStruct} />
+          <StatCard icon={<Swords className="w-5 h-5" />} color="purple" label="Duell-Bilanz" value={`${user.duelWins} : ${user.duelLosses}`} sub="Siege : Niederlagen" />
+        </div>
+
         <h3 className="text-sm font-bold text-theme-muted uppercase tracking-wider mb-4">Erfolge</h3>
         <div className="space-y-3">
           <Achievement icon={<Medal className="w-6 h-6" />} title="Erster Schritt" desc="Erste Aufgabe im Modul Lineare Algebra richtig gelöst." unlocked={user.solvedCount >= 1} color="yellow" />
           <Achievement icon={<Medal className="w-6 h-6" />} title="Matrix Meister" desc="Löse 10 Determinanten-Aufgaben fehlerfrei." unlocked={user.solvedCount >= 10} color="purple" />
         </div>
+      </div>
+    </div>
+  );
+};
+
+const EloCard: React.FC<{ label: string; value: number }> = ({ label, value }) => {
+  return (
+    <div className="p-4 bg-theme-card border border-theme-border rounded-2xl flex flex-col justify-between shadow-sm">
+      <div className="flex justify-between items-start text-purple-600 dark:text-purple-400 mb-2">
+        <Swords className="w-5 h-5" />
+        <span className="text-xs text-theme-muted font-bold uppercase tracking-wider">Elo</span>
+      </div>
+      <div>
+        <span className="text-2xl font-extrabold text-theme-primary">{value}</span>
+        <span className="block text-xs text-theme-muted mt-1 font-semibold">{label}</span>
       </div>
     </div>
   );

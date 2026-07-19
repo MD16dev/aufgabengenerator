@@ -1,7 +1,16 @@
 import { RefreshCw, Trophy, Zap } from 'lucide-react';
 import { ModuleSelector } from './ModuleSelector';
 import { GenericTaskRunner } from './GenericTaskRunner';
+import { BusTaskRunner } from './BusTaskRunner';
+import { PageTableTaskRunner } from './PageTableTaskRunner';
+import { LEADERBOARD_MODULE_TASKS } from '../hooks/useLeaderboard';
 import type { LeaderboardItem } from '../types';
+
+// Flat lookup of task id -> human-readable label, derived from the shared
+// module/task mapping so the side leaderboard shows the correct task type.
+const TASK_LABELS: Record<string, string> = Object.fromEntries(
+  LEADERBOARD_MODULE_TASKS.flatMap((m) => m.tasks.map((t) => [t.id, t.label])),
+);
 
 interface TasksPageProps {
   activeTaskId: string | null;
@@ -28,7 +37,21 @@ export const TasksPage: React.FC<TasksPageProps> = ({
   return (
     <div className="w-full max-w-6xl mx-auto flex flex-col lg:flex-row gap-6 items-stretch animate-fadeIn" id="tasks-split-layout">
       <div className="flex-grow flex items-center justify-center">
-        {activeTaskId ? (
+        {activeTaskId === 'os_bus_anki' ? (
+          <BusTaskRunner
+            taskType={activeTaskId}
+            user={user}
+            onSolved={onSolved}
+            onBackToSelector={() => setActiveTaskId(null)}
+          />
+        ) : activeTaskId === 'os_page_table' ? (
+          <PageTableTaskRunner
+            taskType={activeTaskId}
+            user={user}
+            onSolved={onSolved}
+            onBackToSelector={() => setActiveTaskId(null)}
+          />
+        ) : activeTaskId ? (
           <GenericTaskRunner
             taskType={activeTaskId}
             user={user}
@@ -54,7 +77,7 @@ export const TasksPage: React.FC<TasksPageProps> = ({
               </h3>
             </div>
             <span className="text-[10px] font-bold text-theme-muted block mb-4 uppercase tracking-wider border-b border-theme-border pb-2">
-              {activeTaskId ? 'Typ: 2x2 Determinante' : `Modul: ${MODULE_LABELS[activeModuleId] || 'LA - Lineare Algebra'}`}
+              {activeTaskId ? `Typ: ${TASK_LABELS[activeTaskId] || activeTaskId}` : `Modul: ${MODULE_LABELS[activeModuleId] || 'LA - Lineare Algebra'}`}
             </span>
 
             {loadingSideLeaderboard ? (

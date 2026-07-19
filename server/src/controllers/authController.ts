@@ -138,7 +138,14 @@ export const getMe = async (req: AuthenticatedRequest, res: Response, next: Next
       profilePic: user.profilePic,
       isAdmin: user.isAdmin,
       createdAt: user.createdAt,
-      solvedCount: user._count.solvedTasks
+      solvedCount: user._count.solvedTasks,
+      elo: user.elo,
+      eloLinAlg: user.eloLinAlg,
+      eloOs: user.eloOs,
+      eloFormalSys: user.eloFormalSys,
+      eloAlgoStruct: user.eloAlgoStruct,
+      duelWins: user.duelWins,
+      duelLosses: user.duelLosses
     });
   } catch (error) {
     next(error);

@@ -267,7 +267,7 @@ export function generateEigenbasis(): TaskData {
     mathQuery,
     answer,
     explanation,
-    prompt: `Bestimme eine Basis des Eigenraums zum größten Eigenwert von $A$.`,
+    prompt: `Die Eigenwerte von $A$ sind gegeben: $\\lambda_1=${eigenvalues[0]},\\; \\lambda_2=${eigenvalues[1]},\\; \\lambda_3=${eigenvalues[2]}$. Bestimme eine Basis des Eigenraums zum größten Eigenwert $\\lambda_{\\max}=${largest}$ von $A$.`,
     inputHint: 'Kommagetrennte Vektoren, erster Nicht-Null-Eintrag = 1, z.B. (1,2,0),(0,1,1)'
   };
 }

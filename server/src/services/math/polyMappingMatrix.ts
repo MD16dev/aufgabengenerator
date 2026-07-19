@@ -144,14 +144,14 @@ export function generatePolyMappingMatrix(): TaskData {
   explanation.push(
     `Die Koeffizienten von $\\varphi(b_i)$ sind genau die $i$-te Spalte der Darstellungsmatrix $M_B^B(\\varphi)$.`
   );
-  explanation.push(`Damit erhalten wir: $${formatMatrix(matrix)}$$`);
+  explanation.push(`Damit erhalten wir: $$${formatMatrix(matrix)}$$`);
 
   return {
     type: 'calc_poly_mapping_matrix',
     mathQuery,
     answer: formatMatrix(matrix),
     explanation,
-    prompt: `Gegeben sei die lineare Abbildung $\\varphi$ mit ${rule.description}. Bestimme die Darstellungsmatrix $M_B^B(\\varphi)$ bezüglich $B = \\{X^3, X^2, X, 1\\}$.`,
+    prompt: `Gegeben sei die lineare Abbildung $\\varphi$ mit ${rule.description}. Bestimme die Darstellungsmatrix $M_B^B(\\varphi)$ bezüglich $B = \\{X^3, X^2, X, 1\\}$. (Achtung: Der Koordinatenvektor ist absteigend nach Grad geordnet als $[c_3, c_2, c_1, c_0]$ – das konstante Glied steht also am Ende.)`,
     inputHint: 'Matrix zeilenweise, Einträge durch Komma, Zeilen durch Semikolon, z.B. [1,0,0,0;0,2,1,0;...]'
   };
 }

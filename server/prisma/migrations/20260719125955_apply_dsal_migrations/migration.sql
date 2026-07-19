@@ -1,0 +1,25 @@
+-- RedefineTables
+PRAGMA defer_foreign_keys=ON;
+PRAGMA foreign_keys=OFF;
+CREATE TABLE "new_User" (
+    "id" TEXT NOT NULL PRIMARY KEY,
+    "username" TEXT NOT NULL,
+    "passwordHash" TEXT NOT NULL,
+    "displayName" TEXT,
+    "isAdmin" BOOLEAN NOT NULL DEFAULT false,
+    "profilePic" TEXT,
+    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "elo" INTEGER NOT NULL DEFAULT 1000,
+    "eloLinAlg" INTEGER NOT NULL DEFAULT 1000,
+    "eloOs" INTEGER NOT NULL DEFAULT 1000,
+    "eloFormalSys" INTEGER NOT NULL DEFAULT 1000,
+    "eloAlgoStruct" INTEGER NOT NULL DEFAULT 1000,
+    "duelWins" INTEGER NOT NULL DEFAULT 0,
+    "duelLosses" INTEGER NOT NULL DEFAULT 0
+);
+INSERT INTO "new_User" ("createdAt", "displayName", "id", "isAdmin", "passwordHash", "profilePic", "username") SELECT "createdAt", "displayName", "id", "isAdmin", "passwordHash", "profilePic", "username" FROM "User";
+DROP TABLE "User";
+ALTER TABLE "new_User" RENAME TO "User";
+CREATE UNIQUE INDEX "User_username_key" ON "User"("username");
+PRAGMA foreign_keys=ON;
+PRAGMA defer_foreign_keys=OFF;
