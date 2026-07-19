@@ -163,10 +163,10 @@ async function createDuel(key: QueueKey, p1: QueuePlayer, p2: QueuePlayer): Prom
     moduleId: key.moduleId,
     taskTypeId: key.taskTypeId,
     limit: key.limit,
-    opponent: null as { userId: string; username: string } | null,
+    opponent: null as { userId: string; username: string; elo: number } | null,
   };
-  io?.to(p1.socketId).emit('duel:start', { ...payload, opponent: { userId: p2.userId, username: p2.username } });
-  io?.to(p2.socketId).emit('duel:start', { ...payload, opponent: { userId: p1.userId, username: p1.username } });
+  io?.to(p1.socketId).emit('duel:start', { ...payload, opponent: { userId: p2.userId, username: p2.username, elo: p2.elo } });
+  io?.to(p2.socketId).emit('duel:start', { ...payload, opponent: { userId: p1.userId, username: p1.username, elo: p1.elo } });
 
   startCountdown(active);
   return active;

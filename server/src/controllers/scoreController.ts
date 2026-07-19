@@ -133,3 +133,60 @@ export const getLeaderboard = async (req: AuthenticatedRequest, res: Response, n
     next(error);
   }
 };
+
+/**
+ * Retrieve the Elo leaderboard. Optional ?module=lin_alg|os|formal_sys|algo_struct
+ * selects the per-module Elo column; without it the general `elo` is used.
+ */
+export const getEloLeaderboard = async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
+  try {
+    const { module } = req.query;
+
+    const eloField = (() => {
+      switch (String(module || '')) {
+        case 'lin_alg': return 'eloLinAlg';
+        case 'os': return 'eloOs';
+        case 'formal_sys': return 'eloFormalSys';
+        case 'algo_struct': return 'eloAlgoStruct';
+        default: return 'elo';
+      }
+    })();
+
+    const users = await prisma.user.findMany({
+      select: {
+        id: true,
+        username: true,
+        displayName: true,
+        profilePic: true,
+        elo: true,
+        eloLinAlg: true,
+        eloOs: true,
+        eloFormalSys: true,
+        eloAlgoStruct: true,
+        duelWins: true,
+        duelLosses: true,
+      },
+    });
+
+    const leaderboard = users
+      .map((user) => ({
+        username: user.username,
+        displayName: user.displayName || user.username,
+        profilePic: user.profilePic,
+        elo: user[eloField as keyof typeof user] as number,
+        eloLinAlg: user.eloLinAlg,
+        eloOs: user.eloOs,
+        eloFormalSys: user.eloFormalSys,
+        eloAlgoStruct: user.eloAlgoStruct,
+        duelWins: user.duelWins,
+        duelLosses: user.duelLosses,
+        isUser: req.user ? req.user.userId === user.id : false,
+      }))
+      .filter((item) => item.elo > 0 || item.isUser)
+      .sort((a, b) => b.elo - a.elo);
+
+    res.json(leaderboard);
+  } catch (error) {
+    next(error);
+  }
+};

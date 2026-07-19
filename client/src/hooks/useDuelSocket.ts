@@ -6,6 +6,7 @@ import { SOCKET_URL } from '../config';
 export interface DuelOpponent {
   userId: string;
   username: string;
+  elo: number;
 }
 
 export interface DuelStartPayload {

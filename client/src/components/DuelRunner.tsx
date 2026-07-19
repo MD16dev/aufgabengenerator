@@ -2,7 +2,20 @@ import React, { useEffect, useState, useRef } from 'react';
 import { MathRenderer, LatexTextRenderer } from './MathRenderer';
 import { CheckCircle2, XCircle, HelpCircle, ArrowRight, Swords, Trophy, X, Clock } from 'lucide-react';
 import { useDuelSocket } from '../hooks/useDuelSocket';
+import { useAuth } from '../hooks/useAuth';
 import type { DuelStartPayload, DuelTask, DuelScore, DuelFinished } from '../hooks/useDuelSocket';
+import type { UserProfile } from '../types';
+
+/** Returns the per-module Elo value for a user based on the duel's module. */
+function getEloForModule(user: UserProfile, moduleId: string): number {
+  switch (moduleId) {
+    case 'lin_alg': return user.eloLinAlg;
+    case 'os': return user.eloOs;
+    case 'formal_sys': return user.eloFormalSys;
+    case 'algo_struct': return user.eloAlgoStruct;
+    default: return user.elo;
+  }
+}
 
 interface DuelRunnerProps {
   startPayload: DuelStartPayload;
@@ -11,6 +24,7 @@ interface DuelRunnerProps {
 
 export const DuelRunner: React.FC<DuelRunnerProps> = ({ startPayload, onExit }) => {
   const { submitAnswer, on, off } = useDuelSocket();
+  const { user } = useAuth();
   const [countdown, setCountdown] = useState<number | null>(null);
   const [task, setTask] = useState<DuelTask | null>(null);
   const [userAnswer, setUserAnswer] = useState<string>('');
@@ -118,6 +132,9 @@ export const DuelRunner: React.FC<DuelRunnerProps> = ({ startPayload, onExit }) 
             <div className="text-3xl font-extrabold font-display text-purple-600 dark:text-purple-400">
               {myScoreObj?.score ?? 0}
             </div>
+            <div className="text-xs text-theme-muted font-semibold mt-0.5">
+              {user ? `Elo ${getEloForModule(user, startPayload.moduleId)}` : ''}
+            </div>
           </div>
           <div className="text-center px-4">
             <Swords className="w-6 h-6 text-theme-muted mx-auto mb-1" />
@@ -127,6 +144,9 @@ export const DuelRunner: React.FC<DuelRunnerProps> = ({ startPayload, onExit }) 
             <div className="text-xs font-bold text-theme-muted">{startPayload.opponent.username.toUpperCase()}</div>
             <div className="text-3xl font-extrabold font-display text-indigo-600 dark:text-indigo-400">
               {opponentScoreObj?.score ?? 0}
+            </div>
+            <div className="text-xs text-theme-muted font-semibold mt-0.5">
+              Elo {startPayload.opponent.elo}
             </div>
           </div>
         </div>

@@ -5,6 +5,13 @@ export interface UserProfile {
   profilePic?: string;
   createdAt: string;
   solvedCount: number;
+  elo: number;
+  eloLinAlg: number;
+  eloOs: number;
+  eloFormalSys: number;
+  eloAlgoStruct: number;
+  duelWins: number;
+  duelLosses: number;
 }
 
 export interface LeaderboardItem {
@@ -16,4 +23,18 @@ export interface LeaderboardItem {
   isUser: boolean;
 }
 
-export type LeaderboardFilterType = 'global' | 'module' | 'task';
+export interface EloLeaderboardItem {
+  username: string;
+  displayName: string;
+  profilePic?: string;
+  elo: number;
+  eloLinAlg: number;
+  eloOs: number;
+  eloFormalSys: number;
+  eloAlgoStruct: number;
+  duelWins: number;
+  duelLosses: number;
+  isUser: boolean;
+}
+
+export type LeaderboardFilterType = 'global' | 'module' | 'task' | 'elo';

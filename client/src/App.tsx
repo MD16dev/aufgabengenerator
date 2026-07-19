@@ -32,6 +32,7 @@ export default function App() {
     selectedModuleFilter, setSelectedModuleFilter, selectedTaskFilter, setSelectedTaskFilter,
     selectedTaskModuleFilter, setSelectedTaskModuleFilter,
     sideLeaderboard, loadingSideLeaderboard, fetchLeaderboard, fetchSideLeaderboard,
+    eloLeaderboard, fetchEloLeaderboard,
   } = useLeaderboard();
 
   const adminUsername = import.meta.env.VITE_ADMIN_USERNAME || 'MD16';
@@ -51,9 +52,17 @@ export default function App() {
 
   useEffect(() => {
     if (activeTab === 'leaderboard') {
-      fetchLeaderboard();
+      if (leaderboardFilter === 'elo') {
+        fetchEloLeaderboard(selectedModuleFilter === 'Lineare Algebra' ? 'lin_alg'
+          : selectedModuleFilter === 'Betriebssysteme' ? 'os'
+          : selectedModuleFilter === 'Formale Systeme' ? 'formal_sys'
+          : selectedModuleFilter === 'Algorithmen & Datenstrukturen' ? 'algo_struct'
+          : undefined);
+      } else {
+        fetchLeaderboard();
+      }
     }
-  }, [activeTab, leaderboardFilter, selectedModuleFilter, selectedTaskFilter, fetchLeaderboard]);
+  }, [activeTab, leaderboardFilter, selectedModuleFilter, selectedTaskFilter, fetchLeaderboard, fetchEloLeaderboard]);
 
   useEffect(() => {
     if (activeTab === 'tasks') {
@@ -136,6 +145,7 @@ export default function App() {
             setTaskFilter={setSelectedTaskFilter}
             taskModuleFilter={selectedTaskModuleFilter}
             setTaskModuleFilter={setSelectedTaskModuleFilter}
+            eloLeaderboard={eloLeaderboard}
           />
         )}
 

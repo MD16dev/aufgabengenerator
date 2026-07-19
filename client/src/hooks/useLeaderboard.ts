@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react';
-import type { LeaderboardItem, LeaderboardFilterType } from '../types';
+import type { LeaderboardItem, LeaderboardFilterType, EloLeaderboardItem } from '../types';
 import { API_BASE } from '../config';
 
 /**
@@ -53,6 +53,9 @@ export function useLeaderboard() {
 
   const [sideLeaderboard, setSideLeaderboard] = useState<LeaderboardItem[]>([]);
   const [loadingSideLeaderboard, setLoadingSideLeaderboard] = useState<boolean>(false);
+
+  const [eloLeaderboard, setEloLeaderboard] = useState<EloLeaderboardItem[]>([]);
+  const [loadingEloLeaderboard, setLoadingEloLeaderboard] = useState<boolean>(false);
 
   const buildUrl = (filter: LeaderboardFilterType, module: string, task: string) => {
     let url = `${API_BASE}/api/tasks/leaderboard`;
@@ -110,11 +113,33 @@ export function useLeaderboard() {
     }
   }, []);
 
+  const fetchEloLeaderboard = useCallback(async (moduleId?: string) => {
+    setLoadingEloLeaderboard(true);
+    const token = localStorage.getItem('auth_token');
+    const headers: HeadersInit = {};
+    if (token) headers['Authorization'] = `Bearer ${token}`;
+
+    let url = `${API_BASE}/api/tasks/elo-leaderboard`;
+    if (moduleId) url += `?module=${encodeURIComponent(moduleId)}`;
+
+    try {
+      const response = await fetch(url, { headers });
+      if (response.ok) {
+        setEloLeaderboard(await response.json());
+      }
+    } catch (err) {
+      console.error('Elo-Bestenliste konnte nicht geladen werden:', err);
+    } finally {
+      setLoadingEloLeaderboard(false);
+    }
+  }, []);
+
   return {
     leaderboard, setLeaderboard, loadingLeaderboard, leaderboardFilter, setLeaderboardFilter,
     selectedModuleFilter, setSelectedModuleFilter, selectedTaskFilter, setSelectedTaskFilter,
     selectedTaskModuleFilter, setSelectedTaskModuleFilter,
     sideLeaderboard, setSideLeaderboard, loadingSideLeaderboard,
+    eloLeaderboard, loadingEloLeaderboard, fetchEloLeaderboard,
     fetchLeaderboard, fetchSideLeaderboard,
   };
 }

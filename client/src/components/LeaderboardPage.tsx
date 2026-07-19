@@ -1,5 +1,5 @@
-import { RefreshCw } from 'lucide-react';
-import type { LeaderboardItem, LeaderboardFilterType } from '../types';
+import { RefreshCw, Swords } from 'lucide-react';
+import type { LeaderboardItem, LeaderboardFilterType, EloLeaderboardItem } from '../types';
 import { LEADERBOARD_MODULE_TASKS } from '../hooks/useLeaderboard';
 
 interface LeaderboardPageProps {
@@ -13,12 +13,14 @@ interface LeaderboardPageProps {
   setTaskFilter: (t: string) => void;
   taskModuleFilter: string;
   setTaskModuleFilter: (m: string) => void;
+  eloLeaderboard: EloLeaderboardItem[];
 }
 
 const FILTERS: { value: LeaderboardFilterType; label: string }[] = [
   { value: 'global', label: 'Gesamt' },
   { value: 'module', label: 'Modul' },
   { value: 'task', label: 'Aufgabe' },
+  { value: 'elo', label: 'Elo' },
 ];
 
 const MODULES: { value: string; label: string }[] = [
@@ -32,6 +34,7 @@ export const LeaderboardPage: React.FC<LeaderboardPageProps> = ({
   leaderboard, loading, filter, setFilter,
   moduleFilter, setModuleFilter, taskFilter, setTaskFilter,
   taskModuleFilter, setTaskModuleFilter,
+  eloLeaderboard,
 }) => {
   const activeIndex = FILTERS.findIndex((f) => f.value === filter);
   const taskModule = LEADERBOARD_MODULE_TASKS.find((m) => m.module === taskModuleFilter);
@@ -170,7 +173,19 @@ export const LeaderboardPage: React.FC<LeaderboardPageProps> = ({
             the panel shrink/grow on tab switch -> flicker. With a fixed height the
             panel never resizes; long lists scroll internally. */}
         <div className="h-[28rem]">
-          {leaderboard.length > 0 ? (
+          {filter === 'elo' ? (
+            eloLeaderboard.length > 0 ? (
+              <div className="h-full overflow-y-auto space-y-2.5 pr-1">
+                {eloLeaderboard.map((item, index) => (
+                  <EloLeaderboardRow key={index} item={item} rank={index} />
+                ))}
+              </div>
+            ) : (
+              <div className="flex flex-col items-center justify-center h-full text-theme-muted text-sm">
+                Noch keine Elo-Werte vorhanden. Spiele ein Duell, um hier zu erscheinen!
+              </div>
+            )
+          ) : leaderboard.length > 0 ? (
             <div className="h-full overflow-y-auto space-y-2.5 pr-1">
               {leaderboard.map((item, index) => (
                 <LeaderboardRow key={index} item={item} rank={index} />
@@ -217,6 +232,42 @@ const LeaderboardRow: React.FC<{ item: LeaderboardItem; rank: number }> = ({ ite
       <div className="flex items-center gap-2">
         <span className="font-extrabold text-theme-primary">{item.solvedCount}</span>
         <span className="text-xs text-theme-muted font-medium">gelöst</span>
+      </div>
+    </div>
+  );
+};
+
+const EloLeaderboardRow: React.FC<{ item: EloLeaderboardItem; rank: number }> = ({ item, rank }) => {
+  const rankStyle =
+    rank === 0 ? 'bg-amber-500/20 text-amber-600 dark:text-amber-400 border border-amber-500/35' :
+    rank === 1 ? 'bg-theme-card border border-theme-border text-theme-secondary font-bold' :
+    rank === 2 ? 'bg-amber-700/20 text-amber-800 dark:text-amber-600 border border-amber-700/35' :
+    'bg-theme-card border border-theme-border text-theme-muted font-bold';
+
+  return (
+    <div
+      className={`flex items-center justify-between p-4 rounded-2xl border transition-all ${
+        item.isUser ? 'bg-purple-500/10 dark:bg-purple-500/15 border-purple-500/35 shadow-sm' : 'bg-theme-card border-theme-border'
+      }`}
+    >
+      <div className="flex items-center gap-4.5">
+        <span className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm ${rankStyle}`}>{rank + 1}</span>
+        <div className="w-10 h-10 rounded-xl bg-purple-500/10 flex items-center justify-center overflow-hidden border border-theme-border shrink-0">
+          {item.profilePic ? (
+            <img src={item.profilePic} className="w-full h-full object-cover" alt="" />
+          ) : (
+            <span className="text-xs font-bold text-purple-600 dark:text-purple-400 uppercase">{item.displayName.substring(0, 2)}</span>
+          )}
+        </div>
+        <div>
+          <span className="font-bold text-theme-primary">{item.displayName}</span>
+          <span className="block text-[10px] text-theme-muted font-semibold">@{item.username}</span>
+        </div>
+      </div>
+      <div className="flex items-center gap-2">
+        <Swords className="w-4 h-4 text-purple-600 dark:text-purple-400" />
+        <span className="font-extrabold text-theme-primary">{item.elo}</span>
+        <span className="text-xs text-theme-muted font-medium">Elo</span>
       </div>
     </div>
   );
