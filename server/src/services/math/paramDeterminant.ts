@@ -42,7 +42,8 @@ function det3Poly(M: Poly[][], p: number): Poly {
   const minor00 = term(m(1, 1), m(2, 2), m(1, 2), m(2, 1));
   const minor01 = term(m(1, 0), m(2, 2), m(1, 2), m(2, 0));
   const minor02 = term(m(1, 0), m(2, 1), m(1, 1), m(2, 0));
-  return padd(padd(pmul(m(0, 0), minor00, p), pmul(m(0, 1), minor01, p), p), pmul(m(0, 2), minor02, p), p);
+  // det = a00*(a11*a22 - a12*a21) - a01*(a10*a22 - a12*a20) + a02*(a10*a21 - a11*a20)
+  return padd(psub(pmul(m(0, 0), minor00, p), pmul(m(0, 1), minor01, p), p), pmul(m(0, 2), minor02, p), p);
 }
 
 function formatPoly(poly: Poly): string {
