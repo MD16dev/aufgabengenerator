@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { X, Send, CheckCircle2, AlertCircle, MessageSquare, AlertTriangle } from 'lucide-react';
+import { API_BASE } from '../config';
 
 interface FeedbackModalProps {
   isOpen: boolean;
@@ -38,7 +39,7 @@ export const FeedbackModal: React.FC<FeedbackModalProps> = ({ isOpen, onClose, c
         headers['Authorization'] = `Bearer ${token}`;
       }
 
-      const response = await fetch('http://localhost:5001/api/feedback', {
+      const response = await fetch(`${API_BASE}/api/feedback`, {
         method: 'POST',
         headers,
         body: JSON.stringify({

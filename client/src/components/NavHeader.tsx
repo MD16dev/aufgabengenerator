@@ -1,8 +1,8 @@
-import { GraduationCap, Home, BookOpen, Trophy, User, ShieldCheck, LogIn, LogOut, RefreshCw, MessageSquare, HelpCircle } from 'lucide-react';
+import { GraduationCap, Home, BookOpen, Trophy, User, ShieldCheck, LogIn, LogOut, RefreshCw, MessageSquare, HelpCircle, Swords } from 'lucide-react';
 import { ThemeToggle } from './ThemeToggle';
 import type { UserProfile } from '../types';
 
-type TabType = 'home' | 'tasks' | 'leaderboard' | 'profile' | 'admin';
+type TabType = 'home' | 'tasks' | 'leaderboard' | 'profile' | 'admin' | 'duels';
 
 interface NavHeaderProps {
   activeTab: TabType;
@@ -20,6 +20,7 @@ interface NavHeaderProps {
 const TABS: { id: TabType; label: string; icon: React.ReactNode }[] = [
   { id: 'home', label: 'Start', icon: <Home className="w-4 h-4" /> },
   { id: 'tasks', label: 'Aufgaben', icon: <BookOpen className="w-4 h-4" /> },
+  { id: 'duels', label: 'Duelle', icon: <Swords className="w-4 h-4" /> },
   { id: 'leaderboard', label: 'Bestenliste', icon: <Trophy className="w-4 h-4" /> },
   { id: 'profile', label: 'Profil', icon: <User className="w-4 h-4" /> },
 ];

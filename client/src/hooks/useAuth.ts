@@ -1,7 +1,6 @@
 import { useState, useCallback } from 'react';
 import type { UserProfile } from '../types';
-
-const API_BASE = 'http://localhost:5001';
+import { API_BASE } from '../config';
 
 /**
  * Handles authentication session state: token verification, logout and

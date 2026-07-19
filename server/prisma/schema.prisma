@@ -15,6 +15,15 @@ model User {
   profilePic   String?      // Will store base64 data URI
   createdAt    DateTime     @default(now())
   solvedTasks  SolvedTask[]
+  // Duel ratings (Elo) — one per module plus a general rating
+  elo          Int          @default(1000)
+  eloLinAlg    Int          @default(1000)
+  eloOs        Int          @default(1000)
+  eloFormalSys Int          @default(1000)
+  eloAlgoStruct Int         @default(1000)
+  duelWins     Int          @default(0)
+  duelLosses   Int          @default(0)
+  duels        DuelParticipant[]
 }
 
 model TaskType {
@@ -42,4 +51,55 @@ model Feedback {
   userId         String?
   githubIssueUrl String?  // Link to the created GitHub issue
   createdAt      DateTime @default(now())
+}
+
+model BusQuestion {
+  id            String   @id @default(uuid())
+  question      String
+  correctAnswer String
+  distractor1   String
+  distractor2   String
+  distractor3   String
+  explanation   String?
+  createdAt     DateTime @default(now())
+}
+
+// ---- Duelle (real-time duels) ----
+
+model Duel {
+  id          String           @id @default(uuid())
+  mode        String           // e.g. "same_task"
+  moduleId    String           // module the duel belongs to
+  taskTypeId  String           // the task type both players solve
+  limit       Int              // win limit: 3, 5 or 10 solved tasks
+  status      String           @default("pending") // pending | active | finished | cancelled
+  winnerId    String?
+  loserId     String?
+  createdAt   DateTime         @default(now())
+  finishedAt  DateTime?
+  participants DuelParticipant[]
+  rounds      DuelRound[]
+}
+
+model DuelParticipant {
+  id        String   @id @default(uuid())
+  duelId    String
+  userId    String
+  score     Int      @default(0)
+  eloBefore Int      @default(1000)
+  eloAfter  Int?
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  duel      Duel     @relation(fields: [duelId], references: [id], onDelete: Cascade)
+
+  @@unique([duelId, userId])
+}
+
+model DuelRound {
+  id        String   @id @default(uuid())
+  duelId    String
+  taskType  String
+  taskData  String   // JSON-serialized TaskData shared by both players
+  solvedBy  String?  // userId of the player who solved it first (optional)
+  createdAt DateTime @default(now())
+  duel      Duel     @relation(fields: [duelId], references: [id], onDelete: Cascade)
 }

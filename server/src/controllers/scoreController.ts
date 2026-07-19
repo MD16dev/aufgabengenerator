@@ -28,9 +28,25 @@ export const solveTask = async (req: AuthenticatedRequest, res: Response, next: 
           ? '3x3 Determinante (Sarrus)' 
           : taskTypeId === 'lin_alg_matmul'
           ? 'Matrizenmultiplikation'
+          : taskTypeId === 'calc_gl_n_cardinality'
+          ? 'Kardinalität von GL_n'
+          : taskTypeId === 'calc_param_determinant_finite_field'
+          ? 'Determinante mit Parameter'
+          : taskTypeId === 'calc_poly_mapping_matrix'
+          ? 'Darstellungsmatrix (Polynomräume)'
+          : taskTypeId === 'calc_eigenbasis'
+          ? 'Eigenbasis berechnen'
+          : taskTypeId === 'calc_linear_code_parameters'
+          ? 'Parameter linearer Codes'
+          : taskTypeId === 'os_bus_anki'
+          ? 'BUS Quizfragen'
+          : taskTypeId === 'os_page_table'
+          ? 'Adressübersetzung'
           : 'Aufgabe',
-        module: (taskTypeId === 'lin_alg_det' || taskTypeId === 'lin_alg_det3x3' || taskTypeId === 'lin_alg_matmul') 
+        module: (taskTypeId.startsWith('lin_alg') || taskTypeId.startsWith('calc'))
           ? 'Lineare Algebra' 
+          : taskTypeId.startsWith('os')
+          ? 'Betriebssysteme'
           : 'Allgemein'
       }
     });

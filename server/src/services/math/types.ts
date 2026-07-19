@@ -16,4 +16,6 @@ export interface TaskData {
   prompt?: string;
   /** Optional input hint, e.g. "Gib das Ergebnis als Dezimalzahl ein." */
   inputHint?: string;
+  /** Optional options for multiple choice tasks. */
+  options?: string[];
 }
