@@ -5,6 +5,10 @@ interface OnboardingTourProps {
   onClose: () => void;
   /** Called when a step wants to navigate to a specific tab / task. */
   onNavigate?: (target: { tab: 'home' | 'tasks' | 'leaderboard' | 'profile' | 'admin'; taskId?: string | null }) => void;
+  /** Initial step index (restored from the URL). */
+  initialStep?: number;
+  /** Called whenever the current step changes (to sync the URL). */
+  onStepChange?: (step: number) => void;
 }
 
 interface TourStep {
@@ -31,8 +35,8 @@ interface SpotlightCoords {
   opacity: number;
 }
 
-export const OnboardingTour: React.FC<OnboardingTourProps> = ({ onClose, onNavigate }) => {
-  const [currentStep, setCurrentStep] = useState<number>(0);
+export const OnboardingTour: React.FC<OnboardingTourProps> = ({ onClose, onNavigate, initialStep = 0, onStepChange }) => {
+  const [currentStep, setCurrentStep] = useState<number>(initialStep);
   
   // Coordinates for the floating speech bubble
   const [coords, setCoords] = useState<Coords>({
@@ -215,7 +219,9 @@ export const OnboardingTour: React.FC<OnboardingTourProps> = ({ onClose, onNavig
 
   const handleNext = () => {
     if (currentStep < steps.length - 1) {
-      setCurrentStep(currentStep + 1);
+      const next = currentStep + 1;
+      setCurrentStep(next);
+      onStepChange?.(next);
     } else {
       handleComplete();
     }
@@ -223,7 +229,9 @@ export const OnboardingTour: React.FC<OnboardingTourProps> = ({ onClose, onNavig
 
   const handleBack = () => {
     if (currentStep > 0) {
-      setCurrentStep(currentStep - 1);
+      const prev = currentStep - 1;
+      setCurrentStep(prev);
+      onStepChange?.(prev);
     }
   };
 

@@ -15,17 +15,19 @@ import { DuelRunner } from './components/DuelRunner';
 import { useAuth } from './hooks/useAuth';
 import { useLeaderboard } from './hooks/useLeaderboard';
 import { PomodoroProvider } from './hooks/usePomodoro';
+import { useRoute, type RouteState } from './hooks/useRoute';
 
 type TabType = 'home' | 'tasks' | 'leaderboard' | 'profile' | 'admin' | 'duels';
 
-export default function App() {
-  const [activeTab, setActiveTab] = useState<TabType>('home');
-  const [activeTaskId, setActiveTaskId] = useState<string | null>(null);
-  const [activeModuleId, setActiveModuleId] = useState<string>('lin_alg');
-  const [isAuthModalOpen, setIsAuthModalOpen] = useState<boolean>(false);
-  const [isOnboardingOpen, setIsOnboardingOpen] = useState<boolean>(false);
-  const [isFeedbackOpen, setIsFeedbackOpen] = useState<boolean>(false);
-  const [activeDuel, setActiveDuel] = useState<any>(null);
+export default function App({ initialRoute }: { initialRoute?: RouteState }) {
+  const { route, setRoute } = useRoute(initialRoute);
+
+  const activeTab = route.view;
+  const activeTaskId = route.taskId;
+  const activeModuleId = route.moduleId;
+  const isAuthModalOpen = route.authOpen;
+  const isOnboardingOpen = route.onboardingOpen;
+  const isFeedbackOpen = route.feedbackOpen;
 
   const { user, loadingUser, checkUserSession, handleLogout, updateProfile } = useAuth();
   const {
@@ -44,11 +46,14 @@ export default function App() {
     return saved ? parseInt(saved, 10) : 0;
   });
 
+  // Full duel payload (not serializable) — only the duelId lives in the URL.
+  const [activeDuel, setActiveDuel] = useState<any>(null);
+
   useEffect(() => {
     checkUserSession();
     const onboardingDone = localStorage.getItem('aufgabengenerator_onboarding_completed');
-    if (!onboardingDone) setIsOnboardingOpen(true);
-  }, [checkUserSession]);
+    if (!onboardingDone) setRoute({ onboardingOpen: true });
+  }, [checkUserSession, setRoute]);
 
   useEffect(() => {
     if (activeTab === 'leaderboard') {
@@ -98,6 +103,11 @@ export default function App() {
     }
   };
 
+  // Navigation helpers backed by the URL route.
+  const setActiveTab = (tab: TabType) => setRoute({ view: tab, taskId: null, duelId: null });
+  const setActiveTaskId = (id: string | null) => setRoute({ taskId: id });
+  const setActiveModuleId = (id: string) => setRoute({ moduleId: id, taskId: null });
+
   return (
     <PomodoroProvider>
     <div className="min-h-screen flex flex-col transition-colors duration-200">
@@ -112,9 +122,9 @@ export default function App() {
         loadingUser={loadingUser}
         isAdmin={isAdmin}
         onLogout={handleLogout}
-        onOpenFeedback={() => setIsFeedbackOpen(true)}
-        onOpenOnboarding={() => setIsOnboardingOpen(true)}
-        onOpenAuth={() => setIsAuthModalOpen(true)}
+        onOpenFeedback={() => setRoute({ feedbackOpen: true })}
+        onOpenOnboarding={() => setRoute({ onboardingOpen: true, onboardingStep: 0 })}
+        onOpenAuth={() => setRoute({ authOpen: true })}
       />
 
       <main className="flex-grow flex items-center justify-center py-6 px-4 z-10">
@@ -157,7 +167,7 @@ export default function App() {
           <ProfilePage
             user={user}
             guestScore={guestScore}
-            onOpenAuth={() => setIsAuthModalOpen(true)}
+            onOpenAuth={() => setRoute({ authOpen: true })}
             onUpdateProfile={updateProfile}
           />
         )}
@@ -165,7 +175,10 @@ export default function App() {
         {activeTab === 'duels' && !activeDuel && (
           <DuelLobby
             user={user}
-            onDuelStart={(payload: any) => setActiveDuel(payload)}
+            onDuelStart={(payload: any) => {
+              setActiveDuel(payload);
+              setRoute({ duelId: payload.duelId });
+            }}
             onDuelWaiting={() => {}}
             onDuelMatched={() => {}}
           />
@@ -176,7 +189,7 @@ export default function App() {
             startPayload={activeDuel}
             onExit={() => {
               setActiveDuel(null);
-              setActiveTab('duels');
+              setRoute({ duelId: null, view: 'duels' });
             }}
           />
         )}
@@ -186,17 +199,19 @@ export default function App() {
 
       <PomodoroWidget />
 
-      <AuthModal isOpen={isAuthModalOpen} onClose={() => setIsAuthModalOpen(false)} onAuthSuccess={handleAuthSuccess} />
+      <AuthModal isOpen={isAuthModalOpen} onClose={() => setRoute({ authOpen: false })} onAuthSuccess={handleAuthSuccess} />
       {isOnboardingOpen && (
         <OnboardingTour
-          onClose={() => setIsOnboardingOpen(false)}
+          initialStep={route.onboardingStep}
+          onClose={() => setRoute({ onboardingOpen: false })}
+          onStepChange={(step: number) => setRoute({ onboardingStep: step }, { replace: true })}
           onNavigate={({ tab, taskId }) => {
             setActiveTab(tab);
             setActiveTaskId(taskId !== undefined ? taskId : null);
           }}
         />
       )}
-      <FeedbackModal isOpen={isFeedbackOpen} onClose={() => setIsFeedbackOpen(false)} currentUser={user} />
+      <FeedbackModal isOpen={isFeedbackOpen} onClose={() => setRoute({ feedbackOpen: false })} currentUser={user} />
     </div>
     </PomodoroProvider>
   );

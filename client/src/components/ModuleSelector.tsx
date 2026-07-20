@@ -230,10 +230,16 @@ export const ModuleSelector: React.FC<ModuleSelectorProps> = ({ activeModule, on
           isActive: true
         },
         {
-          id: 'os_scheduling',
-          name: 'Scheduling (FIFO / Round-Robin)',
-          description: 'Berechne Wartezeiten und Durchlaufzeiten für Prozess-Scheduling.',
-          isActive: false
+          id: 'os_scheduling_wait',
+          name: 'Scheduling: Wartezeit',
+          description: 'Berechne die durchschnittliche Wartezeit für FIFO, SJF oder Round Robin.',
+          isActive: true
+        },
+        {
+          id: 'os_scheduling_gantt',
+          name: 'Scheduling: Gantt (Drag&Drop)',
+          description: 'Ziehe die Prozesse per Drag-and-Drop in die korrekte Reihenfolge.',
+          isActive: true
         }
       ]
     },

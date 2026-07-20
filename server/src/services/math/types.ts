@@ -57,6 +57,24 @@ export interface TaskData {
    * Rendered by the SVG GraphRenderer on the frontend.
    */
   graph?: GraphJSON;
+
+  /**
+   * Scheduling drag-and-drop payload (custom renderer reads this).
+   * Wird vom SchedulingDragDropRunner auf dem Frontend ausgelesen, um ein
+   * Gantt-Diagramm per Drag-and-Drop zusammensetzen zu lassen.
+   */
+  schedulingDragDrop?: {
+    /** Verwendetes Scheduling-Verfahren, z.B. "FIFO (FCFS)" oder "Round Robin (Q=3)". */
+    algorithm: string;
+    /** Die beteiligten Prozesse mit ihren Parametern. */
+    processes: { id: string; name: string; burst: number; arrival: number; remaining: number }[];
+    /** Anzahl der Slots (12-20). */
+    slots: number;
+    /** Korrekte Slot-Belegung, z.B. ["P1","P1","P2",...]. */
+    solution: string[];
+    /** Aufgabenstellung für den Nutzer. */
+    prompt: string;
+  };
 }
 
 /**
