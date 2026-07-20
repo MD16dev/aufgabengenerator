@@ -234,8 +234,10 @@ export const GenericTaskRunner: React.FC<GenericTaskRunnerProps> = ({
               </h2>
             )}
 
-            <div className="flex justify-center my-8 select-none scale-110 md:scale-125 transition-transform min-w-0" id="task-math-expression">
-              <MathRenderer math={task.mathQuery} block />
+            <div className="flex justify-center my-8 select-none px-4 md:px-8 transition-transform min-w-0" id="task-math-expression">
+              <div className="w-full max-w-2xl text-center">
+                <MathRenderer math={task.mathQuery} block />
+              </div>
             </div>
 
             {task.renderMode === 'tree' && task.tree ? (

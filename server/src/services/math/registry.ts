@@ -40,6 +40,8 @@ import {
 } from './matrixInverseField';
 import { generateBusAnkiTask } from './osBusAnki';
 import { generatePageTableTask } from './osPageTable';
+import { generateSchedulingGanttTask } from './osSchedulingGantt';
+import { generateSchedulingWaitTask } from './osSchedulingWait';
 import { generateBSTInsertion, generateBSTDeletion } from '../dsal/bst';
 import { generateAVLInsertion, generateAVLDeletion } from '../dsal/avl';
 import { generateRedBlackInsertion, generateRedBlackDeletion } from '../dsal/redblack';
@@ -122,6 +124,8 @@ export const taskGenerators: Record<string, () => TaskData | Promise<TaskData>> 
   'calc_preimage_field': generatePreimageField,
   'os_bus_anki': generateBusAnkiTask,
   'os_page_table': generatePageTableTask,
+  'os_scheduling_gantt': generateSchedulingGanttTask,
+  'os_scheduling_wait': generateSchedulingWaitTask,
   // DSAL — Algorithmen & Datenstrukturen (translated from exercisegenerator)
   'dsal_bst_insert': generateBSTInsertion,
   'dsal_bst_delete': generateBSTDeletion,

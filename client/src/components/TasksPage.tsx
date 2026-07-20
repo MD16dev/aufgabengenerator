@@ -3,6 +3,7 @@ import { ModuleSelector } from './ModuleSelector';
 import { GenericTaskRunner } from './GenericTaskRunner';
 import { BusTaskRunner } from './BusTaskRunner';
 import { PageTableTaskRunner } from './PageTableTaskRunner';
+import { SchedulingDragDropRunner } from './SchedulingDragDropRunner';
 import { LEADERBOARD_MODULE_TASKS } from '../hooks/useLeaderboard';
 import type { LeaderboardItem } from '../types';
 
@@ -46,6 +47,13 @@ export const TasksPage: React.FC<TasksPageProps> = ({
           />
         ) : activeTaskId === 'os_page_table' ? (
           <PageTableTaskRunner
+            taskType={activeTaskId}
+            user={user}
+            onSolved={onSolved}
+            onBackToSelector={() => setActiveTaskId(null)}
+          />
+        ) : activeTaskId === 'os_scheduling_gantt' ? (
+          <SchedulingDragDropRunner
             taskType={activeTaskId}
             user={user}
             onSolved={onSolved}
