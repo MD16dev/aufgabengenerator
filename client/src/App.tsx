@@ -12,12 +12,13 @@ import { OnboardingTour } from './components/OnboardingTour';
 import { FeedbackModal } from './components/FeedbackModal';
 import { DuelLobby } from './components/DuelLobby';
 import { DuelRunner } from './components/DuelRunner';
+import { ExamPage } from './components/ExamPage';
 import { useAuth } from './hooks/useAuth';
 import { useLeaderboard } from './hooks/useLeaderboard';
 import { PomodoroProvider } from './hooks/usePomodoro';
 import { useRoute, type RouteState } from './hooks/useRoute';
 
-type TabType = 'home' | 'tasks' | 'leaderboard' | 'profile' | 'admin' | 'duels';
+type TabType = 'home' | 'tasks' | 'leaderboard' | 'profile' | 'admin' | 'duels' | 'exam';
 
 export default function App({ initialRoute }: { initialRoute?: RouteState }) {
   const { route, setRoute } = useRoute(initialRoute);
@@ -192,6 +193,10 @@ export default function App({ initialRoute }: { initialRoute?: RouteState }) {
               setRoute({ duelId: null, view: 'duels' });
             }}
           />
+        )}
+
+        {activeTab === 'exam' && (
+          <ExamPage user={user} onOpenAuth={() => setRoute({ authOpen: true })} />
         )}
       </main>
 
