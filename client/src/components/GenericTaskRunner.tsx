@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { MathRenderer, LatexTextRenderer } from './MathRenderer';
 import { TreeRenderer } from './TreeRenderer';
 import { StepTaskRunner } from './StepTaskRunner';
-import { CheckCircle2, XCircle, HelpCircle, ArrowRight, RefreshCw, ArrowLeft, Lock } from 'lucide-react';
+import { CheckCircle2, XCircle, HelpCircle, ArrowRight, RefreshCw, ArrowLeft, Lock, Eye } from 'lucide-react';
 import { API_BASE } from '../config';
 import type { TaskData } from '../types';
 
@@ -11,6 +11,19 @@ interface GenericTaskRunnerProps {
   user: { id: string; username: string } | null;
   onSolved: () => void;
   onBackToSelector: () => void;
+  /** When true (e.g. during an exam), solution reveal and skipping are disabled. */
+  examMode?: boolean;
+  /** In exam mode, the correctness of a submitted answer is reported here
+   *  (so it can be scored later) WITHOUT showing any right/wrong feedback. */
+  onAutoGrade?: (correct: boolean, answer: string) => void;
+  /** When true, the runner renders a read-only model-solution view: it shows
+   *  the user's submitted answer followed by the model solution, with no
+   *  reveal/check/skip buttons — only a single expand/collapse control. */
+  solutionMode?: boolean;
+  /** The answer the user submitted (shown above the model solution). */
+  userAnswer?: string;
+  /** Optional pre-fetched task data (e.g. in exam mode) */
+  task?: TaskData;
 }
 
 /**
@@ -33,17 +46,25 @@ export const GenericTaskRunner: React.FC<GenericTaskRunnerProps> = ({
   user,
   onSolved,
   onBackToSelector,
+  examMode = false,
+  onAutoGrade,
+  solutionMode = false,
+  userAnswer: userAnswerProp,
+  task: initialTask,
 }) => {
-  const [task, setTask] = useState<TaskData | null>(null);
-  const [loading, setLoading] = useState<boolean>(true);
+  const [task, setTask] = useState<TaskData | null>(initialTask ?? null);
+  const [loading, setLoading] = useState<boolean>(!initialTask);
   const [error, setError] = useState<string | null>(null);
   const [userAnswer, setUserAnswer] = useState<string>('');
   const [selectedChoice, setSelectedChoice] = useState<string | null>(null);
   const [status, setStatus] = useState<'idle' | 'correct' | 'incorrect'>('idle');
   const [showSolution, setShowSolution] = useState<boolean>(false);
   const [isLocked, setIsLocked] = useState<boolean>(false);
+  const [examSubmitted, setExamSubmitted] = useState<boolean>(false);
   const [revealFeedbackGiven, setRevealFeedbackGiven] = useState<boolean>(false);
   const [revealFeedbackMsg, setRevealFeedbackMsg] = useState<string>('');
+  // In solution mode the model solution is shown in a collapsible panel.
+  const [solutionExpanded, setSolutionExpanded] = useState<boolean>(!solutionMode);
 
   const [localScore, setLocalScore] = useState<number>(() => {
     const saved = localStorage.getItem('aufgabengenerator_score');
@@ -91,9 +112,26 @@ export const GenericTaskRunner: React.FC<GenericTaskRunnerProps> = ({
   };
 
   useEffect(() => {
-    fetchTask();
+    if (initialTask) {
+      setTask(initialTask);
+      setLoading(false);
+    } else {
+      fetchTask();
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [taskType]);
+  }, [taskType, initialTask]);
+
+  useEffect(() => {
+    if (examMode && userAnswerProp !== undefined && task) {
+      const isChoiceTask = !!task.choices && task.choices.length > 0;
+      if (isChoiceTask) {
+        setSelectedChoice(userAnswerProp || null);
+      } else {
+        setUserAnswer(userAnswerProp || '');
+      }
+      setExamSubmitted(!!userAnswerProp);
+    }
+  }, [userAnswerProp, examMode, task]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -101,24 +139,30 @@ export const GenericTaskRunner: React.FC<GenericTaskRunnerProps> = ({
 
     // Multiple-choice tasks compare the selected option id with `answer`.
     const isChoiceTask = !!task.choices && task.choices.length > 0;
+    let correct = false;
     if (isChoiceTask) {
       if (selectedChoice === null) return;
-      if (selectedChoice === task.answer) {
-        setStatus('correct');
-      } else {
-        setStatus('incorrect');
-        return;
-      }
+      correct = selectedChoice === task.answer;
     } else {
       if (userAnswer.trim() === '') return;
       const normalizedUser = normalizeInput(userAnswer);
       const normalizedAnswer = normalizeInput(task.answer);
-      if (normalizedUser === normalizedAnswer) {
-        setStatus('correct');
-      } else {
-        setStatus('incorrect');
-        return;
-      }
+      correct = normalizedUser === normalizedAnswer;
+    }
+
+    // In exam mode we must NOT reveal whether the answer was right or wrong.
+    // We only report the result silently (for later scoring) and stop here.
+    if (examMode) {
+      onAutoGrade?.(correct, isChoiceTask ? (selectedChoice ?? '') : userAnswer);
+      setExamSubmitted(true);
+      return;
+    }
+
+    if (correct) {
+      setStatus('correct');
+    } else {
+      setStatus('incorrect');
+      return;
     }
 
     const token = localStorage.getItem('auth_token');
@@ -182,6 +226,101 @@ export const GenericTaskRunner: React.FC<GenericTaskRunnerProps> = ({
 
   return (
     <div className="w-full max-w-2xl mx-auto px-4 py-8 animate-fadeIn" id="generic-task-solver">
+      {solutionMode ? (
+        <div className="glass-panel rounded-3xl p-6 md:p-8 relative overflow-hidden">
+          <div className="absolute top-0 right-0 w-48 h-48 bg-purple-500/10 rounded-full blur-3xl pointer-events-none" />
+
+          <div className="flex justify-between items-center mb-4">
+            <span className="text-xs font-bold uppercase tracking-wider px-3 py-1 bg-purple-500/10 text-purple-600 dark:text-purple-400 rounded-full border border-purple-500/25">
+              {task?.type}
+            </span>
+          </div>
+
+          {task?.prompt && (
+            <h2 className="text-xl md:text-2xl font-bold font-display text-theme-primary mb-6 leading-snug">
+              <LatexTextRenderer text={task.prompt} />
+            </h2>
+          )}
+
+          {task?.mathQuery && (
+            <div className="flex justify-center my-8 select-none px-4 md:px-8 transition-transform min-w-0">
+              <div className="w-full max-w-2xl text-center">
+                <MathRenderer math={task.mathQuery} block />
+              </div>
+            </div>
+          )}
+
+          {task?.choices && task.choices.length > 0 ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 my-6">
+              {task.choices.map((choice) => {
+                const isSelected = userAnswerProp === choice.id;
+                return (
+                  <div
+                    key={choice.id}
+                    className={`p-3 bg-theme-card border rounded-2xl overflow-x-auto ${
+                      isSelected ? 'border-purple-500 ring-2 ring-purple-500/30' : 'border-theme-border'
+                    }`}
+                  >
+                    {choice.tree ? (
+                      <TreeRenderer tree={choice.tree} />
+                    ) : (
+                      <div className="text-center py-4"><MathRenderer math={choice.caption ?? ''} block /></div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          ) : null}
+
+          <div className="mt-6 p-4 bg-theme-card border border-theme-border rounded-2xl">
+            <p className="text-sm font-semibold text-theme-primary mb-1">Deine Antwort:</p>
+            <p className="text-theme-secondary">
+              {userAnswerProp && userAnswerProp.length > 0 ? (
+                <LatexTextRenderer text={userAnswerProp} />
+              ) : (
+                <span className="text-theme-muted italic">keine Antwort abgegeben</span>
+              )}
+            </p>
+          </div>
+
+          <div className="mt-4">
+            <button
+              type="button"
+              onClick={() => setSolutionExpanded((v) => !v)}
+              className="flex items-center gap-2 text-sm font-semibold text-purple-600 dark:text-purple-400 hover:opacity-80 transition-opacity cursor-pointer"
+            >
+              <Eye className="w-4 h-4" />
+              {solutionExpanded ? 'Musterlösung ausblenden' : 'Musterlösung anzeigen'}
+            </button>
+
+            {solutionExpanded && (
+              <div className="mt-3 p-4 bg-theme-card border border-theme-border rounded-2xl animate-fadeIn">
+                <h3 className="text-sm font-bold text-purple-600 dark:text-purple-400 uppercase tracking-wider mb-3">
+                  Musterlösung
+                </h3>
+                {task?.explanation && task.explanation.length > 0 ? (
+                  <div className="space-y-2 text-theme-secondary text-sm">
+                    {task.explanation.map((step, idx) => (
+                      <div key={idx} className="pb-2 last:pb-0 border-b last:border-0 border-theme-border">
+                        <LatexTextRenderer text={step} />
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-sm text-theme-muted">
+                    {isAutoGraded ? (
+                      <>Lösung: <LatexTextRenderer text={task?.answer ?? ''} /></>
+                    ) : (
+                      'Keine schriftliche Musterlösung verfügbar.'
+                    )}
+                  </p>
+                )}
+              </div>
+            )}
+          </div>
+        </div>
+      ) : (
+      <>
       <div className="flex justify-between items-center mb-6">
         <button
           onClick={onBackToSelector}
@@ -307,10 +446,10 @@ export const GenericTaskRunner: React.FC<GenericTaskRunnerProps> = ({
                       className="w-full px-4 py-3.5 bg-theme-input border border-theme-border rounded-xl text-theme-primary placeholder-theme-muted focus:outline-none focus:border-purple-500 focus:ring-1 focus:ring-purple-500 transition-all font-semibold text-lg disabled:opacity-60 disabled:cursor-not-allowed"
                       id="task-answer-input"
                     />
-                    {status === 'correct' && (
+                    {!examMode && status === 'correct' && (
                       <CheckCircle2 className="absolute right-4 top-1/2 -translate-y-1/2 w-6 h-6 text-emerald-400 animate-bounce" />
                     )}
-                    {status === 'incorrect' && (
+                    {!examMode && status === 'incorrect' && (
                       <XCircle className="absolute right-4 top-1/2 -translate-y-1/2 w-6 h-6 text-rose-400" />
                     )}
                     {isLocked && status !== 'correct' && (
@@ -319,7 +458,16 @@ export const GenericTaskRunner: React.FC<GenericTaskRunnerProps> = ({
                   </div>
                 )}
 
-                {status !== 'correct' && !isLocked ? (
+                {examMode ? (
+                  <button
+                    type="submit"
+                    disabled={task.choices && task.choices.length > 0 ? selectedChoice === null : userAnswer.trim() === ''}
+                    className="w-full sm:w-auto px-6 py-3.5 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 disabled:from-purple-800 disabled:to-indigo-800 disabled:opacity-40 disabled:cursor-not-allowed text-white font-semibold rounded-xl transition-all shadow-lg hover:shadow-purple-500/25 flex items-center justify-center gap-2 cursor-pointer"
+                    id="submit-answer-btn"
+                  >
+                    {examSubmitted ? 'Antwort aktualisieren' : 'Antwort abgeben'}
+                  </button>
+                ) : status !== 'correct' && !isLocked ? (
                   <button
                     type="submit"
                     disabled={task.choices && task.choices.length > 0 ? selectedChoice === null : userAnswer.trim() === ''}
@@ -347,7 +495,7 @@ export const GenericTaskRunner: React.FC<GenericTaskRunnerProps> = ({
               </div>
             )}
 
-            {status === 'incorrect' && (
+            {!examMode && status === 'incorrect' && (
               <div className="mt-4 p-3.5 bg-rose-500/10 border border-rose-500/20 text-rose-600 dark:text-rose-400 rounded-xl text-sm font-bold flex items-start gap-2.5 animate-fadeIn">
                 <XCircle className="w-5 h-5 text-rose-500 dark:text-rose-400 shrink-0 mt-0.5" />
                 <div>
@@ -355,7 +503,7 @@ export const GenericTaskRunner: React.FC<GenericTaskRunnerProps> = ({
                 </div>
               </div>
             )}
-            {status === 'correct' && (
+            {!examMode && status === 'correct' && (
               <div className="mt-4 p-3.5 bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 rounded-xl text-sm font-bold flex items-start gap-2.5 animate-fadeIn">
                 <CheckCircle2 className="w-5 h-5 text-emerald-500 dark:text-emerald-400 shrink-0 mt-0.5" />
                 <div>
@@ -404,20 +552,22 @@ export const GenericTaskRunner: React.FC<GenericTaskRunnerProps> = ({
             )}
 
             <div className="flex flex-wrap justify-between items-center gap-3 mt-8 pt-6 border-t border-theme-border">
-              <button
-                type="button"
-                onClick={handleRevealSolution}
-                disabled={showSolution}
-                className={`flex items-center gap-2 text-sm font-semibold transition-colors cursor-pointer ${
-                  showSolution ? 'text-purple-600 dark:text-purple-400' : 'text-theme-muted hover:text-purple-600'
-                }`}
-                id="show-solution-btn"
-              >
-                <HelpCircle className="w-4 h-4" />
-                {showSolution ? 'Lösung angezeigt' : 'Rechenweg anzeigen'}
-              </button>
+              {!examMode && (
+                <button
+                  type="button"
+                  onClick={handleRevealSolution}
+                  disabled={showSolution}
+                  className={`flex items-center gap-2 text-sm font-semibold transition-colors cursor-pointer ${
+                    showSolution ? 'text-purple-600 dark:text-purple-400' : 'text-theme-muted hover:text-purple-600'
+                  }`}
+                  id="show-solution-btn"
+                >
+                  <HelpCircle className="w-4 h-4" />
+                  {showSolution ? 'Lösung angezeigt' : 'Rechenweg anzeigen'}
+                </button>
+              )}
 
-              {status !== 'correct' && (
+              {status !== 'correct' && !examMode && (
                 <button
                   type="button"
                   onClick={() => {
@@ -460,6 +610,8 @@ export const GenericTaskRunner: React.FC<GenericTaskRunnerProps> = ({
           )
         ) : null}
       </div>
+      </>
+      )}
     </div>
   );
 };

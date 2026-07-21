@@ -13,6 +13,7 @@
     "katex": "^0.16.10",
     "lucide-react": "^0.395.0",
     "prop-types": "^15.8.1",
+    "puppeteer-core": "^23.11.1",
     "react": "^19.2.7",
     "react-dom": "^19.2.7",
     "react-katex": "^3.0.1",

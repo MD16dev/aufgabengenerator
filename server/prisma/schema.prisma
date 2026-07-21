@@ -25,6 +25,7 @@ model User {
   duelWins     Int          @default(0)
   duelLosses   Int          @default(0)
   duels        DuelParticipant[]
+  examAttempts ExamAttempt[]
 }
 
 model TaskType {
@@ -107,4 +108,41 @@ model DuelRound {
   solvedBy  String?  // userId of the player who solved it first (optional)
   createdAt DateTime @default(now())
   duel      Duel     @relation(fields: [duelId], references: [id], onDelete: Cascade)
+}
+
+// ---- Prüfungsmodus (exam mode) ----
+
+model ExamAttempt {
+  id          String   @id @default(uuid())
+  userId      String
+  moduleId    String // lin_alg | algo_struct | os | formal_sys
+  durationMin Int // chosen exam length in minutes (20..180)
+  // Total achievable points across all tasks in the plan.
+  maxPoints   Int      @default(0)
+  // Points the user actually earned (sum of ExamTask.userPoints).
+  earnedPoints Int     @default(0)
+  // Percentage 0..100, persisted so the leaderboard is stable across table changes.
+  scorePct    Float    @default(0)
+  // Final grade per the German 1.0..5.0 grading table.
+  grade       Float    @default(5.0)
+  passed      Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tasks       ExamTask[]
+
+  @@index([moduleId, scorePct])
+}
+
+model ExamTask {
+  id           String  @id @default(uuid())
+  attemptId    String
+  taskTypeId   String
+  category     String // human-readable category label, e.g. "Determinanten"
+  workloadMin  Int     // estimated working time for this task in minutes
+  autoGraded   Boolean // true when the system can grade it (answer/choices present)
+  maxPoints    Int     // points this task contributes to the exam total
+  userPoints   Int     @default(0) // points the user earned (0..maxPoints)
+  attempt      ExamAttempt @relation(fields: [attemptId], references: [id], onDelete: Cascade)
+
+  @@index([attemptId])
 }

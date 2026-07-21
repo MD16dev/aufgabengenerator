@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 
-export type RouteView = 'home' | 'tasks' | 'leaderboard' | 'profile' | 'admin' | 'duels';
+export type RouteView = 'home' | 'tasks' | 'leaderboard' | 'profile' | 'admin' | 'duels' | 'exam';
 
 export interface RouteState {
   view: RouteView;
@@ -18,7 +18,7 @@ export interface RouteState {
   lbTaskModule: string;
 }
 
-const VALID_VIEWS: RouteView[] = ['home', 'tasks', 'leaderboard', 'profile', 'admin', 'duels'];
+const VALID_VIEWS: RouteView[] = ['home', 'tasks', 'leaderboard', 'profile', 'admin', 'duels', 'exam'];
 
 const DEFAULT_ROUTE: RouteState = {
   view: 'home',

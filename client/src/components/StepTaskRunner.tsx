@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { MathRenderer, LatexTextRenderer } from './MathRenderer';
 import { TreeRenderer } from './TreeRenderer';
 import { GraphRenderer } from './GraphRenderer';
-import { HelpCircle, RefreshCw, ArrowLeft, ArrowRight, CheckCircle2 } from 'lucide-react';
+import { HelpCircle, RefreshCw, ArrowLeft, ArrowRight, CheckCircle2, Eye } from 'lucide-react';
 import type { TaskData } from '../types';
 
 interface StepTaskRunnerProps {
@@ -11,6 +11,14 @@ interface StepTaskRunnerProps {
   onSolved: () => void;
   onBackToSelector: () => void;
   onSkip: () => void;
+  /** When true (e.g. during an exam), solution reveal and skipping are disabled. */
+  examMode?: boolean;
+  /** When true, the runner renders a read-only model-solution view: it shows
+   *  the user's submitted answer followed by the model solution, with no
+   *  reveal/check/skip buttons — only a single expand/collapse control. */
+  solutionMode?: boolean;
+  /** The answer the user submitted (shown above the model solution). */
+  userAnswer?: string;
 }
 
 /**
@@ -27,8 +35,12 @@ export const StepTaskRunner: React.FC<StepTaskRunnerProps> = ({
   onSolved,
   onBackToSelector,
   onSkip,
+  examMode = false,
+  solutionMode = false,
+  userAnswer: userAnswerProp,
 }) => {
   const [revealed, setRevealed] = useState(false);
+  const [solutionExpanded, setSolutionExpanded] = useState<boolean>(!solutionMode);
   const [solved, setSolved] = useState(false);
   const [feedbackGiven, setFeedbackGiven] = useState(false);
   const [feedbackMsg, setFeedbackMsg] = useState('');
@@ -87,6 +99,129 @@ export const StepTaskRunner: React.FC<StepTaskRunnerProps> = ({
 
   return (
     <div className="w-full max-w-2xl mx-auto px-4 py-8 animate-fadeIn" id="step-task-runner">
+      {solutionMode ? (
+        <div className="glass-panel rounded-3xl p-6 md:p-8 relative overflow-hidden">
+          <div className="absolute top-0 right-0 w-48 h-48 bg-purple-500/10 rounded-full blur-3xl pointer-events-none" />
+
+          <div className="flex justify-between items-center mb-4">
+            <span className="text-xs font-bold uppercase tracking-wider px-3 py-1 bg-purple-500/10 text-purple-600 dark:text-purple-400 rounded-full border border-purple-500/25">
+              {task.type}
+            </span>
+          </div>
+
+          {task.prompt && (
+            <h2 className="text-xl md:text-2xl font-bold font-display text-theme-primary mb-4 leading-snug">
+              <LatexTextRenderer text={task.prompt} />
+            </h2>
+          )}
+
+          <div className="mb-4">
+            <h3 className="text-sm font-bold text-purple-600 dark:text-purple-400 uppercase tracking-wider mb-2">
+              Aufgabe
+            </h3>
+            <div className="p-4 bg-theme-card border border-theme-border rounded-2xl overflow-x-auto flex justify-center">
+              {task.renderMode === 'tree' && task.tree ? (
+                <TreeRenderer tree={task.tree} />
+              ) : task.graph ? (
+                <GraphRenderer graph={task.graph} />
+              ) : (
+                <div className="text-center py-2 min-w-0"><MathRenderer math={task.mathQuery} block /></div>
+              )}
+            </div>
+          </div>
+
+          <div className="mt-6 p-4 bg-theme-card border border-theme-border rounded-2xl">
+            <p className="text-sm font-semibold text-theme-primary mb-1">Deine Antwort:</p>
+            <p className="text-theme-secondary">
+              {userAnswerProp && userAnswerProp.length > 0 ? (
+                <LatexTextRenderer text={userAnswerProp} />
+              ) : (
+                <span className="text-theme-muted italic">keine Antwort abgegeben</span>
+              )}
+            </p>
+          </div>
+
+          <div className="mt-4">
+            <button
+              type="button"
+              onClick={() => setSolutionExpanded((v) => !v)}
+              className="flex items-center gap-2 text-sm font-semibold text-purple-600 dark:text-purple-400 hover:opacity-80 transition-opacity cursor-pointer"
+            >
+              <Eye className="w-4 h-4" />
+              {solutionExpanded ? 'Musterlösung ausblenden' : 'Musterlösung anzeigen'}
+            </button>
+
+            {solutionExpanded && (
+              <div className="mt-3 p-4 bg-theme-card border border-theme-border rounded-2xl animate-fadeIn">
+                <h3 className="text-sm font-bold text-purple-600 dark:text-purple-400 uppercase tracking-wider mb-4">
+                  Musterlösung (mit Zwischenschritten)
+                </h3>
+                {steps.length === 0 ? (
+                  <p className="text-sm text-theme-muted">Keine Zwischenschritte verfügbar.</p>
+                ) : (
+                  steps.map((step, i) => (
+                    <div key={i} className="mb-4 last:mb-0">
+                      <div className="flex items-center gap-2 mb-2 flex-wrap">
+                        <span className="text-xs font-bold px-2 py-0.5 bg-purple-500/10 text-purple-600 dark:text-purple-400 rounded-full">
+                          Schritt {i + 1}
+                        </span>
+                        <span className="text-sm font-semibold text-theme-primary">
+                          <LatexTextRenderer text={step.instruction} />
+                        </span>
+                        {step.annotation && (
+                          <span className="text-xs text-emerald-600 dark:text-emerald-400 ml-auto">
+                            {step.annotation}
+                          </span>
+                        )}
+                      </div>
+                      {step.kind === 'tree' && (
+                        <div className="p-3 bg-emerald-500/10 border border-emerald-500/30 rounded-xl overflow-x-auto">
+                          <TreeRenderer tree={step.tree ?? null} />
+                        </div>
+                      )}
+                      {step.kind === 'array' && (
+                        <span className="inline-block px-3 py-1.5 bg-emerald-500/10 border border-emerald-500/30 rounded-xl text-emerald-600 dark:text-emerald-400 font-semibold">
+                          [{step.array!.join(', ')}]
+                        </span>
+                      )}
+                      {step.kind === 'text' && (
+                        <span className="inline-block px-3 py-1.5 bg-emerald-500/10 border border-emerald-500/30 rounded-xl text-emerald-600 dark:text-emerald-400 font-semibold">
+                          {step.answer}
+                        </span>
+                      )}
+                      {step.kind === 'matrix' && step.matrix && (
+                        <div className="inline-block px-3 py-1.5 bg-emerald-500/10 border border-emerald-500/30 rounded-xl">
+                          <MathRenderer
+                            math={`\\begin{pmatrix} ${step.matrix
+                              .map((row) => row.map((x) => (x === Infinity ? '\\infty' : String(x))).join(' & '))
+                              .join(' \\\\ ')} \\end{pmatrix}`}
+                            block
+                          />
+                        </div>
+                      )}
+                    </div>
+                  ))
+                )}
+                {task.explanation && task.explanation.length > 0 && (
+                  <div className="mt-5 p-5 bg-theme-card border border-theme-border rounded-2xl animate-fadeIn">
+                    <h3 className="text-sm font-bold text-purple-600 dark:text-purple-400 uppercase tracking-wider mb-4">
+                      Regeln & Rechenweg:
+                    </h3>
+                    <div className="space-y-3 text-theme-secondary text-sm md:text-base">
+                      {task.explanation.map((line, idx) => (
+                        <div key={idx} className="pb-3 last:pb-0 border-b last:border-0 border-theme-border">
+                          <LatexTextRenderer text={line} />
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        </div>
+      ) : (
+      <>
       <div className="flex justify-between items-center mb-6">
         <button
           onClick={onBackToSelector}
@@ -258,23 +393,29 @@ export const StepTaskRunner: React.FC<StepTaskRunnerProps> = ({
           </div>
         ) : (
           <div className="flex justify-between items-center mt-6 pt-4 border-t border-theme-border">
-            <button
-              type="button"
-              onClick={() => setRevealed(true)}
-              className="flex items-center gap-2 text-sm font-semibold text-theme-muted hover:text-purple-600 transition-colors cursor-pointer"
-            >
-              <HelpCircle className="w-4 h-4" /> Lösung anzeigen
-            </button>
-            <button
-              type="button"
-              onClick={onSkip}
-              className="flex items-center gap-2 text-sm font-semibold text-theme-muted hover:text-theme-primary transition-colors cursor-pointer"
-            >
-              <RefreshCw className="w-4 h-4" /> Neue Aufgabe
-            </button>
+            {!examMode && (
+              <button
+                type="button"
+                onClick={() => setRevealed(true)}
+                className="flex items-center gap-2 text-sm font-semibold text-theme-muted hover:text-purple-600 transition-colors cursor-pointer"
+              >
+                <HelpCircle className="w-4 h-4" /> Lösung anzeigen
+              </button>
+            )}
+            {!examMode && (
+              <button
+                type="button"
+                onClick={onSkip}
+                className="flex items-center gap-2 text-sm font-semibold text-theme-muted hover:text-theme-primary transition-colors cursor-pointer"
+              >
+                <RefreshCw className="w-4 h-4" /> Neue Aufgabe
+              </button>
+            )}
           </div>
         )}
       </div>
+      </>
+      )}
     </div>
   );
 };
